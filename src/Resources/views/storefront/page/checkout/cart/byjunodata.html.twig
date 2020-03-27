@@ -1,0 +1,14 @@
+{% sw_extends '@Storefront/storefront/base.html.twig' %}
+
+{% block base_content %}
+    {% block page_checkout %}
+        <div class="checkout">
+            <div class="row col-md-2">
+                <a class="btn btn-primary btn-block" href="{{ path('frontend.checkout.byjunosubmit') }}?returnurl={{ page["returnurl"] }}&orderid={{ page["orderid"] }}">
+                    Submit order
+                </a>
+            </div>
+        </div>
+    {% endblock %}
+{% endblock %}
+
