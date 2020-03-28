@@ -5,7 +5,6 @@
     <card>
         <title>General setting</title>
         <title lang="de-DE">General setting</title>
-
         <input-field type="single-select">
             <name>mode</name>
             <options>
@@ -23,6 +22,418 @@
             <defaultValue>test</defaultValue>
             <label>Plugin mode</label>
             <label lang="de-DE">Plugin mode</label>
+        </input-field>
+        <input-field type="single-select">
+            <name>byjunob2b</name>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+            <defaultValue>disabled</defaultValue>
+            <label>Enable B2B check</label>
+            <label lang="de-DE">Enable B2B check</label>
+        </input-field>
+        <input-field>
+            <name>byjunouserid</name>
+            <label>User ID</label>
+            <label lang="de-DE">User ID</label>
+        </input-field>
+        <input-field>
+            <name>byjunoclientid</name>
+            <label>Client ID</label>
+            <label lang="de-DE">Client ID</label>
+        </input-field>
+        <input-field>
+            <name>byjunopassword</name>
+            <label>Password</label>
+            <label lang="de-DE">Password</label>
+        </input-field>
+        <input-field>
+            <name>byjunotechemail</name>
+            <label>Technical Contact (E-mail)</label>
+            <label lang="de-DE">Technical Contact (E-mail)</label>
+        </input-field>
+        <input-field>
+            <name>byjunominimum</name>
+            <label>Mininmal amount for checkout (empty, default 10)</label>
+            <label lang="de-DE">Mininmal amount for checkout (empty, default 10)</label>
+            <defaultValue>10</defaultValue>
+        </input-field>
+        <input-field>
+            <name>byjunomaximum</name>
+            <label>Maximal amount for checkout  (empty, default 1000)</label>
+            <label lang="de-DE">Maximal amount for checkout  (empty, default 1000)</label>
+            <defaultValue>1000</defaultValue>
+        </input-field>
+        <input-field>
+            <name>byjunotimeout</name>
+            <label lang="de-DE">Connection timeout to Byjuno CDP server in seconds</label>
+            <defaultValue>30</defaultValue>
+        </input-field>
+        <input-field type="single-select">
+            <name>byjunothreatmetrixenable</name>
+            <label>Enable ThreatMetrix security check</label>
+            <label lang="de-DE">Enable ThreatMetrix security check</label>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+            <defaultValue>disabled</defaultValue>
+        </input-field>
+        <input-field>
+            <name>byjunothreatmetrix</name>
+            <label>ThreatMetrix Org Id</label>
+            <label lang="de-DE">ThreatMetrix Org Id</label>
+            <defaultValue>lq866c5i</defaultValue>
+        </input-field>
+        <input-field type="single-select">
+            <name>byjunoallowpostal</name>
+            <label>Allow postal delivery</label>
+            <defaultValue>enabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field>
+            <name>allowedcdp</name>
+            <label>Accepted CDP risks if credit check enabled</label>
+            <defaultValue>2</defaultValue>
+        </input-field>
+        <input-field type="single-select">
+            <name>byjunogender</name>
+            <label>Enable gender selection</label>
+            <defaultValue>enabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>byjunobirthday</name>
+            <label>Enable birthday selection</label>
+            <defaultValue>enabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field>
+            <name>byjunoprodemail</name>
+            <label>Production email of Byjuno</label>
+            <label lang="de-DE">Production email of Byjuno</label>
+            <defaultValue>invoices@byjuno.ch</defaultValue>
+        </input-field>
+        <input-field>
+            <name>byjunotestemail</name>
+            <label>Test email of Byjuno</label>
+            <label lang="de-DE">Test email of Byjuno</label>
+            <defaultValue>invoices-test@byjuno.ch</defaultValue>
+        </input-field>
+        <input-field>
+            <name>alloweds2</name>
+            <label>Accepted Byjuno Risk for S2</label>
+            <label lang="de-DE">Accepted Byjuno Risk for S2</label>
+            <defaultValue>2</defaultValue>
+        </input-field>
+        <input-field>
+            <name>alloweds2merchant</name>
+            <label>Accepted Merchant Risk for S2</label>
+            <label lang="de-DE">Accepted Merchant Risk for S2</label>
+        </input-field>
+        <input-field>
+            <name>alloweds3</name>
+            <label>Accepted statuses for S3 response</label>
+            <label lang="de-DE">Accepted statuses for S3 response</label>
+            <defaultValue>2</defaultValue>
+        </input-field>
+
+    </card>
+    <card>
+        <title>Allowed payments Byjuno invoice</title>
+        <title lang="de-DE">Allowed payments Byjuno invoice</title>
+
+        <input-field type="single-select">
+            <name>byjunoinvoice</name>
+            <label>Byjuno Invoice (with partial payment option)</label>
+            <defaultValue>enabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>singleinvoice</name>
+            <label>Byjuno Single Invoice</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>byjunoinvoiceb2b</name>
+            <label>Byjuno Invoice (with partial payment option) (B2B)</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>singleinvoiceb2b</name>
+            <label>Byjuno Single Invoice (B2B)</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+    </card>
+    <card>
+        <title>Allowed payments Byjuno installment</title>
+        <title lang="de-DE">Allowed payments Byjuno installment</title>
+        <input-field type="single-select">
+            <name>installment3</name>
+            <label>3 installments</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>installment10</name>
+            <label>10 installments</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>installment12</name>
+            <label>12 installments</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>installment24</name>
+            <label>24 installments</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>installment4x12</name>
+            <label>4 installments in 12 months</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>installment3b2b</name>
+            <label>3 installments (B2B)</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>installment10b2b</name>
+            <label>10 installments (B2B)</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>installment12b2b</name>
+            <label>12 installments (B2B)</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>installment24b2b</name>
+            <label>24 installments (B2B)</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>installment4x12b2b</name>
+            <label>4 installments in 12 months (B2B)</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
         </input-field>
     </card>
 </config>
