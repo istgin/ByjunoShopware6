@@ -42,6 +42,9 @@ class ByjunoCorePayment implements AsynchronousPaymentHandlerInterface
         RequestDataBag $dataBag,
         SalesChannelContext $salesChannelContext
     ): RedirectResponse {
+        $customer = $salesChannelContext->getCustomer();
+        var_dump($customer->getId());
+      //  exit();
         // Method that sends the return URL to the external gateway and gets a redirect URL back
         try {
             $redirectUrl = $this->sendReturnUrlToExternalGateway($transaction);

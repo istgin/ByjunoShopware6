@@ -51,7 +51,7 @@
             <label>Client ID</label>
             <label lang="de-DE">Client ID</label>
         </input-field>
-        <input-field>
+        <input-field type="password">
             <name>byjunopassword</name>
             <label>Password</label>
             <label lang="de-DE">Password</label>
