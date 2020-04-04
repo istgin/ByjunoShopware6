@@ -11,7 +11,8 @@
   ],
   "require": {
     "shopware/core": "*",
-    "shopware/storefront": "*"
+    "shopware/storefront": "*",
+    "ext-simplexml": "*"
   },
   "extra": {
     "shopware-plugin-class": "Byjuno\\ByjunoPayments\\ByjunoPayments",

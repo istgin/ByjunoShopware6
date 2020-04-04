@@ -352,7 +352,7 @@ class ByjunoRequest
     public function setRequestEmail($RequestEmail)
     {
         if (!preg_match('/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/', $RequestEmail)) {
-            throw new Exception("Request Email is invalid");
+            throw new \Exception("Request Email is invalid");
         }
         $this->RequestEmail = $RequestEmail;
     }
@@ -479,7 +479,7 @@ class ByjunoRequest
 
     public function createRequest()
     {
-        $xml = new SimpleXMLElement("<Request></Request>");
+        $xml = new \SimpleXMLElement("<Request></Request>");
         $xml->addAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
         $xml->addAttribute("xsi:noNamespaceSchemaLocation", "http://site.byjuno.ch/schema/CreditDecisionRequest140.xsd");
         $xml->addAttribute("ClientId", $this->ClientId);

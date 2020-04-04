@@ -1,5 +1,7 @@
 <?php
 
+namespace Byjuno\ByjunoPayments\Api\Classes;
+
 class ByjunoResponse
 {
 

@@ -1,4 +1,5 @@
 <?php
+namespace Byjuno\ByjunoPayments\Api;
 
 function Byjuno_mapMethod($method) {
     if ($method == 'byjuno_payment_installment') {
