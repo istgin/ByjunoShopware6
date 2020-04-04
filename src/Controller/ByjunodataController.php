@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Byjuno\ByjunoPayments\Controller;
 
 
+use phpDocumentor\Reflection\Types\Array_;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\Checkout\Order\OrderEntity;
@@ -65,18 +66,41 @@ class ByjunodataController extends StorefrontController
      */
     public function submitData(Request $request, SalesChannelContext $context)
     {
+        $_SESSION["_byjuno_key"] = "ok";
         $order = $this->getOrder($request->query->get("orderid"));
         $customer = $this->getCustomer($order->getOrderCustomer()->getCustomerId(), $context->getContext());
         $dob = $customer->getBirthday();
         $dob_year = intval($dob->format("Y"));
         $dob_month = intval($dob->format("m"));
         $dob_day = intval($dob->format("d"));
+        $byjunoinvoice = Array();
+        $selected = "";
+        if ($this->systemConfigService->get("ByjunoPayments.config.byjunoinvoice") == 'enabled') {
+            $byjunoinvoice[] = Array("name" => "Byjuno Invoice", "id" => "byjunoinvoice");
+            $selected = "byjunoinvoice";
+        }
+        if ($this->systemConfigService->get("ByjunoPayments.config.singleinvoice") == 'enabled') {
+            $byjunoinvoice[] = Array("name" => "Byjuno Single Invoice", "id" => "singleinvoice");
+            $selected = "singleinvoice";
+        }
+        $custom_bd_enable = false;
+        if ($this->systemConfigService->get("ByjunoPayments.config.byjunobirthday") == 'enabled') {
+            $custom_bd_enable = true;
+        }
+        $custom_gender_enable = false;
+        if ($this->systemConfigService->get("ByjunoPayments.config.byjunogender") == 'enabled') {
+            $custom_gender_enable = true;
+        }
+
+        $this->systemConfigService->get("ByjunoPayments.config.singleinvoice");
         $params = Array(
             "returnurl" => urlencode($request->query->get("returnurl")),
             "orderid" => $request->query->get("orderid"),
-            "custom_gender_enable" => true,
-            "custom_bd_enable" => true,
+            "custom_gender_enable" => $custom_gender_enable,
+            "custom_bd_enable" => $custom_bd_enable,
             "salutations" => $this->getSalutations($context),
+            "byjunoinvoice" => $byjunoinvoice,
+            "selected" => $selected,
             "current_salutation" => $order->getOrderCustomer()->getSalutationId(),
             "current_year" => $dob_year,
             "current_month" => $dob_month,
@@ -87,13 +111,27 @@ class ByjunodataController extends StorefrontController
 
     /**
      * @RouteScope(scopes={"storefront"})
-     * @Route("/byjuno/byjunosubmit", name="frontend.checkout.byjunosubmit", options={"seo"="false"}, methods={"GET"})
+     * @Route("/byjuno/byjunosubmit", name="frontend.checkout.byjunosubmit", options={"seo"="false"}, methods={"POST"})
      */
     public function finalizeTransaction(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
     {
-        $orderid = $request->query->get("orderid");
-        $returnUrl = $request->query->get("returnurl")."&status=completed";
-        return new RedirectResponse($returnUrl);
+        if (!empty($_SESSION["_byjuno_key"])) {
+            // empty session
+            //$_SESSION["_byjuno_key"] = '';
+            $orderid = $request->query->get("orderid");
+            $returnUrl = $request->query->get("returnurl")."&status=completed";
+
+            $customSalutationId = $request->get("customSalutationId");
+            $customBirthdayDay = $request->get("customBirthdayDay");
+            $customBirthdayMonth = $request->get("customBirthdayMonth");
+            $customBirthdayYear = $request->get("customBirthdayYear");
+            $paymentplan = $request->get("paymentplan");
+
+            var_dump($paymentplan);
+            exit('aaa');
+            return new RedirectResponse($returnUrl);
+        }
+
     }
 
     private function getOrder(string $orderId): ?OrderEntity

@@ -12,7 +12,8 @@
                             </div>
                             <form action="{{ path('frontend.checkout.byjunosubmit') }}?returnurl={{ page["returnurl"] }}&orderid={{ page["orderid"] }}"
                                   class="register-form" method="post" id="proceed_byjuno_invoice"
-                                  name="proceed_byjuno_invoice">
+                                  name="proceed_byjuno_invoice" data-form-csrf-handler="true">
+                                {{ sw_csrf('frontend.checkout.byjunosubmit') }}
                                 <div class="register-personal">
                                     {% if page["custom_gender_enable"] %}
                                         <label class="form-label"
@@ -20,10 +21,10 @@
                                             {{ "account.personalSalutationLabel"|trans|sw_sanitize }}{{ "general.required"|trans|sw_sanitize }}
                                         </label>
                                         <div class="form-row">
-                                            <div class="form-group col-md-2 col-4">
-                                                <select id="customPersonalSalutation"
+                                            <div class="form-group col-mdl-2 col-4">
+                                                    <select id="customPersonalSalutation"
                                                         class="custom-select"
-                                                        name="customSlutationId"
+                                                        name="customSalutationId"
                                                         required="required">
                                                     {% if not page['current_salutation'] %}
                                                         <option disabled="disabled"
@@ -109,6 +110,17 @@
                                             </div>
                                         </div>
                                     {% endif %}
+                                    <label class="form-label"
+                                           for="paymentplan">
+                                        Select payment plan
+                                    </label>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-2 col-4">
+                                            {% for paymentoption in page["byjunoinvoice"] %}
+                                                <input type="radio" name="paymentplan" id="payment_{{ paymentoption['id'] }}" value="{{ paymentoption['id'] }}" {% if page['selected'] == paymentoption['id']  %} checked="checked" {% endif %} /> <label for="payment_{{ paymentoption['id'] }}">{{ paymentoption['name'] }}</label><br />
+                                            {% endfor %}
+                                        </div>
+                                    </div>
                                 </div>
                                 <script>
                                     var byjuno_submit = false;
