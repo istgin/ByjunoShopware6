@@ -76,8 +76,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     public function converter(CartConvertedEvent $event)
     {
-
-        if ($event->getSalesChannelContext()->getPaymentMethod()->getHandlerIdentifier() == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
+        if ($this->systemConfigService->get("ByjunoPayments.config.byjunousecdp") == 'enabled' && $event->getSalesChannelContext()->getPaymentMethod()->getHandlerIdentifier() == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
             $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b");
             $paymentMethod = "";
             if ($event->getSalesChannelContext()->getPaymentMethod()->getId() == ByjunoPayments::BYJUNO_INVOICE) {
@@ -108,7 +107,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             }
             if (!$this->isStatusOkCDP($statusCDP)) {
                 $violation = new ConstraintViolation(
-                    "error",
+                    "You are not allowed to pay with this payment method. Please try different.",
                     '',
                     [],
                     '',
@@ -117,10 +116,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                 );
                 $violations = new ConstraintViolationList([$violation]);
                 $exception = new ConstraintViolationException($violations, []);
-                $cart = $event->getCart();
-                $data = $event->getConvertedCart();
-                var_dump($event->getConvertedCart()["deliveries"]);
-                exit();
                 throw new ConstraintViolationException($violations, []);
             }
         }
