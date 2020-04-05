@@ -8,6 +8,7 @@ namespace Byjuno\ByjunoPayments\Controller;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoRequest;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoResponse;
+use Exception;
 use phpDocumentor\Reflection\Types\Array_;
 use RuntimeException;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
@@ -96,12 +97,16 @@ class ByjunodataController extends StorefrontController
         $byjunoinvoice = Array();
         $selected = "";
         if ($this->systemConfigService->get("ByjunoPayments.config.byjunoinvoice") == 'enabled') {
-            $byjunoinvoice[] = Array("name" => "Byjuno Invoice", "id" => "byjunoinvoice");
-            $selected = "byjuno_invoice";
+            $byjunoinvoice[] = Array("name" => "Byjuno Invoice", "id" => "byjuno_invoice");
+            if ($selected == "") {
+                $selected = "byjuno_invoice";
+            }
         }
         if ($this->systemConfigService->get("ByjunoPayments.config.singleinvoice") == 'enabled') {
-            $byjunoinvoice[] = Array("name" => "Byjuno Single Invoice", "id" => "singleinvoice");
-            $selected = "sinlge_invoice";
+            $byjunoinvoice[] = Array("name" => "Byjuno Single Invoice", "id" => "sinlge_invoice");
+            if ($selected == "") {
+                $selected = "sinlge_invoice";
+            }
         }
         $custom_bd_enable = false;
         if ($this->systemConfigService->get("ByjunoPayments.config.byjunobirthday") == 'enabled') {
@@ -139,49 +144,95 @@ class ByjunodataController extends StorefrontController
             // empty session
             //$_SESSION["_byjuno_key"] = '';
             $orderid = $request->query->get("orderid");
-            $returnUrl = $request->query->get("returnurl")."&status=completed";
+            $returnUrlSuccess = $request->query->get("returnurl")."&status=completed";
+            $returnUrlFail = $request->query->get("returnurl")."&status=fail";
 
             $customSalutationId = $request->get("customSalutationId");
             $customBirthdayDay = $request->get("customBirthdayDay");
             $customBirthdayMonth = $request->get("customBirthdayMonth");
             $customBirthdayYear = $request->get("customBirthdayYear");
             $paymentplan = $request->get("paymentplan");
+            $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b");
             $order = $this->getOrder($orderid);
             $request = $this->Byjuno_CreateShopWareShopRequestUserBilling(
                 $salesChannelContext->getContext(),
                 $order,
                 $salesChannelContext->getContext(),
-                "",
-                "byjuno_payment_installment",
+                $order->getOrderNumber(),
+                "byjuno_payment_invoice",
                 $paymentplan,
                 "",
                 "",
                 "",
                 "",
                 "NO");
-            $xml = $request->createRequest();
+            $statusLog = "Order request (S1)";
+            if ($request->getCompanyName1() != '' && $b2b == 'enabled') {
+                $statusLog = "Order request for company (S1)";
+                $xml = $request->createRequestCompany();
+            } else {
+                $xml = $request->createRequest();
+            }
             $communicator = new ByjunoCommunicator();
             $communicator->setServer($this->systemConfigService->get("ByjunoPayments.config.mode"));
             $response = $communicator->sendRequest($xml);
+            $statusS1 = 0;
+            $statusS3 = 0;
             if ($response) {
                 $intrumResponse = new ByjunoResponse();
                 $intrumResponse->setRawResponse($response);
                 $intrumResponse->processResponse();
-                $status = (int)$intrumResponse->getCustomerRequestStatus();
-                $statusLog = "Intrum status";
-                if (!empty($_SESSION["intrum"]["mustupdate"])) {
-                    $statusLog .= " ".$_SESSION["intrum"]["mustupdate"];
-                } else {
-                    $statusLog .= " GetPaymentMeans";
-                }
-                var_dump($status);
-                exit('bbb');
-                if (intval($status) > 15) {
-                    $status = 0;
+                $statusS1 = (int)$intrumResponse->getCustomerRequestStatus();
+                if (intval($statusS1) > 15) {
+                    $statusS1 = 0;
                 }
             }
-            exit('aaa');
-            return new RedirectResponse($returnUrl);
+            if ($this->isStatusOkS2($statusS1)) {
+                $risk = $this->getStatusRisk($statusS1);
+                $requestS3 = $this->Byjuno_CreateShopWareShopRequestUserBilling(
+                    $salesChannelContext->getContext(),
+                    $order,
+                    $salesChannelContext->getContext(),
+                    $order->getOrderNumber(),
+                    "byjuno_payment_invoice",
+                    $paymentplan,
+                    $risk,
+                    "",
+                    "",
+                    "",
+                    "YES");
+                $statusLog = "Order complete (S3)";
+                if ($requestS3->getCompanyName1() != '' && $b2b == 'enabled') {
+                    $statusLog = "Order complete for company (S3)";
+                    $xml = $requestS3->createRequestCompany();
+                } else {
+                    $xml = $requestS3->createRequest();
+                }
+                $byjunoCommunicator = new ByjunoCommunicator();
+                if (isset($mode) && $mode == 'Live') {
+                    $byjunoCommunicator->setServer('live');
+                } else {
+                    $byjunoCommunicator->setServer('test');
+                }
+                $response = $byjunoCommunicator->sendRequest($xml);
+                if (isset($response)) {
+                    $byjunoResponse = new ByjunoResponse();
+                    $byjunoResponse->setRawResponse($response);
+                    $byjunoResponse->processResponse();
+                    $statusS3 = (int)$byjunoResponse->getCustomerRequestStatus();
+                    if (intval($statusS3) > 15) {
+                        $statusS3 = 0;
+                    }
+                }
+            } else {
+                return new RedirectResponse($returnUrlFail);
+            }
+            if ($this->isStatusOkS2($statusS1) && $this->isStatusOkS3($statusS3)) {
+                //TODO: mail here
+                return new RedirectResponse($returnUrlSuccess);
+            } else {
+                return new RedirectResponse($returnUrlFail);
+            }
         }
 
     }
@@ -490,6 +541,107 @@ class ByjunodataController extends StorefrontController
             return "3";
         } else {
             return "4";
+        }
+    }
+
+    protected function isStatusOkS2($status) {
+        try {
+            $accepted_S2_ij = $this->systemConfigService->get("ByjunoPayments.config.alloweds2");
+            $accepted_S2_merhcant = $this->systemConfigService->get("ByjunoPayments.config.alloweds2merchant");
+            $ijStatus = Array();
+            if (!empty(trim((String)$accepted_S2_ij))) {
+                $ijStatus = explode(",", trim((String)$accepted_S2_ij));
+                foreach($ijStatus as $key => $val) {
+                    $ijStatus[$key] = intval($val);
+                }
+            }
+            $merchantStatus = Array();
+            if (!empty(trim((String)$accepted_S2_merhcant))) {
+                $merchantStatus = explode(",", trim((String)$accepted_S2_merhcant));
+                foreach($merchantStatus as $key => $val) {
+                    $merchantStatus[$key] = intval($val);
+                }
+            }
+            if (!empty($accepted_S2_ij) && count($ijStatus) > 0 && in_array($status, $ijStatus)) {
+                return true;
+            } else if (!empty($accepted_S2_merhcant) && count($merchantStatus) > 0 && in_array($status, $merchantStatus)) {
+                return true;
+            }
+            return false;
+
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    protected function isStatusOkCDP($status) {
+        try {
+            $accepted_CDP = $this->systemConfigService->get("ByjunoPayments.config.allowedcdp");
+            $ijStatus = Array();
+            if (!empty(trim((String)$accepted_CDP))) {
+                $ijStatus = explode(",", trim((String)$accepted_CDP));
+                foreach($ijStatus as $key => $val) {
+                    $ijStatus[$key] = intval($val);
+                }
+            }
+            if (!empty($accepted_CDP) && count($ijStatus) > 0 && in_array($status, $ijStatus)) {
+                return true;
+            }
+            return false;
+
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+
+    protected function isStatusOkS3($status) {
+        try {
+            $accepted_S3 = $this->systemConfigService->get("ByjunoPayments.config.alloweds3");
+            $ijStatus = Array();
+            if (!empty(trim((String)$accepted_S3))) {
+                $ijStatus = explode(",", trim((String)$accepted_S3));
+                foreach($ijStatus as $key => $val) {
+                    $ijStatus[$key] = intval($val);
+                }
+            }
+            if (!empty($accepted_S3) && count($ijStatus) > 0 && in_array($status, $ijStatus)) {
+                return true;
+            }
+            return false;
+
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    protected function getStatusRisk($status) {
+        try {
+            $accepted_S2_ij = $this->systemConfigService->get("ByjunoPayments.config.alloweds2");
+            $accepted_S2_merhcant = $this->systemConfigService->get("ByjunoPayments.config.alloweds2merchant");
+            $ijStatus = Array();
+            if (!empty(trim((String)$accepted_S2_ij))) {
+                $ijStatus = explode(",", trim((String)$accepted_S2_ij));
+                foreach($ijStatus as $key => $val) {
+                    $ijStatus[$key] = intval($val);
+                }
+            }
+            $merchantStatus = Array();
+            if (!empty(trim((String)$accepted_S2_merhcant))) {
+                $merchantStatus = explode(",", trim((String)$accepted_S2_merhcant));
+                foreach($merchantStatus as $key => $val) {
+                    $merchantStatus[$key] = intval($val);
+                }
+            }
+            if (!empty($accepted_S2_ij) && count($ijStatus) > 0 && in_array($status, $ijStatus)) {
+                return "IJ";
+            } else if (!empty($accepted_S2_merhcant) && count($merchantStatus) > 0 && in_array($status, $merchantStatus)) {
+                return "CLIENT";
+            }
+            return "No owner";
+
+        } catch (Exception $e) {
+            return "INTERNAL ERROR";
         }
     }
 }

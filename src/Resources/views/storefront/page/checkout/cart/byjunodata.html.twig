@@ -142,6 +142,7 @@
                                         if (byjuno_submit === false) {
                                             byjuno_submit = true;
                                             setTimeout(function () {
+                                                document.getElementById('proceed_byjuno_invoice_button').classList.add('disabled');
                                                 document.getElementById('proceed_byjuno_invoice').submit();
                                             }, 1);
                                         }
