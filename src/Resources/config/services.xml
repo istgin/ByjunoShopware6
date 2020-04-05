@@ -22,5 +22,13 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+        <service id="Byjuno\ByjunoPayments\Service\ByjunoCDPOrderConverterSubscriber">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
+            <argument type="service" id="payment_method.repository" />
+            <argument type="service" id="language.repository" />
+            <argument type="service" id="order_address.repository" />
+            <argument type="service" id="Psr\Container\ContainerInterface" />
+            <tag name="kernel.event_subscriber"/>
+        </service>
     </services>
 </container>

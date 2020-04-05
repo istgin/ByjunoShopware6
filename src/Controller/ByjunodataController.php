@@ -303,10 +303,10 @@ class ByjunodataController extends StorefrontController
         $request->setFirstName($billingAddress->getFirstName());
         $request->setLastName($billingAddress->getLastName());
         $addressAdd = '';
-        if (!empty($billing['additionalAddressLine1'])) {
+        if (!empty($billingAddress->getAdditionalAddressLine1())) {
             $addressAdd = ' '.trim($billingAddress->getAdditionalAddressLine1());
         }
-        if (!empty($billing['additionalAddressLine2'])) {
+        if (!empty($billingAddress->getAdditionalAddressLine2())) {
             $addressAdd = $addressAdd.' '.trim($billingAddress->getAdditionalAddressLine2());
         }
         $request->setFirstLine(trim($billingAddress->getStreet().' '.$addressAdd));
@@ -393,10 +393,10 @@ class ByjunodataController extends StorefrontController
         $request->setExtraInfo($extraInfo);
 
         $addressShippingAdd = '';
-        if (!empty($billing['additionalAddressLine1'])) {
+        if (!empty($shippingAddress->getAdditionalAddressLine1())) {
             $addressShippingAdd = ' '.trim($shippingAddress->getAdditionalAddressLine1());
         }
-        if (!empty($billing['additionalAddressLine2'])) {
+        if (!empty($shippingAddress->getAdditionalAddressLine2())) {
             $addressShippingAdd = $addressShippingAdd.' '.trim($shippingAddress->getAdditionalAddressLine2());
         }
 
@@ -573,27 +573,6 @@ class ByjunodataController extends StorefrontController
             return false;
         }
     }
-
-    protected function isStatusOkCDP($status) {
-        try {
-            $accepted_CDP = $this->systemConfigService->get("ByjunoPayments.config.allowedcdp");
-            $ijStatus = Array();
-            if (!empty(trim((String)$accepted_CDP))) {
-                $ijStatus = explode(",", trim((String)$accepted_CDP));
-                foreach($ijStatus as $key => $val) {
-                    $ijStatus[$key] = intval($val);
-                }
-            }
-            if (!empty($accepted_CDP) && count($ijStatus) > 0 && in_array($status, $ijStatus)) {
-                return true;
-            }
-            return false;
-
-        } catch (Exception $e) {
-            return false;
-        }
-    }
-
 
     protected function isStatusOkS3($status) {
         try {
