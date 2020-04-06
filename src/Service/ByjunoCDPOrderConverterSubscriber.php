@@ -316,7 +316,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
         if ($deliveries != null) {
             foreach ($deliveries as $delivery) {
-                if ($delivery["id"] !== $billingAddressId) {
+                if ($delivery["shippingOrderAddress"]["id"] !== $billingAddressId) {
                     continue;
                 }
                 return $delivery["shippingOrderAddress"];
