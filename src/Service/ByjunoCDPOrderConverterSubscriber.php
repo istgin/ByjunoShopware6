@@ -179,9 +179,14 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
         $customer = $this->getCustomer($convertedCart["orderCustomer"]["customerId"], $context);
         $dob = $customer->getBirthday();
-        $dob_year = intval($dob->format("Y"));
-        $dob_month = intval($dob->format("m"));
-        $dob_day = intval($dob->format("d"));
+        $dob_year = null;
+        $dob_month = null;
+        $dob_day = null;
+        if ($dob != null) {
+            $dob_year = intval($dob->format("Y"));
+            $dob_month = intval($dob->format("m"));
+            $dob_day = intval($dob->format("d"));
+        }
 
         if (!empty($dob_year) && !empty($dob_month) && !empty($dob_day)) {
             $request->setDateOfBirth($dob_year . "-" . $dob_month . "-" . $dob_day);
