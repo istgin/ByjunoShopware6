@@ -303,7 +303,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         return null;
     }
 
-    private function getBillingAddress(String $billingAddressId, Array $addresses, Array $deliveries)
+    private function getBillingAddress(String $billingAddressId, $addresses, $deliveries)
     {
         if ($addresses != null) {
             foreach ($addresses as $addres) {
