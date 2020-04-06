@@ -110,6 +110,20 @@
                                             </div>
                                         </div>
                                     {% endif %}
+                                    {% if page["invoiceDeliveryEnabled"] %}
+                                        <label class="form-label"
+                                               for="invoicedelivery">
+                                            Select invoice delivery method
+                                        </label>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6 col-6">
+                                                <input type="radio" name="invoicedelivery" id="payment_email" value="email" checked="checked" />
+                                                <label for="payment_email">Send invoice by e-mail</label><br />
+                                                <input type="radio" name="invoicedelivery" id="payment_postal" value="postal" />
+                                                <label for="payment_postal">Invoice dispatch in paper form by post (for a fee of CHF 3.50)</label><br />
+                                            </div>
+                                        </div>
+                                    {% endif %}
                                     <label class="form-label"
                                            for="paymentplan">
                                         Select payment plan

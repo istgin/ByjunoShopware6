@@ -117,12 +117,18 @@ class ByjunodataController extends StorefrontController
             $custom_gender_enable = true;
         }
 
+        $invoiceDeliveryEnabled = false;
+        if ($this->systemConfigService->get("ByjunoPayments.config.byjunoallowpostal") == 'enabled') {
+            $invoiceDeliveryEnabled = true;
+        }
+
         $this->systemConfigService->get("ByjunoPayments.config.singleinvoice");
         $params = Array(
             "returnurl" => urlencode($request->query->get("returnurl")),
             "orderid" => $request->query->get("orderid"),
             "custom_gender_enable" => $custom_gender_enable,
             "custom_bd_enable" => $custom_bd_enable,
+            "invoiceDeliveryEnabled" => $invoiceDeliveryEnabled,
             "salutations" => $this->getSalutations($context),
             "byjunoinvoice" => $byjunoinvoice,
             "selected" => $selected,
@@ -141,16 +147,30 @@ class ByjunodataController extends StorefrontController
     public function finalizeTransaction(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
     {
         if (!empty($_SESSION["_byjuno_key"])) {
-            // empty session
-            //$_SESSION["_byjuno_key"] = '';
+           // $_SESSION["_byjuno_key"] = '';
             $orderid = $request->query->get("orderid");
             $returnUrlSuccess = $request->query->get("returnurl")."&status=completed";
             $returnUrlFail = $request->query->get("returnurl")."&status=fail";
-
-            $customSalutationId = $request->get("customSalutationId");
-            $customBirthdayDay = $request->get("customBirthdayDay");
-            $customBirthdayMonth = $request->get("customBirthdayMonth");
-            $customBirthdayYear = $request->get("customBirthdayYear");
+            $invoiceDelivery = "";
+            if (!empty($request->get("invoiceDelivery")) && $request->get("invoiceDelivery") == 'postal') {
+                $invoiceDelivery = 'postal';
+            }
+            $customSalutation = "";
+            if (!empty($request->get("customSalutationId"))) {
+                $cs = $this->getSalutation($request->get("customSalutationId"), $salesChannelContext->getContext());
+                if ($cs != null) {
+                    $customSalutation = $cs->getDisplayName();
+                }
+            }
+            $customBirthday = "";
+            if (!empty($request->get("customBirthdayDay"))
+                && !empty($request->get("customBirthdayMonth"))
+                && !empty($request->get("customBirthdayYear"))) {
+                $customBirthdayDay = $request->get("customBirthdayDay");
+                $customBirthdayMonth = $request->get("customBirthdayMonth");
+                $customBirthdayYear = $request->get("customBirthdayYear");
+                $customBirthday = $customBirthdayYear."-".$customBirthdayMonth."-".$customBirthdayDay;
+            }
             $paymentplan = $request->get("paymentplan");
             $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b");
             $order = $this->getOrder($orderid);
@@ -163,8 +183,8 @@ class ByjunodataController extends StorefrontController
                 $paymentplan,
                 "",
                 "",
-                "",
-                "",
+                $customSalutation,
+                $customBirthday,
                 "NO");
             $statusLog = "Order request (S1)";
             if ($request->getCompanyName1() != '' && $b2b == 'enabled') {
@@ -197,9 +217,9 @@ class ByjunodataController extends StorefrontController
                     "byjuno_payment_invoice",
                     $paymentplan,
                     $risk,
-                    "",
-                    "",
-                    "",
+                    $invoiceDelivery,
+                    $customSalutation,
+                    $customBirthday,
                     "YES");
                 $statusLog = "Order complete (S3)";
                 if ($requestS3->getCompanyName1() != '' && $b2b == 'enabled') {
@@ -327,14 +347,18 @@ class ByjunodataController extends StorefrontController
         $request->setGender(0);
         $additionalInfo = $billingAddress->getSalutation();
         if (!empty($additionalInfo)) {
-            if (strtolower($additionalInfo) == 'ms') {
+            if (strtolower($additionalInfo) == 'ms.') {
                 $request->setGender(2);
-            } else if (strtolower($additionalInfo) == 'mr') {
+            } else if (strtolower($additionalInfo) == 'mr.') {
                 $request->setGender(1);
             }
         }
         if (!empty($customGender)) {
-            $request->setGender($customGender);
+            if (strtolower($customGender) == 'ms.') {
+                $request->setGender(2);
+            } else if (strtolower($customGender) == 'mr.') {
+                $request->setGender(1);
+            }
         }
 
         $customer = $this->getCustomer($order->getOrderCustomer()->getCustomerId(), $context);
@@ -548,6 +572,7 @@ class ByjunodataController extends StorefrontController
         try {
             $accepted_S2_ij = $this->systemConfigService->get("ByjunoPayments.config.alloweds2");
             $accepted_S2_merhcant = $this->systemConfigService->get("ByjunoPayments.config.alloweds2merchant");
+
             $ijStatus = Array();
             if (!empty(trim((String)$accepted_S2_ij))) {
                 $ijStatus = explode(",", trim((String)$accepted_S2_ij));
@@ -622,5 +647,15 @@ class ByjunodataController extends StorefrontController
         } catch (Exception $e) {
             return "INTERNAL ERROR";
         }
+    }
+
+    private function getSalutation(String $salutationId, Context $context): SalutationEntity
+    {
+        $criteria = new Criteria([$salutationId]);
+
+        /** @var EntityRepositoryInterface $salutationRepository */
+        $salutationRepository = $this->container->get('salutation.repository');
+        $salutation = $salutationRepository->search($criteria, $context)->first();
+        return $salutation;
     }
 }

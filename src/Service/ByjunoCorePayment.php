@@ -75,10 +75,9 @@ class ByjunoCorePayment implements AsynchronousPaymentHandlerInterface
         } else {
             // Payment not completed, set transaction status to "cancel"
             $this->transactionStateHandler->cancel($transaction->getOrderTransaction()->getId(), $context);
-            throw new CustomerCanceledAsyncPaymentException(
-                $transactionId,
-                'Customer canceled the payment on the PayPal page'
-            );
+            $url = $this->container->get('router')->generate("frontend.checkout.byjunocancel", [], UrlGeneratorInterface::ABSOLUTE_PATH);
+            header("Location:".$url);
+            exit();
         }
     }
 
