@@ -91,9 +91,14 @@ class ByjunodataController extends StorefrontController
         $order = $this->getOrder($request->query->get("orderid"));
         $customer = $this->getCustomer($order->getOrderCustomer()->getCustomerId(), $context->getContext());
         $dob = $customer->getBirthday();
-        $dob_year = intval($dob->format("Y"));
-        $dob_month = intval($dob->format("m"));
-        $dob_day = intval($dob->format("d"));
+        $dob_year = null;
+        $dob_month = null;
+        $dob_day = null;
+        if ($dob != null) {
+            $dob_year = intval($dob->format("Y"));
+            $dob_month = intval($dob->format("m"));
+            $dob_day = intval($dob->format("d"));
+        }
         $byjunoinvoice = Array();
         $selected = "";
         if ($this->systemConfigService->get("ByjunoPayments.config.byjunoinvoice") == 'enabled') {
