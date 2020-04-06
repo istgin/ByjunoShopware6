@@ -138,7 +138,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         } else {
             $request->setCustomerReference($reference);
         }
-        $billingAddress = $this->getBillingAddress($convertedCart["billingAddressId"], $convertedCart["addresses"]);
+        $billingAddress = $this->getBillingAddress($convertedCart["billingAddressId"], $convertedCart["addresses"], $convertedCart["deliveries"]);
         $billingAddressCountry = $this->getCountry($billingAddress["countryId"], $context);
         $shippingAddress = $this->getOrderShippingAddress($convertedCart["deliveries"]);
         $shippingAddressCountry = $this->getCountry($shippingAddress["countryId"], $context);
@@ -303,14 +303,24 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         return null;
     }
 
-    private function getBillingAddress(String $billingAddressId, Array $addresses)
+    private function getBillingAddress(String $billingAddressId, Array $addresses, Array $deliveries)
     {
-        foreach ($addresses as $addres) {
-            if ($addres["id"] !== $billingAddressId) {
-                continue;
-            }
+        if ($addresses != null) {
+            foreach ($addresses as $addres) {
+                if ($addres["id"] !== $billingAddressId) {
+                    continue;
+                }
 
-            return $addres;
+                return $addres;
+            }
+        }
+        if ($deliveries != null) {
+            foreach ($deliveries as $delivery) {
+                if ($delivery["id"] !== $billingAddressId) {
+                    continue;
+                }
+                return $delivery["shippingOrderAddress"];
+            }
         }
         return null;
     }
