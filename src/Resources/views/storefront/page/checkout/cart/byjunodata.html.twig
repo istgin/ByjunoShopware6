@@ -8,7 +8,7 @@
                     <div class="card register-card">
                         <div class="card-body">
                             <div class="card-title">
-                                Byjuno invoice
+                                {{ page["payment_method"] }}
                             </div>
                             <form action="{{ path('frontend.checkout.byjunosubmit') }}?returnurl={{ page["returnurl"] }}&orderid={{ page["orderid"] }}"
                                   class="register-form" method="post" id="proceed_byjuno_invoice"
@@ -113,24 +113,24 @@
                                     {% if page["invoiceDeliveryEnabled"] %}
                                         <label class="form-label"
                                                for="invoicedelivery">
-                                            Select invoice delivery method
+                                            {{ page["send_invoice"] }}
                                         </label>
                                         <div class="form-row">
                                             <div class="form-group col-md-6 col-6">
                                                 <input type="radio" name="invoicedelivery" id="payment_email" value="email" checked="checked" />
-                                                <label for="payment_email">Send invoice by e-mail</label><br />
+                                                <label for="payment_email">{{ "ByjunoPayment.send_email" | trans }}</label><br />
                                                 <input type="radio" name="invoicedelivery" id="payment_postal" value="postal" />
-                                                <label for="payment_postal">Invoice dispatch in paper form by post (for a fee of CHF 3.50)</label><br />
+                                                <label for="payment_postal">{{ "ByjunoPayment.send_postal" | trans }}</label><br />
                                             </div>
                                         </div>
                                     {% endif %}
                                     <label class="form-label"
                                            for="paymentplan">
-                                        Select payment plan
+                                        {{ "ByjunoPayment.payment_plan" | trans }}
                                     </label>
                                     <div class="form-row">
                                         <div class="form-group col-md-2 col-4">
-                                            {% for paymentoption in page["byjunoinvoice"] %}
+                                            {% for paymentoption in page["paymentplans"] %}
                                                 <input type="radio" name="paymentplan" id="payment_{{ paymentoption['id'] }}" value="{{ paymentoption['id'] }}" {% if page['selected'] == paymentoption['id']  %} checked="checked" {% endif %} /> <label for="payment_{{ paymentoption['id'] }}">{{ paymentoption['name'] }}</label><br />
                                             {% endfor %}
                                         </div>
@@ -164,7 +164,7 @@
                                 </script>
                                 <div class="register-submit" style="text-align: left">
                                     <button onclick="byjuno_submit_fn()" type="button" class="btn btn-primary btn-lg" form="proceed_byjuno_invoice" id="proceed_byjuno_invoice_button">
-                                        Submit payment
+                                        {{ "ByjunoPayment.submit_payment" | trans }}
                                     </button>
                                 </div>
                             </form>

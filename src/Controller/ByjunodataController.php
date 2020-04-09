@@ -8,6 +8,7 @@ namespace Byjuno\ByjunoPayments\Controller;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoRequest;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoResponse;
+use Byjuno\ByjunoPayments\ByjunoPayments;
 use Exception;
 use phpDocumentor\Reflection\Types\Array_;
 use RuntimeException;
@@ -37,6 +38,7 @@ use Shopware\Core\Framework\Routing\Annotation\RouteScope;
 use function Byjuno\ByjunoPayments\Api\Byjuno_getClientIp;
 use function Byjuno\ByjunoPayments\Api\Byjuno_mapMethod;
 use function Byjuno\ByjunoPayments\Api\Byjuno_mapRepayment;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ByjunodataController extends StorefrontController
 {
@@ -66,13 +68,17 @@ class ByjunodataController extends StorefrontController
     /** @var EntityRepositoryInterface */
     private $orderAddressRepository;
 
+    /** @var TranslatorInterface */
+    private $translator;
+
     public function __construct(
         CartService $cartService,
         OrderService $orderService,
         SystemConfigService $systemConfigService,
         SalesChannelRepositoryInterface $salutationRepository,
         EntityRepositoryInterface $languageRepository,
-        EntityRepositoryInterface $orderAddressRepository)
+        EntityRepositoryInterface $orderAddressRepository,
+        TranslatorInterface $translator)
     {
         $this->cartService = $cartService;
         $this->orderService = $orderService;
@@ -80,7 +86,9 @@ class ByjunodataController extends StorefrontController
         $this->salutationRepository = $salutationRepository;
         $this->languageRepository = $languageRepository;
         $this->orderAddressRepository = $orderAddressRepository;
+        $this->translator = $translator;
     }
+
     /**
      * @RouteScope(scopes={"storefront"})
      * @Route("/byjuno/byjunodata", name="frontend.checkout.byjunodata", options={"seo"="false"}, methods={"GET"})
@@ -89,7 +97,27 @@ class ByjunodataController extends StorefrontController
     {
         $_SESSION["_byjuno_key"] = "ok";
         $order = $this->getOrder($request->query->get("orderid"));
+        $paymentMethod = "";
+        $paymentMethodId = "";
+        $paymentMethods = $order->getTransactions()->getPaymentMethodIds();
+        foreach ($paymentMethods as $pm) {
+            $paymentMethodId = $pm;
+            break;
+        }
+        if ($paymentMethodId == ByjunoPayments::BYJUNO_INVOICE) {
+            $paymentMethod = "byjuno_payment_invoice";
+        } else if ($paymentMethodId == ByjunoPayments::BYJUNO_INSTALLMENT) {
+            $paymentMethod = "byjuno_payment_installment";
+        }
+        if ($paymentMethod == '') {
+            exit();
+        }
+        $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b");
         $customer = $this->getCustomer($order->getOrderCustomer()->getCustomerId(), $context->getContext());
+        $prefix_b2b = "";
+        if ($b2b == 'enabled' && !empty($customer->getCompany())) {
+            $prefix_b2b = "b2b";
+        }
         $dob = $customer->getBirthday();
         $dob_year = null;
         $dob_month = null;
@@ -99,18 +127,57 @@ class ByjunodataController extends StorefrontController
             $dob_month = intval($dob->format("m"));
             $dob_day = intval($dob->format("d"));
         }
-        $byjunoinvoice = Array();
+        $paymentplans = Array();
         $selected = "";
-        if ($this->systemConfigService->get("ByjunoPayments.config.byjunoinvoice") == 'enabled') {
-            $byjunoinvoice[] = Array("name" => "Byjuno Invoice", "id" => "byjuno_invoice");
-            if ($selected == "") {
-                $selected = "byjuno_invoice";
+        $payment_method = "";
+        $send_invoice = "";
+        if ($paymentMethod == "byjuno_payment_invoice") {
+            $payment_method = $this->translator->trans('ByjunoPayment.invoice');
+            $send_invoice =  $this->translator->trans('ByjunoPayment.send_invoice');
+            if ($this->systemConfigService->get("ByjunoPayments.config.byjunoinvoice".$prefix_b2b) == 'enabled') {
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.invoice_byjuno'), "id" => "byjuno_invoice");
+                if ($selected == "") {
+                    $selected = "byjuno_invoice";
+                }
             }
-        }
-        if ($this->systemConfigService->get("ByjunoPayments.config.singleinvoice") == 'enabled') {
-            $byjunoinvoice[] = Array("name" => "Byjuno Single Invoice", "id" => "sinlge_invoice");
-            if ($selected == "") {
-                $selected = "sinlge_invoice";
+            if ($this->systemConfigService->get("ByjunoPayments.config.singleinvoice".$prefix_b2b) == 'enabled') {
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.invoice_single'), "id" => "sinlge_invoice");
+                if ($selected == "") {
+                    $selected = "single_invoice";
+                }
+            }
+        } else if ($paymentMethod == "byjuno_payment_installment") {
+            $payment_method = $this->translator->trans('ByjunoPayment.installment');
+            $send_invoice =  $this->translator->trans('ByjunoPayment.send_installment');
+            if ($this->systemConfigService->get("ByjunoPayments.config.installment3".$prefix_b2b) == 'enabled') {
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_3'), "id" => "installment_3");
+                if ($selected == "") {
+                    $selected = "installment_3";
+                }
+            }
+            if ($this->systemConfigService->get("ByjunoPayments.config.installment10".$prefix_b2b) == 'enabled') {
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_10'), "id" => "installment_10");
+                if ($selected == "") {
+                    $selected = "installment_10";
+                }
+            }
+            if ($this->systemConfigService->get("ByjunoPayments.config.installment12".$prefix_b2b) == 'enabled') {
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_12'), "id" => "installment_12");
+                if ($selected == "") {
+                    $selected = "installment_12";
+                }
+            }
+            if ($this->systemConfigService->get("ByjunoPayments.config.installment24".$prefix_b2b) == 'enabled') {
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_24'), "id" => "installment_24");
+                if ($selected == "") {
+                    $selected = "installment_24";
+                }
+            }
+            if ($this->systemConfigService->get("ByjunoPayments.config.installment4x12".$prefix_b2b) == 'enabled') {
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_4x12'), "id" => "installment_4x12");
+                if ($selected == "") {
+                    $selected = "installment_4x12";
+                }
             }
         }
         $custom_bd_enable = false;
@@ -129,13 +196,15 @@ class ByjunodataController extends StorefrontController
 
         $this->systemConfigService->get("ByjunoPayments.config.singleinvoice");
         $params = Array(
+            "payment_method" => $payment_method,
+            "send_invoice" => $send_invoice,
             "returnurl" => urlencode($request->query->get("returnurl")),
             "orderid" => $request->query->get("orderid"),
             "custom_gender_enable" => $custom_gender_enable,
             "custom_bd_enable" => $custom_bd_enable,
             "invoiceDeliveryEnabled" => $invoiceDeliveryEnabled,
             "salutations" => $this->getSalutations($context),
-            "byjunoinvoice" => $byjunoinvoice,
+            "paymentplans" => $paymentplans,
             "selected" => $selected,
             "current_salutation" => $order->getOrderCustomer()->getSalutationId(),
             "current_year" => $dob_year,
@@ -152,10 +221,10 @@ class ByjunodataController extends StorefrontController
     public function finalizeTransaction(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
     {
         if (!empty($_SESSION["_byjuno_key"])) {
-           // $_SESSION["_byjuno_key"] = '';
+            // $_SESSION["_byjuno_key"] = '';
             $orderid = $request->query->get("orderid");
-            $returnUrlSuccess = $request->query->get("returnurl")."&status=completed";
-            $returnUrlFail = $request->query->get("returnurl")."&status=fail";
+            $returnUrlSuccess = $request->query->get("returnurl") . "&status=completed";
+            $returnUrlFail = $request->query->get("returnurl") . "&status=fail";
             $invoiceDelivery = "";
             if (!empty($request->get("invoiceDelivery")) && $request->get("invoiceDelivery") == 'postal') {
                 $invoiceDelivery = 'postal';
@@ -174,7 +243,7 @@ class ByjunodataController extends StorefrontController
                 $customBirthdayDay = $request->get("customBirthdayDay");
                 $customBirthdayMonth = $request->get("customBirthdayMonth");
                 $customBirthdayYear = $request->get("customBirthdayYear");
-                $customBirthday = $customBirthdayYear."-".$customBirthdayMonth."-".$customBirthdayDay;
+                $customBirthday = $customBirthdayYear . "-" . $customBirthdayMonth . "-" . $customBirthdayDay;
             }
             $paymentplan = $request->get("paymentplan");
             $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b");
@@ -274,6 +343,8 @@ class ByjunodataController extends StorefrontController
         $criteria->addAssociation('deliveries.shippingOrderAddress.country');
         $criteria->addAssociation('language');
         $criteria->addAssociation('currency');
+        $criteria->addAssociation('salesChannel');
+        $criteria->addAssociation('salesChannel.paymentMethod');
         $criteria->addAssociation('customFields');
         $criteria->addAssociation('tags');
         return $orderRepo->search($criteria, Context::createDefaultContext())->get($orderId);
@@ -288,7 +359,6 @@ class ByjunodataController extends StorefrontController
         $criteria->addFilter(new EqualsFilter('id', $customerId));
         return $customerRepo->search($criteria, $context)->first();
     }
-
 
 
     /**
@@ -306,7 +376,8 @@ class ByjunodataController extends StorefrontController
         return $salutations;
     }
 
-    function Byjuno_CreateShopWareShopRequestUserBilling(Context $context, OrderEntity $order, Context $salesChannelContext, $orderId, $paymentmethod, $repayment, $riskOwner, $invoiceDelivery, $customGender = "", $customDob = "", $orderClosed = "NO") {
+    function Byjuno_CreateShopWareShopRequestUserBilling(Context $context, OrderEntity $order, Context $salesChannelContext, $orderId, $paymentmethod, $repayment, $riskOwner, $invoiceDelivery, $customGender = "", $customDob = "", $orderClosed = "NO")
+    {
         $request = new ByjunoRequest();
         $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid"));
         $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid"));
@@ -315,7 +386,7 @@ class ByjunodataController extends StorefrontController
         $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail"));
         $request->setLanguage($this->getCustomerLanguage($salesChannelContext, $order->getLanguageId()));
 
-        $request->setRequestId(uniqid($order->getBillingAddressId()."_"));
+        $request->setRequestId(uniqid($order->getBillingAddressId() . "_"));
         $reference = $order->getOrderCustomer()->getCustomerId();
         if (empty($reference)) {
             $request->setCustomerReference(uniqid("guest_"));
@@ -329,12 +400,12 @@ class ByjunodataController extends StorefrontController
         $request->setLastName($billingAddress->getLastName());
         $addressAdd = '';
         if (!empty($billingAddress->getAdditionalAddressLine1())) {
-            $addressAdd = ' '.trim($billingAddress->getAdditionalAddressLine1());
+            $addressAdd = ' ' . trim($billingAddress->getAdditionalAddressLine1());
         }
         if (!empty($billingAddress->getAdditionalAddressLine2())) {
-            $addressAdd = $addressAdd.' '.trim($billingAddress->getAdditionalAddressLine2());
+            $addressAdd = $addressAdd . ' ' . trim($billingAddress->getAdditionalAddressLine2());
         }
-        $request->setFirstLine(trim($billingAddress->getStreet().' '.$addressAdd));
+        $request->setFirstLine(trim($billingAddress->getStreet() . ' ' . $addressAdd));
         $request->setCountryCode($billingAddress->getCountry()->getIso());
         $request->setPostCode($billingAddress->getZipcode());
         $request->setTown($billingAddress->getCity());
@@ -377,8 +448,8 @@ class ByjunodataController extends StorefrontController
             $dob_day = intval($dob->format("d"));
         }
 
-        if (!empty($dob_year) && !empty($dob_month) && !empty($dob_day) ) {
-            $request->setDateOfBirth($dob_year."-".$dob_month."-".$dob_day);
+        if (!empty($dob_year) && !empty($dob_month) && !empty($dob_day)) {
+            $request->setDateOfBirth($dob_year . "-" . $dob_month . "-" . $dob_day);
         }
         if (!empty($customDob)) {
             $request->setDateOfBirth($customDob);
@@ -428,14 +499,14 @@ class ByjunodataController extends StorefrontController
 
         $addressShippingAdd = '';
         if (!empty($shippingAddress->getAdditionalAddressLine1())) {
-            $addressShippingAdd = ' '.trim($shippingAddress->getAdditionalAddressLine1());
+            $addressShippingAdd = ' ' . trim($shippingAddress->getAdditionalAddressLine1());
         }
         if (!empty($shippingAddress->getAdditionalAddressLine2())) {
-            $addressShippingAdd = $addressShippingAdd.' '.trim($shippingAddress->getAdditionalAddressLine2());
+            $addressShippingAdd = $addressShippingAdd . ' ' . trim($shippingAddress->getAdditionalAddressLine2());
         }
 
         $extraInfo["Name"] = 'DELIVERY_FIRSTLINE';
-        $extraInfo["Value"] = trim($shippingAddress->getStreet().' '.$addressShippingAdd);
+        $extraInfo["Value"] = trim($shippingAddress->getStreet() . ' ' . $addressShippingAdd);
         $request->setExtraInfo($extraInfo);
 
         $extraInfo["Name"] = 'DELIVERY_HOUSENUMBER';
@@ -484,7 +555,7 @@ class ByjunodataController extends StorefrontController
 
     private function getCustomerLanguage(Context $context, string $languages): string
     {
-        $criteria  = new Criteria([$languages]);
+        $criteria = new Criteria([$languages]);
         $criteria->addAssociation('locale');
 
         /** @var null|LanguageEntity $language */
@@ -529,19 +600,20 @@ class ByjunodataController extends StorefrontController
         return $address;
     }
 
-    private function Byjuno_getClientIp() {
+    private function Byjuno_getClientIp()
+    {
         $ipaddress = '';
         if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
             $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
-        } else if(!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        } else if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
             $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        } else if(!empty($_SERVER['HTTP_X_FORWARDED'])) {
+        } else if (!empty($_SERVER['HTTP_X_FORWARDED'])) {
             $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
-        } else if(!empty($_SERVER['HTTP_FORWARDED_FOR'])) {
+        } else if (!empty($_SERVER['HTTP_FORWARDED_FOR'])) {
             $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
-        } else if(!empty($_SERVER['HTTP_FORWARDED'])) {
+        } else if (!empty($_SERVER['HTTP_FORWARDED'])) {
             $ipaddress = $_SERVER['HTTP_FORWARDED'];
-        } else if(!empty($_SERVER['REMOTE_ADDR'])) {
+        } else if (!empty($_SERVER['REMOTE_ADDR'])) {
             $ipaddress = $_SERVER['REMOTE_ADDR'];
         } else {
             $ipaddress = 'UNKNOWN';
@@ -550,7 +622,8 @@ class ByjunodataController extends StorefrontController
         return trim(end($ipd));
     }
 
-    function Byjuno_mapMethod($method) {
+    function Byjuno_mapMethod($method)
+    {
         if ($method == 'byjuno_payment_installment') {
             return "INSTALLMENT";
         } else {
@@ -558,7 +631,8 @@ class ByjunodataController extends StorefrontController
         }
     }
 
-    function Byjuno_mapRepayment($type) {
+    function Byjuno_mapRepayment($type)
+    {
         if ($type == 'installment_3') {
             return "10";
         } else if ($type == 'installment_10') {
@@ -578,7 +652,8 @@ class ByjunodataController extends StorefrontController
         }
     }
 
-    protected function isStatusOkS2($status) {
+    protected function isStatusOkS2($status)
+    {
         try {
             $accepted_S2_ij = $this->systemConfigService->get("ByjunoPayments.config.alloweds2");
             $accepted_S2_merhcant = $this->systemConfigService->get("ByjunoPayments.config.alloweds2merchant");
@@ -586,14 +661,14 @@ class ByjunodataController extends StorefrontController
             $ijStatus = Array();
             if (!empty(trim((String)$accepted_S2_ij))) {
                 $ijStatus = explode(",", trim((String)$accepted_S2_ij));
-                foreach($ijStatus as $key => $val) {
+                foreach ($ijStatus as $key => $val) {
                     $ijStatus[$key] = intval($val);
                 }
             }
             $merchantStatus = Array();
             if (!empty(trim((String)$accepted_S2_merhcant))) {
                 $merchantStatus = explode(",", trim((String)$accepted_S2_merhcant));
-                foreach($merchantStatus as $key => $val) {
+                foreach ($merchantStatus as $key => $val) {
                     $merchantStatus[$key] = intval($val);
                 }
             }
@@ -609,13 +684,14 @@ class ByjunodataController extends StorefrontController
         }
     }
 
-    protected function isStatusOkS3($status) {
+    protected function isStatusOkS3($status)
+    {
         try {
             $accepted_S3 = $this->systemConfigService->get("ByjunoPayments.config.alloweds3");
             $ijStatus = Array();
             if (!empty(trim((String)$accepted_S3))) {
                 $ijStatus = explode(",", trim((String)$accepted_S3));
-                foreach($ijStatus as $key => $val) {
+                foreach ($ijStatus as $key => $val) {
                     $ijStatus[$key] = intval($val);
                 }
             }
@@ -629,21 +705,22 @@ class ByjunodataController extends StorefrontController
         }
     }
 
-    protected function getStatusRisk($status) {
+    protected function getStatusRisk($status)
+    {
         try {
             $accepted_S2_ij = $this->systemConfigService->get("ByjunoPayments.config.alloweds2");
             $accepted_S2_merhcant = $this->systemConfigService->get("ByjunoPayments.config.alloweds2merchant");
             $ijStatus = Array();
             if (!empty(trim((String)$accepted_S2_ij))) {
                 $ijStatus = explode(",", trim((String)$accepted_S2_ij));
-                foreach($ijStatus as $key => $val) {
+                foreach ($ijStatus as $key => $val) {
                     $ijStatus[$key] = intval($val);
                 }
             }
             $merchantStatus = Array();
             if (!empty(trim((String)$accepted_S2_merhcant))) {
                 $merchantStatus = explode(",", trim((String)$accepted_S2_merhcant));
-                foreach($merchantStatus as $key => $val) {
+                foreach ($merchantStatus as $key => $val) {
                     $merchantStatus[$key] = intval($val);
                 }
             }

@@ -1,0 +1,11 @@
+{
+  "ByjunoPayment": {
+    "invoice": "Byjuno invoice",
+    "payment_plan" : "Select payment plan",
+    "submit_payment" : "Submit payment",
+    "send_email" : "Send invoice by e-mail",
+    "send_postal" : "Invoice dispatch in paper form by post (for a fee of CHF 3.50)",
+    "send_invoice" : "Select invoice delivery method",
+    "send_installment" : "Select installment delivery method",
+  }
+}
