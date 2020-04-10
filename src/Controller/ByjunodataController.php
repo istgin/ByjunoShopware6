@@ -10,6 +10,7 @@ use Byjuno\ByjunoPayments\Api\Classes\ByjunoRequest;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoResponse;
 use Byjuno\ByjunoPayments\ByjunoPayments;
 use Exception;
+use Mollie\Api\Resources\Order;
 use phpDocumentor\Reflection\Types\Array_;
 use RuntimeException;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
@@ -18,17 +19,23 @@ use Shopware\Core\Checkout\Order\Aggregate\OrderAddress\OrderAddressEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryEntity;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Checkout\Order\SalesChannel\OrderService;
+use Shopware\Core\Content\MailTemplate\Exception\MailEventConfigurationException;
+use Shopware\Core\Content\MailTemplate\MailTemplateEntity;
+use Shopware\Core\Content\MailTemplate\Service\MailService;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Exception\InconsistentCriteriaIdsException;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Framework\Event\MailActionInterface;
+use Shopware\Core\Framework\Validation\DataBag\DataBag;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepositoryInterface;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\Salutation\SalutationCollection;
 use Shopware\Core\System\Salutation\SalutationEntity;
+use Shopware\Core\System\StateMachine\Aggregation\StateMachineState\StateMachineStateEntity;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Storefront\Controller\StorefrontController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -70,6 +77,15 @@ class ByjunodataController extends StorefrontController
 
     /** @var TranslatorInterface */
     private $translator;
+    /**
+     * @var MailService
+     */
+    private $mailService;
+
+    /**
+     * @var EntityRepositoryInterface
+     */
+    private $mailTemplateRepository;
 
     public function __construct(
         CartService $cartService,
@@ -78,7 +94,9 @@ class ByjunodataController extends StorefrontController
         SalesChannelRepositoryInterface $salutationRepository,
         EntityRepositoryInterface $languageRepository,
         EntityRepositoryInterface $orderAddressRepository,
-        TranslatorInterface $translator)
+        TranslatorInterface $translator,
+        MailService $mailService,
+        EntityRepositoryInterface $mailTemplateRepository)
     {
         $this->cartService = $cartService;
         $this->orderService = $orderService;
@@ -87,6 +105,8 @@ class ByjunodataController extends StorefrontController
         $this->languageRepository = $languageRepository;
         $this->orderAddressRepository = $orderAddressRepository;
         $this->translator = $translator;
+        $this->mailService = $mailService;
+        $this->mailTemplateRepository = $mailTemplateRepository;
     }
 
     /**
@@ -247,6 +267,7 @@ class ByjunodataController extends StorefrontController
             }
             $paymentplan = $request->get("paymentplan");
             $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b");
+            $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
             $order = $this->getOrder($orderid);
             $request = $this->Byjuno_CreateShopWareShopRequestUserBilling(
                 $salesChannelContext->getContext(),
@@ -303,7 +324,7 @@ class ByjunodataController extends StorefrontController
                     $xml = $requestS3->createRequest();
                 }
                 $byjunoCommunicator = new ByjunoCommunicator();
-                if (isset($mode) && $mode == 'Live') {
+                if (isset($mode) && $mode == 'live') {
                     $byjunoCommunicator->setServer('live');
                 } else {
                     $byjunoCommunicator->setServer('test');
@@ -322,13 +343,44 @@ class ByjunodataController extends StorefrontController
                 return new RedirectResponse($returnUrlFail);
             }
             if ($this->isStatusOkS2($statusS1) && $this->isStatusOkS3($statusS3)) {
-                //TODO: mail here
+                $this->sendMailOrder($salesChannelContext->getContext(), $order, $salesChannelContext->getSalesChannel()->getId());
                 return new RedirectResponse($returnUrlSuccess);
             } else {
                 return new RedirectResponse($returnUrlFail);
             }
         }
 
+    }
+
+    private function sendMailOrder(Context $context, OrderEntity $order, String $salesChanhhelId): void {
+
+        $mailTemplate = $this->getMailTemplate($context, "order_confirmation_mail", $order);
+        if ($mailTemplate !== null) {
+            $data = new DataBag();
+            $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
+            if (isset($mode) && $mode == 'live') {
+                $recipients = Array($this->systemConfigService->get("ByjunoPayments.config.byjunoprodemail") => "Byjuno order confirmation");
+            } else {
+                $recipients = Array($this->systemConfigService->get("ByjunoPayments.config.byjunotestemail") => "Byjuno order confirmation");
+            }
+            $data->set('recipients', $recipients);
+            $data->set('senderName', $mailTemplate->getTranslation('senderName'));
+            $data->set('salesChannelId', $salesChanhhelId);
+
+            $data->set('templateId', $mailTemplate->getId());
+            $data->set('customFields', $mailTemplate->getCustomFields());
+            $data->set('contentHtml', $mailTemplate->getTranslation('contentHtml'));
+            $data->set('contentPlain', $mailTemplate->getTranslation('contentPlain'));
+            $data->set('subject', $mailTemplate->getTranslation('subject'));
+            $data->set('mediaIds', []);
+
+            $templateData["order"] = $order;
+            $this->mailService->send(
+                $data->all(),
+                $context,
+                $templateData
+            );
+        }
     }
 
     private function getOrder(string $orderId): ?OrderEntity
@@ -339,14 +391,23 @@ class ByjunodataController extends StorefrontController
         $criteria = new Criteria([$orderId]);
         $criteria->addAssociation('transactions');
         $criteria->addAssociation('addresses');
+        $criteria->addAssociation('addresses.country');
         $criteria->addAssociation('deliveries');
+        $criteria->addAssociation('deliveries.shippingMethod');
         $criteria->addAssociation('deliveries.shippingOrderAddress.country');
         $criteria->addAssociation('language');
         $criteria->addAssociation('currency');
         $criteria->addAssociation('salesChannel');
+        $criteria->addAssociation('billingAddress');
+        $criteria->addAssociation('billingAddress.country');
         $criteria->addAssociation('salesChannel.paymentMethod');
-        $criteria->addAssociation('customFields');
+        $criteria->addAssociation('orderCustomer.customer');
+        $criteria->addAssociation('orderCustomer.salutation');
+        $criteria->addAssociation('transactions');
+        $criteria->addAssociation('transactions.paymentMethod');
         $criteria->addAssociation('tags');
+        $criteria->addAssociation('transactions.paymentMethod');
+        $criteria->addAssociation('addresses');
         return $orderRepo->search($criteria, Context::createDefaultContext())->get($orderId);
     }
 
@@ -744,5 +805,15 @@ class ByjunodataController extends StorefrontController
         $salutationRepository = $this->container->get('salutation.repository');
         $salutation = $salutationRepository->search($criteria, $context)->first();
         return $salutation;
+    }
+
+    private function getMailTemplate(Context $context, string $technicalName, OrderEntity $order): ?MailTemplateEntity
+    {
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('mailTemplateType.technicalName', $technicalName));
+        $criteria->addAssociation('mailTemplateType');
+        $criteria->addAssociation('mailTemplateType.technicalName');
+        $mailTemplate = $this->mailTemplateRepository->search($criteria, $context)->first();
+        return $mailTemplate;
     }
 }
