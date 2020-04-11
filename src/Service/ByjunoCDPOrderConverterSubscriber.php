@@ -31,6 +31,7 @@ use Shopware\Core\System\Salutation\SalutationCollection;
 use Shopware\Core\System\Salutation\SalutationEntity;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Recovery\Install\Struct\Currency;
+use Shopware\Storefront\Event\StorefrontRenderEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
@@ -70,8 +71,30 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
+            StorefrontRenderEvent::class => 'onByjunoRender',
             CartConvertedEvent::class => 'converter'
         ];
+    }
+
+    public function onByjunoRender(StorefrontRenderEvent $event): void
+    {
+        $byjuno_tmx = array();
+        $tmx_enable = false;
+        if ($this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable") == 'enabled') {
+            $tmx_enable = true;
+        }
+        $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix");
+        if (isset($tmx_enable) && $tmx_enable == true && isset($tmxorgid) && $tmxorgid != '' && !isset($_SESSION["byjuno_tmx"])) {
+            $_SESSION["byjuno_tmx"] = session_id();
+            $byjuno_tmx["tmx_orgid"] = $tmxorgid;
+            $byjuno_tmx["tmx_session"] = $_SESSION["byjuno_tmx"];
+            $byjuno_tmx["tmx_enable"] = true;
+        } else {
+            $byjuno_tmx["tmx_orgid"] = "";
+            $byjuno_tmx["tmx_session"] = "";
+            $byjuno_tmx["tmx_enable"] = false;
+        }
+        $event->setParameter('byjuno_tmx', $byjuno_tmx);
     }
 
     public function converter(CartConvertedEvent $event)
