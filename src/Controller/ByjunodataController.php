@@ -159,13 +159,13 @@ class ByjunodataController extends StorefrontController
             $payment_method = $this->translator->trans('ByjunoPayment.invoice');
             $send_invoice =  $this->translator->trans('ByjunoPayment.send_invoice');
             if ($this->systemConfigService->get("ByjunoPayments.config.byjunoinvoice".$prefix_b2b) == 'enabled') {
-                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.invoice_byjuno'), "id" => "byjuno_invoice");
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.invoice_byjuno'), "id" => "byjuno_invoice", "toc" => $this->translator->trans('ByjunoPayment.invoice_byjuno_toc_url'));
                 if ($selected == "") {
                     $selected = "byjuno_invoice";
                 }
             }
             if ($this->systemConfigService->get("ByjunoPayments.config.singleinvoice".$prefix_b2b) == 'enabled') {
-                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.invoice_single'), "id" => "sinlge_invoice");
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.invoice_single'), "id" => "single_invoice", "toc" => $this->translator->trans('ByjunoPayment.invoice_single_toc_url'));
                 if ($selected == "") {
                     $selected = "single_invoice";
                 }
@@ -175,31 +175,31 @@ class ByjunodataController extends StorefrontController
             $payment_method = $this->translator->trans('ByjunoPayment.installment');
             $send_invoice =  $this->translator->trans('ByjunoPayment.send_installment');
             if ($this->systemConfigService->get("ByjunoPayments.config.installment3".$prefix_b2b) == 'enabled') {
-                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_3'), "id" => "installment_3");
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_3'), "id" => "installment_3", "toc" => $this->translator->trans('ByjunoPayment.installment_3_toc_url'));
                 if ($selected == "") {
                     $selected = "installment_3";
                 }
             }
             if ($this->systemConfigService->get("ByjunoPayments.config.installment10".$prefix_b2b) == 'enabled') {
-                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_10'), "id" => "installment_10");
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_10'), "id" => "installment_10", "toc" => $this->translator->trans('ByjunoPayment.installment_10_toc_url'));
                 if ($selected == "") {
                     $selected = "installment_10";
                 }
             }
             if ($this->systemConfigService->get("ByjunoPayments.config.installment12".$prefix_b2b) == 'enabled') {
-                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_12'), "id" => "installment_12");
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_12'), "id" => "installment_12", "toc" => $this->translator->trans('ByjunoPayment.installment_12_toc_url'));
                 if ($selected == "") {
                     $selected = "installment_12";
                 }
             }
             if ($this->systemConfigService->get("ByjunoPayments.config.installment24".$prefix_b2b) == 'enabled') {
-                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_24'), "id" => "installment_24");
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_24'), "id" => "installment_24", "toc" => $this->translator->trans('ByjunoPayment.installment_24_toc_url'));
                 if ($selected == "") {
                     $selected = "installment_24";
                 }
             }
             if ($this->systemConfigService->get("ByjunoPayments.config.installment4x12".$prefix_b2b) == 'enabled') {
-                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_4x12'), "id" => "installment_4x12");
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_4x12'), "id" => "installment_4x12", "toc" => $this->translator->trans('ByjunoPayment.installment_4x12_toc_url'));
                 if ($selected == "") {
                     $selected = "installment_4x12";
                 }
