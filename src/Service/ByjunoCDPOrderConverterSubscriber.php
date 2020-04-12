@@ -35,6 +35,7 @@ use Shopware\Storefront\Event\StorefrontRenderEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 {
@@ -53,12 +54,16 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
     /** @var EntityRepositoryInterface */
     private $orderAddressRepository;
 
+    /** @var TranslatorInterface */
+    private $translator;
+
     public function __construct(
         SystemConfigService $systemConfigService,
         EntityRepositoryInterface $paymentMethodRepository,
         EntityRepositoryInterface $languageRepository,
         EntityRepositoryInterface $orderAddressRepository,
-        ContainerInterface $container
+        ContainerInterface $container,
+        TranslatorInterface $translator
     )
     {
         $this->systemConfigService = $systemConfigService;
@@ -66,6 +71,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $this->languageRepository = $languageRepository;
         $this->orderAddressRepository = $orderAddressRepository;
         $this->container = $container;
+        $this->translator = $translator;
     }
 
     public static function getSubscribedEvents(): array
@@ -130,7 +136,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             }
             if (!$this->isStatusOkCDP($statusCDP)) {
                 $violation = new ConstraintViolation(
-                    "You are not allowed to pay with this payment method. Please try different.",
+                    $this->translator->trans('ByjunoPayment.cdp_error'),
                     '',
                     [],
                     '',
@@ -187,8 +193,8 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         if (!empty($billingAddress["vatId"]) && !empty($billingAddress["company"])) {
             $request->setCompanyVatId($billingAddress["vatId"]);
         }
-        if (!empty($shippingAddress["vatId"])) {
-            $request->setDeliveryCompanyName1($shippingAddress["vatId"]);
+        if (!empty($shippingAddress["company"])) {
+            $request->setDeliveryCompanyName1($shippingAddress["company"]);
         }
         $request->setGender(0);
         $additionalInfo = $billingAddressSalutation->getDisplayName();

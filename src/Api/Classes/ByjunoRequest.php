@@ -524,7 +524,7 @@ class ByjunoRequest
 
     public function createRequestCompany()
     {
-        $xml = new SimpleXMLElement("<Request></Request>");
+        $xml = new \SimpleXMLElement("<Request></Request>");
         $xml->addAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
         $xml->addAttribute("xsi:noNamespaceSchemaLocation", "http://site.byjuno.ch/schema/CreditDecisionRequest140.xsd");
         $xml->addAttribute("ClientId", $this->ClientId);
