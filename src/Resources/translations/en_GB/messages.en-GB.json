@@ -19,14 +19,14 @@
     "installment_4x10": "4 Installments in 10 months",
     "installment_4x10_toc_url": "https://byjuno.ch/en/1d/terms/",
     "payment_plan" : "Select payment plan",
-    "submit_payment" : "Submit payment",
+    "submit_payment" : "Proceed payment",
     "send_email" : "Send invoice by e-mail",
     "send_postal" : "Invoice dispatch in paper form by post (for a fee of CHF 3.50)",
     "send_invoice" : "Select invoice delivery method",
-    "send_installment" : "Select installment delivery method",
+    "send_installment" : "Select invoice delivery method",
     "cdp_error" : "You are not allowed to pay with this payment method. Please try different.",
     "order_canceled" : "Payment unsuccessful. Your order is canceled",
     "back_to_shop" : "Back to the shop",
-    "t_and_c": "(AGB)"
+    "t_and_c": "(T&C)"
   }
 }
