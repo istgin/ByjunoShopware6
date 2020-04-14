@@ -123,7 +123,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             }
             $communicator = new ByjunoCommunicator();
             $communicator->setServer($this->systemConfigService->get("ByjunoPayments.config.mode"));
-            $response = $communicator->sendRequest($xml);
+            $response = $communicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
             $statusCDP = 0;
             if ($response) {
                 $intrumResponse = new ByjunoResponse();

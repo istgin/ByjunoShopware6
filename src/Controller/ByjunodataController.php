@@ -261,7 +261,7 @@ class ByjunodataController extends StorefrontController
             $returnUrlSuccess = $request->query->get("returnurl") . "&status=completed";
             $returnUrlFail = $request->query->get("returnurl") . "&status=fail";
             $invoiceDelivery = "";
-            if (!empty($request->get("invoiceDelivery")) && $request->get("invoiceDelivery") == 'postal') {
+            if (!empty($request->get("invoicedelivery")) && $request->get("invoicedelivery") == 'postal') {
                 $invoiceDelivery = 'postal';
             }
             $customSalutation = "";
@@ -310,7 +310,7 @@ class ByjunodataController extends StorefrontController
             }
             $communicator = new ByjunoCommunicator();
             $communicator->setServer($this->systemConfigService->get("ByjunoPayments.config.mode"));
-            $response = $communicator->sendRequest($xml);
+            $response = $communicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
             $statusS1 = 0;
             $statusS3 = 0;
             if ($response) {
@@ -349,7 +349,7 @@ class ByjunodataController extends StorefrontController
                 } else {
                     $byjunoCommunicator->setServer('test');
                 }
-                $response = $byjunoCommunicator->sendRequest($xml);
+                $response = $byjunoCommunicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout");
                 if (isset($response)) {
                     $byjunoResponse = new ByjunoResponse();
                     $byjunoResponse->setRawResponse($response);
