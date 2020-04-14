@@ -728,7 +728,7 @@ class ByjunodataController extends StorefrontController
             return "1";
         } else if ($type == 'installment_4x10') {
             return "2";
-        } else if ($type == 'sinlge_invoice') {
+        } else if ($type == 'single_invoice') {
             return "3";
         } else {
             return "4";
