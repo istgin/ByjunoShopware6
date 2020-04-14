@@ -349,7 +349,7 @@ class ByjunodataController extends StorefrontController
                 } else {
                     $byjunoCommunicator->setServer('test');
                 }
-                $response = $byjunoCommunicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout");
+                $response = $byjunoCommunicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
                 if (isset($response)) {
                     $byjunoResponse = new ByjunoResponse();
                     $byjunoResponse->setRawResponse($response);
