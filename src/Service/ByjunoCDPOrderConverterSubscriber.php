@@ -202,14 +202,22 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
         $request->setGender(0);
         $additionalInfo = $billingAddressSalutation->getDisplayName();
+        $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale");
+        $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale");
+        $genderMale = explode(",", $genderMaleStr);
+        $genderFemale = explode(",", $genderFemaleStr);
         if (!empty($additionalInfo)) {
-            if (strtolower($additionalInfo) == 'mrs.') {
-                $request->setGender(2);
-            } else if (strtolower($additionalInfo) == 'mr.') {
-                $request->setGender(1);
+            foreach ($genderMale as $ml) {
+                if (strtolower($additionalInfo) == strtolower(trim($ml))) {
+                    $request->setGender(1);
+                }
+            }
+            foreach ($genderFemale as $feml) {
+                if (strtolower($additionalInfo) == strtolower(trim($feml))) {
+                    $request->setGender(2);
+                }
             }
         }
-
         $customer = $this->getCustomer($convertedCart["orderCustomer"]["customerId"], $context);
         $dob = $customer->getBirthday();
         $dob_year = null;

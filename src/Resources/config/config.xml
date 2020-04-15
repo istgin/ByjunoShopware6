@@ -158,6 +158,18 @@
                 </option>
             </options>
         </input-field>
+        <input-field>
+            <name>byjunogendermale</name>
+            <label>Salutation values to detect male gender</label>
+            <defaultValue>Mr,Mr.,Herr,Herr.</defaultValue>
+            <helpText>Comma separated values without spaces</helpText>
+        </input-field>
+        <input-field>
+            <name>byjunogenderfemale</name>
+            <label>Salutation values to detect female gender</label>
+            <defaultValue>Mrs,Mrs.,Ms,Ms.,Frau,Frau.</defaultValue>
+            <helpText>Comma separated values without spaces</helpText>
+        </input-field>
         <input-field type="single-select">
             <name>byjunobirthday</name>
             <label>Enable birthday selection</label>

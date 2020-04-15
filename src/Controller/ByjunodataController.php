@@ -516,18 +516,32 @@ class ByjunodataController extends StorefrontController
 
         $request->setGender(0);
         $additionalInfo = $billingAddress->getSalutation();
+        $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale");
+        $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale");
+        $genderMale = explode(",", $genderMaleStr);
+        $genderFemale = explode(",", $genderFemaleStr);
         if (!empty($additionalInfo)) {
-            if (strtolower($additionalInfo) == 'ms.') {
-                $request->setGender(2);
-            } else if (strtolower($additionalInfo) == 'mr.') {
-                $request->setGender(1);
+            foreach ($genderMale as $ml) {
+                if (strtolower($additionalInfo) == strtolower(trim($ml))) {
+                    $request->setGender(1);
+                }
+            }
+            foreach ($genderFemale as $feml) {
+                if (strtolower($additionalInfo) == strtolower(trim($feml))) {
+                    $request->setGender(2);
+                }
             }
         }
         if (!empty($customGender)) {
-            if (strtolower($customGender) == 'ms.') {
-                $request->setGender(2);
-            } else if (strtolower($customGender) == 'mr.') {
-                $request->setGender(1);
+            foreach ($genderMale as $ml) {
+                if (strtolower($customGender) == strtolower(trim($ml))) {
+                    $request->setGender(1);
+                }
+            }
+            foreach ($genderFemale as $feml) {
+                if (strtolower($customGender) == strtolower(trim($feml))) {
+                    $request->setGender(2);
+                }
             }
         }
 
