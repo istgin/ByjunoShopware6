@@ -207,10 +207,29 @@ class ByjunoResponse
     private $ProcessingInfoDescription;
 
     private $CustomerRequestStatus;
+
+    /**
+     * @return mixed
+     */
+    public function getTransactionNumber()
+    {
+        return $this->TransactionNumber;
+    }
+
+    /**
+     * @param mixed $TransactionNumber
+     */
+    public function setTransactionNumber($TransactionNumber)
+    {
+        $this->TransactionNumber = $TransactionNumber;
+    }
+
     private $CustomerLastStatusChange;
     private $CustomerProcessingInfoCode;
     private $CustomerProcessingInfoClassification;
     private $CustomerProcessingInfoDescription;
+
+    private $TransactionNumber;
 
     public function processResponse()
     {
@@ -229,6 +248,7 @@ class ByjunoResponse
         $this->ProcessingInfoDescription = trim((string)$xml->ProcessingInfo->Description);
 
         $this->CustomerRequestStatus = (int)$xml->Customer->RequestStatus;
+        $this->TransactionNumber = trim((string)$xml->Customer->TransactionNumber);
         $this->CustomerLastStatusChange = trim((string)$xml->Customer->RequestStatus);
         $this->CustomerProcessingInfoCode = trim((string)$xml->Customer->ProcessingInfo->Code);
         $this->CustomerProcessingInfoClassification = trim((string)$xml->Customer->ProcessingInfo->Classification);

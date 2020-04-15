@@ -256,7 +256,7 @@ class ByjunodataController extends StorefrontController
     public function finalizeTransaction(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
     {
         if (!empty($_SESSION["_byjuno_key"]) && !empty($_SESSION["_byjyno_payment_method"])) {
-            $_SESSION["_byjuno_key"] = '';
+            //$_SESSION["_byjuno_key"] = '';
             $orderid = $request->query->get("orderid");
             $returnUrlSuccess = $request->query->get("returnurl") . "&status=completed";
             $returnUrlFail = $request->query->get("returnurl") . "&status=fail";
@@ -300,6 +300,7 @@ class ByjunodataController extends StorefrontController
                 "",
                 $customSalutation,
                 $customBirthday,
+                "",
                 "NO");
             $statusLog = "Order request (S1)";
             if ($request->getCompanyName1() != '' && $b2b == 'enabled') {
@@ -313,11 +314,13 @@ class ByjunodataController extends StorefrontController
             $response = $communicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
             $statusS1 = 0;
             $statusS3 = 0;
+            $transactionNumber = "";
             if ($response) {
                 $intrumResponse = new ByjunoResponse();
                 $intrumResponse->setRawResponse($response);
                 $intrumResponse->processResponse();
                 $statusS1 = (int)$intrumResponse->getCustomerRequestStatus();
+                $transactionNumber = $intrumResponse->getTransactionNumber();
                 if (intval($statusS1) > 15) {
                     $statusS1 = 0;
                 }
@@ -335,6 +338,7 @@ class ByjunodataController extends StorefrontController
                     $invoiceDelivery,
                     $customSalutation,
                     $customBirthday,
+                    $transactionNumber,
                     "YES");
                 $statusLog = "Order complete (S3)";
                 if ($requestS3->getCompanyName1() != '' && $b2b == 'enabled') {
@@ -460,7 +464,7 @@ class ByjunodataController extends StorefrontController
         return $salutations;
     }
 
-    function Byjuno_CreateShopWareShopRequestUserBilling(Context $context, OrderEntity $order, Context $salesChannelContext, $orderId, $paymentmethod, $repayment, $riskOwner, $invoiceDelivery, $customGender = "", $customDob = "", $orderClosed = "NO")
+    function Byjuno_CreateShopWareShopRequestUserBilling(Context $context, OrderEntity $order, Context $salesChannelContext, $orderId, $paymentmethod, $repayment, $riskOwner, $invoiceDelivery, $customGender = "", $customDob = "", $transactionNumber = "", $orderClosed = "NO")
     {
         $request = new ByjunoRequest();
         $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid"));
@@ -541,6 +545,12 @@ class ByjunodataController extends StorefrontController
 
         $request->setTelephonePrivate($billingAddress->getPhoneNumber());
         $request->setEmail($order->getOrderCustomer()->getEmail());
+
+        if ($transactionNumber != "") {
+            $extraInfo["Name"] = 'TRANSACTIONNUMBER';
+            $extraInfo["Value"] = $transactionNumber;
+            $request->setExtraInfo($extraInfo);
+        }
 
         $extraInfo["Name"] = 'ORDERCLOSED';
         $extraInfo["Value"] = $orderClosed;
