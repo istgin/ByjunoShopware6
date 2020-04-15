@@ -368,6 +368,23 @@
             </options>
         </input-field>
         <input-field type="single-select">
+            <name>installment36</name>
+            <label>36 installments</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
             <name>installment3b2b</name>
             <label>3 installments (B2B)</label>
             <defaultValue>disabled</defaultValue>
@@ -438,6 +455,23 @@
         <input-field type="single-select">
             <name>installment4x12b2b</name>
             <label>4 installments in 12 months (B2B)</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>installment36b2b</name>
+            <label>36 installments (B2B)</label>
             <defaultValue>disabled</defaultValue>
             <options>
                 <option>

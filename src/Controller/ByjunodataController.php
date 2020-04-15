@@ -204,6 +204,12 @@ class ByjunodataController extends StorefrontController
                     $selected = "installment_4x12";
                 }
             }
+            if ($this->systemConfigService->get("ByjunoPayments.config.installment36".$prefix_b2b) == 'enabled') {
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_36'), "id" => "installment_36", "toc" => $this->translator->trans('ByjunoPayment.installment_36_toc_url'));
+                if ($selected == "") {
+                    $selected = "installment_36";
+                }
+            }
         }
         $custom_bd_enable = false;
         if ($this->systemConfigService->get("ByjunoPayments.config.byjunobirthday") == 'enabled') {
@@ -737,8 +743,8 @@ class ByjunodataController extends StorefrontController
             return "9";
         } else if ($type == 'installment_4x12') {
             return "1";
-        } else if ($type == 'installment_4x10') {
-            return "2";
+        } else if ($type == 'installment_36') {
+            return "11";
         } else if ($type == 'single_invoice') {
             return "3";
         } else {
