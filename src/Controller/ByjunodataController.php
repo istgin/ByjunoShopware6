@@ -256,7 +256,7 @@ class ByjunodataController extends StorefrontController
     public function finalizeTransaction(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
     {
         if (!empty($_SESSION["_byjuno_key"]) && !empty($_SESSION["_byjyno_payment_method"])) {
-         //   $_SESSION["_byjuno_key"] = '';
+            $_SESSION["_byjuno_key"] = '';
             $orderid = $request->query->get("orderid");
             $returnUrlSuccess = $request->query->get("returnurl") . "&status=completed";
             $returnUrlFail = $request->query->get("returnurl") . "&status=fail";
@@ -362,6 +362,7 @@ class ByjunodataController extends StorefrontController
             } else {
                 return new RedirectResponse($returnUrlFail);
             }
+            $_SESSION["byjuno_tmx"] = '';
             if ($this->isStatusOkS2($statusS1) && $this->isStatusOkS3($statusS3)) {
                 $this->sendMailOrder($salesChannelContext->getContext(), $order, $salesChannelContext->getSalesChannel()->getId());
                 return new RedirectResponse($returnUrlSuccess);

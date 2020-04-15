@@ -84,23 +84,27 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     public function onByjunoRender(StorefrontRenderEvent $event): void
     {
-        $byjuno_tmx = array();
-        $tmx_enable = false;
-        if ($this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable") == 'enabled') {
-            $tmx_enable = true;
+        if ($event->getRequest() != null
+            && $event->getRequest()->attributes != null
+            &&  $event->getRequest()->attributes->get("_controller") == 'Shopware\Storefront\Controller\CheckoutController::confirmPage') {
+            $byjuno_tmx = array();
+            $tmx_enable = false;
+            if ($this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable") == 'enabled') {
+                $tmx_enable = true;
+            }
+            $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix");
+            if (isset($tmx_enable) && $tmx_enable == true && isset($tmxorgid) && $tmxorgid != '' && empty($_SESSION["byjuno_tmx"])) {
+                $_SESSION["byjuno_tmx"] = session_id();
+                $byjuno_tmx["tmx_orgid"] = $tmxorgid;
+                $byjuno_tmx["tmx_session"] = $_SESSION["byjuno_tmx"];
+                $byjuno_tmx["tmx_enable"] = 'true';
+            } else {
+                $byjuno_tmx["tmx_orgid"] = "";
+                $byjuno_tmx["tmx_session"] = "";
+                $byjuno_tmx["tmx_enable"] = 'false';
+            }
+            $event->setParameter('byjuno_tmx', $byjuno_tmx);
         }
-        $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix");
-        if (isset($tmx_enable) && $tmx_enable == true && isset($tmxorgid) && $tmxorgid != '' && !isset($_SESSION["byjuno_tmx"])) {
-            $_SESSION["byjuno_tmx"] = session_id();
-            $byjuno_tmx["tmx_orgid"] = $tmxorgid;
-            $byjuno_tmx["tmx_session"] = $_SESSION["byjuno_tmx"];
-            $byjuno_tmx["tmx_enable"] = true;
-        } else {
-            $byjuno_tmx["tmx_orgid"] = "";
-            $byjuno_tmx["tmx_session"] = "";
-            $byjuno_tmx["tmx_enable"] = false;
-        }
-        $event->setParameter('byjuno_tmx', $byjuno_tmx);
     }
 
     public function converter(CartConvertedEvent $event)
@@ -250,7 +254,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
            $extraInfo["Value"] = $_SESSION["byjuno_tmx"];
            $request->setExtraInfo($extraInfo);
         }
-
         // shipping information
         $extraInfo["Name"] = 'DELIVERY_FIRSTNAME';
         $extraInfo["Value"] = $shippingAddress["firstName"];
