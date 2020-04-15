@@ -141,9 +141,7 @@
                                     var byjuno_submit = false;
                                     function byjuno_submit_fn() {
                                         {% if page["custom_gender_enable"] %}
-                                        if (document.getElementById('customPersonalSalutation').style.borderColor.toLowerCase() === "#ff0000") {
-                                            document.getElementById('customPersonalSalutation').style.borderColor = '#bcc1c7';
-                                        }
+                                        document.getElementById('customPersonalSalutation').style.borderColor = null;
                                         if (document.getElementById('customPersonalSalutation').value === "") {
                                             document.getElementById('customPersonalSalutation').style.borderColor = "#FF0000";
                                             //error customPersonalSalutation empty
@@ -151,17 +149,9 @@
                                         }
                                         {% endif %}
                                         {% if page["custom_bd_enable"] %}
-                                            if (document.getElementById('customPersonalBirthdayDay').style.borderColor.toLowerCase() === "#ff0000") {
-                                                document.getElementById('customPersonalBirthdayDay').style.borderColor = '#bcc1c7';
-                                            }
-
-                                            if (document.getElementById('customBirthdayMonth').style.borderColor.toLowerCase() === "#ff0000") {
-                                                document.getElementById('customBirthdayMonth').style.borderColor = '#bcc1c7';
-                                            }
-
-                                            if (document.getElementById('customBirthdayYear').style.borderColor.toLowerCase() === "#ff0000") {
-                                                document.getElementById('customBirthdayYear').style.borderColor = '#bcc1c7';
-                                            }
+                                            document.getElementById('customPersonalBirthdayDay').style.borderColor = null;
+                                            document.getElementById('customBirthdayMonth').style.borderColor = null;
+                                            document.getElementById('customBirthdayYear').style.borderColor = null;
                                             if (document.getElementById('customPersonalBirthdayDay').value === ""
                                             || document.getElementById('customBirthdayMonth').value === ""
                                             || document.getElementById('customBirthdayYear').value === "") {
