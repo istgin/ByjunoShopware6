@@ -25,7 +25,7 @@
     "send_invoice" : "Seleziona il metodo di consegna della fattura",
     "send_installment" : "Seleziona il metodo di consegna della fattura",
     "cdp_error" : "L'istituto di credito ha rifiutato il pagamento. Si prega di provare un altro metodo di pagamento.",
-    "order_canceled" : "Pagamento fallito. L'ordine è stato annullato.",
+    "order_canceled" : "Pagamento fallito. L'ordine Ã¨ stato annullato.",
     "back_to_shop" : "Torna alla pagina iniziale",
     "t_and_c": "(CGC)"
   }
