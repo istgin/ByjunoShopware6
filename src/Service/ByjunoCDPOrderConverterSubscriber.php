@@ -171,7 +171,15 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         } else {
             $request->setCustomerReference($reference);
         }
-        $billingAddress = $this->getBillingAddress($convertedCart["billingAddressId"], $convertedCart["addresses"], $convertedCart["deliveries"]);
+        $addresses = null;
+        if (!empty($convertedCart["addresses"])) {
+            $addresses = $convertedCart["addresses"];
+        }
+        $deliveries = null;
+        if (!empty($convertedCart["deliveries"])) {
+            $deliveries = $convertedCart["deliveries"];
+        }
+        $billingAddress = $this->getBillingAddress($convertedCart["billingAddressId"], $addresses, $deliveries);
         $billingAddressCountry = $this->getCountry($billingAddress["countryId"], $context);
         $shippingAddress = $this->getOrderShippingAddress($convertedCart["deliveries"]);
         $shippingAddressCountry = $this->getCountry($shippingAddress["countryId"], $context);
