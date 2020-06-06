@@ -5,6 +5,9 @@ namespace Byjuno\ByjunoPayments\Service;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoRequest;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoResponse;
+use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Request;
+use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Response;
+use Byjuno\ByjunoPayments\Api\Classes\ByjunoS5Request;
 use Byjuno\ByjunoPayments\ByjunoPayments;
 use Exception;
 use Psr\Container\ContainerInterface;
@@ -13,6 +16,8 @@ use RuntimeException;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Checkout\Cart\Order\CartConvertedEvent;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
+use Shopware\Core\Checkout\Document\DocumentEntity;
+use Shopware\Core\Checkout\Document\DocumentGeneratorController;
 use Shopware\Core\Checkout\Order\Aggregate\OrderAddress\OrderAddressEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryEntity;
 use Shopware\Core\Checkout\Order\OrderEntity;
@@ -25,14 +30,19 @@ use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
 use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\Currency\CurrencyEntity;
 use Shopware\Core\System\Language\LanguageEntity;
+use Shopware\Core\System\NumberRange\Api\NumberRangeController;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 use Shopware\Core\System\Salutation\SalutationCollection;
 use Shopware\Core\System\Salutation\SalutationEntity;
+use Shopware\Core\System\StateMachine\Event\StateMachineTransitionEvent;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Recovery\Install\Struct\Currency;
 use Shopware\Storefront\Event\StorefrontRenderEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpKernel\Event\ControllerArgumentsEvent;
+use Symfony\Component\HttpKernel\Event\ControllerEvent;
+use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -78,15 +88,142 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
     {
         return [
             StorefrontRenderEvent::class => 'onByjunoRender',
-            CartConvertedEvent::class => 'converter'
+            CartConvertedEvent::class => 'converter',
+            KernelEvents::CONTROLLER_ARGUMENTS => 'onByjunoKernelControllerArguments',
+            StateMachineTransitionEvent::class => 'onByjunoStateMachine'
         ];
+    }
+
+    public function onByjunoStateMachine(StateMachineTransitionEvent $event)
+    {
+        if ($event->getEntityName() == 'order' && $event->getToPlace()->getTechnicalName() == "cancelled") {
+            $order = $this->getOrder($event->getEntityId());
+            if ($order != null) {
+                $paymentMethods = $order->getTransactions();
+                $paymentMethodId = '';
+                foreach ($paymentMethods as $pm) {
+                    $paymentMethodId = $pm->getPaymentMethod()->getHandlerIdentifier();
+                    break;
+                }
+                if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
+                    $request = $this->CreateShopRequestS5Cancel($order->getAmountTotal(),
+                        $order->getCurrency()->getIsoCode(),
+                        $order->getOrderNumber(),
+                        $order->getOrderCustomer()->getId(),
+                        date("Y-m-d"));
+                    $statusLog = "S5 Cancel request";
+                    $xml = $request->createRequest();
+                    $byjunoCommunicator = new ByjunoCommunicator();
+                    if (isset($mode) && $mode == 'Live') {
+                        $byjunoCommunicator->setServer('live');
+                    } else {
+                        $byjunoCommunicator->setServer('test');
+                    }
+                    $response = $byjunoCommunicator->sendS4Request($xml);
+                    if (isset($response)) {
+                        $byjunoResponse = new ByjunoS4Response();
+                        $byjunoResponse->setRawResponse($response);
+                        $byjunoResponse->processResponse();
+                        $statusCDP = $byjunoResponse->getProcessingInfoClassification();
+                        //saveS5Log($request, $xml, $response, $statusCDP, $statusLog, "-", "-");
+                    }
+                }
+            }
+        }
+    }
+
+    public function onByjunoKernelControllerArguments(ControllerArgumentsEvent $event)
+    {
+        $controllerArguments = $event->getArguments();
+        $controller = $event->getController();
+        $controllerName = null;
+        $actionName = null;
+        if (is_array($controller) && count($controller) > 1) {
+            $controllerName = $controller[0];
+            $actionName = $controller[1];
+        }
+
+        if ($controllerName != null && $actionName != null) {
+           // var_dump(get_class($controllerName), $actionName);
+          //  exit();
+            if ($controllerName instanceof NumberRangeController) {
+
+            } else if ($controllerName instanceof DocumentGeneratorController && $actionName == 'createDocument' && $controllerArguments > 1) {
+                $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
+                $orderId = $controllerArguments[1];
+                $type = $controllerArguments[2];
+                $order = $this->getOrder($orderId);
+                if ($order != null) {
+                    $paymentMethods = $order->getTransactions();
+                    $paymentMethodId = '';
+                    foreach ($paymentMethods as $pm) {
+                        $paymentMethodId = $pm->getPaymentMethod()->getHandlerIdentifier();
+                        break;
+                    }
+                    if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
+                        $config = $event->getRequest()->get('config');
+                        $statusLog = '';
+                        $date = date("Y-m-d");
+                        if (!empty($config["documentDate"])) {
+                            $date = date("Y-m-d", strtotime($config["documentDate"]));
+                        }
+                        if (!empty($config["custom"]["stornoNumber"]) && $type == 'storno') {
+                            $invoiceNum = $config["custom"]["invoiceNumber"];
+                            $doc = $this->getInvoice($invoiceNum);
+                            if ($doc != null) {
+                                $order = $doc->getOrder();
+                                $request = $this->createShopRequestS5Refund($config["custom"]["stornoNumber"],
+                                    $order->getAmountTotal(),
+                                    $order->getCurrency()->getIsoCode(),
+                                    $order->getOrderNumber(),
+                                    $order->getOrderCustomer()->getId(),
+                                    $date);
+                                $statusLog = "S5 Refund request";
+                            }
+                        } else if (!empty($config["custom"]["invoiceNumber"]) && $type == 'invoice') {
+                            $request = $this->CreateShopRequestS4($config["custom"]["invoiceNumber"],
+                                $order->getAmountTotal(),
+                                $order->getAmountTotal(),
+                                $order->getCurrency()->getIsoCode(),
+                                $order->getOrderNumber(),
+                                $order->getOrderCustomer()->getId(),
+                                $date);
+                            $statusLog = "S4 Request";
+                        }
+                        if ($statusLog != '') {
+                            $xml = $request->createRequest();
+                            $byjunoCommunicator = new ByjunoCommunicator();
+                            if (isset($mode) && $mode == 'Live') {
+                                $byjunoCommunicator->setServer('live');
+                            } else {
+                                $byjunoCommunicator->setServer('test');
+                            }
+                            $response = $byjunoCommunicator->sendS4Request($xml);
+                            if (isset($response)) {
+                                $byjunoResponse = new ByjunoS4Response();
+                                $byjunoResponse->setRawResponse($response);
+                                $byjunoResponse->processResponse();
+                                $statusCDP = $byjunoResponse->getProcessingInfoClassification();
+                                if ($statusLog == "S4 Request") {
+                                    // saveS4Log($request, $xml, $response, $statusCDP, $statusLog, "-", "-");
+                                } else if ($statusLog == "S5 Refund request") {
+                                    //  saveS5Log($request, $xml, $response, $statusCDP, $statusLog, "-", "-");
+                                }
+                            } else {
+                                throw new Exception("Error, response is empty");
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public function onByjunoRender(StorefrontRenderEvent $event): void
     {
         if ($event->getRequest() != null
             && $event->getRequest()->attributes != null
-            &&  $event->getRequest()->attributes->get("_controller") == 'Shopware\Storefront\Controller\CheckoutController::confirmPage') {
+            && $event->getRequest()->attributes->get("_controller") == 'Shopware\Storefront\Controller\CheckoutController::confirmPage') {
             $byjuno_tmx = array();
             $tmx_enable = false;
             if ($this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable") == 'enabled') {
@@ -266,9 +403,9 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $tmx_enable = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable");
         $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix");
         if (isset($tmx_enable) && $tmx_enable == 'enabled' && isset($tmxorgid) && $tmxorgid != '' && !empty($_SESSION["byjuno_tmx"])) {
-           $extraInfo["Name"] = 'DEVICE_FINGERPRINT_ID';
-           $extraInfo["Value"] = $_SESSION["byjuno_tmx"];
-           $request->setExtraInfo($extraInfo);
+            $extraInfo["Name"] = 'DEVICE_FINGERPRINT_ID';
+            $extraInfo["Value"] = $_SESSION["byjuno_tmx"];
+            $request->setExtraInfo($extraInfo);
         }
         // shipping information
         $extraInfo["Name"] = 'DELIVERY_FIRSTNAME';
@@ -281,14 +418,14 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
         $addressShippingAdd = '';
         if (!empty($shippingAddress['additionalAddressLine1'])) {
-           $addressShippingAdd = ' '.trim($shippingAddress['additionalAddressLine1']);
+            $addressShippingAdd = ' ' . trim($shippingAddress['additionalAddressLine1']);
         }
         if (!empty($shippingAddress['additionalAddressLine2'])) {
-           $addressShippingAdd = $addressShippingAdd.' '.trim($shippingAddress['additionalAddressLine2']);
+            $addressShippingAdd = $addressShippingAdd . ' ' . trim($shippingAddress['additionalAddressLine2']);
         }
 
         $extraInfo["Name"] = 'DELIVERY_FIRSTLINE';
-        $extraInfo["Value"] = trim($shippingAddress["street"].' '.$addressShippingAdd);
+        $extraInfo["Value"] = trim($shippingAddress["street"] . ' ' . $addressShippingAdd);
         $request->setExtraInfo($extraInfo);
 
         $extraInfo["Name"] = 'DELIVERY_HOUSENUMBER';
@@ -409,13 +546,13 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         return $customerRepo->search($criteria, $context)->first();
     }
 
-    private function getCurrency(string $customerId, Context $context): ?CurrencyEntity
+    private function getCurrency(string $currencyId, Context $context): ?CurrencyEntity
     {
         /** @var EntityRepositoryInterface $orderRepo */
         $customerRepo = $this->container->get('currency.repository');
 
         $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('id', $customerId));
+        $criteria->addFilter(new EqualsFilter('id', $currencyId));
         return $customerRepo->search($criteria, $context)->first();
     }
 
@@ -441,7 +578,8 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         return trim(end($ipd));
     }
 
-    function Byjuno_mapMethod($method) {
+    function Byjuno_mapMethod($method)
+    {
         if ($method == 'byjuno_payment_installment') {
             return "INSTALLMENT";
         } else {
@@ -449,13 +587,14 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
     }
 
-    protected function isStatusOkCDP($status) {
+    protected function isStatusOkCDP($status)
+    {
         try {
             $accepted_CDP = $this->systemConfigService->get("ByjunoPayments.config.allowedcdp");
             $ijStatus = Array();
             if (!empty(trim((String)$accepted_CDP))) {
                 $ijStatus = explode(",", trim((String)$accepted_CDP));
-                foreach($ijStatus as $key => $val) {
+                foreach ($ijStatus as $key => $val) {
                     $ijStatus[$key] = intval($val);
                 }
             }
@@ -468,4 +607,110 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             return false;
         }
     }
+
+    function CreateShopRequestS4($doucmentId, $amount, $orderAmount, $orderCurrency, $orderId, $customerId, $date)
+    {
+        $request = new ByjunoS4Request();
+        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid"));
+        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid"));
+        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword"));
+        $request->setVersion("1.00");
+        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail"));
+
+        $request->setRequestId(uniqid((String)$orderId . "_"));
+        $request->setOrderId($orderId);
+        $request->setClientRef($customerId);
+        $request->setTransactionDate($date);
+        $request->setTransactionAmount(number_format($amount, 2, '.', ''));
+        $request->setTransactionCurrency($orderCurrency);
+        $request->setAdditional1("INVOICE");
+        $request->setAdditional2($doucmentId);
+        $request->setOpenBalance(number_format($orderAmount, 2, '.', ''));
+
+        return $request;
+
+    }
+
+    function CreateShopRequestS5Refund($doucmentId, $amount, $orderCurrency, $orderId, $customerId, $date)
+    {
+        $request = new ByjunoS5Request();
+        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid"));
+        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid"));
+        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword"));
+        $request->setVersion("1.00");
+        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail"));
+
+        $request->setRequestId(uniqid((String)$orderId . "_"));
+        $request->setOrderId($orderId);
+        $request->setClientRef($customerId);
+        $request->setTransactionDate($date);
+        $request->setTransactionAmount(number_format($amount, 2, '.', ''));
+        $request->setTransactionCurrency($orderCurrency);
+        $request->setTransactionType("REFUND");
+        $request->setAdditional2($doucmentId);
+        return $request;
+    }
+
+    function CreateShopRequestS5Cancel($amount, $orderCurrency, $orderId, $customerId, $date)
+    {
+
+        $request = new ByjunoS5Request();
+        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid"));
+        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid"));
+        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword"));
+        $request->setVersion("1.00");
+        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail"));
+
+        $request->setRequestId(uniqid((String)$orderId . "_"));
+        $request->setOrderId($orderId);
+        $request->setClientRef($customerId);
+        $request->setTransactionDate($date);
+        $request->setTransactionAmount(number_format($amount, 2, '.', ''));
+        $request->setTransactionCurrency($orderCurrency);
+        $request->setAdditional2('');
+        $request->setTransactionType("EXPIRED");
+        $request->setOpenBalance("0");
+        return $request;
+    }
+
+
+    private function getOrder(string $orderId): ?OrderEntity
+    {
+        /** @var EntityRepositoryInterface $orderRepo */
+        $orderRepo = $this->container->get('order.repository');
+
+        $criteria = new Criteria([$orderId]);
+        $criteria->addAssociation('transactions');
+        $criteria->addAssociation('addresses');
+        $criteria->addAssociation('addresses.country');
+        $criteria->addAssociation('deliveries');
+        $criteria->addAssociation('deliveries.shippingMethod');
+        $criteria->addAssociation('deliveries.shippingOrderAddress.country');
+        $criteria->addAssociation('language');
+        $criteria->addAssociation('currency');
+        $criteria->addAssociation('salesChannel');
+        $criteria->addAssociation('billingAddress');
+        $criteria->addAssociation('billingAddress.country');
+        $criteria->addAssociation('salesChannel.paymentMethod');
+        $criteria->addAssociation('orderCustomer.customer');
+        $criteria->addAssociation('orderCustomer.salutation');
+        $criteria->addAssociation('transactions');
+        $criteria->addAssociation('transactions.paymentMethod');
+        $criteria->addAssociation('tags');
+        $criteria->addAssociation('transactions.paymentMethod');
+        $criteria->addAssociation('addresses');
+        return $orderRepo->search($criteria, Context::createDefaultContext())->get($orderId);
+    }
+
+    private function getInvoice(string $documentId): ?DocumentEntity
+    {
+        /** @var EntityRepositoryInterface $orderRepo */
+        $orderRepo = $this->container->get('document.repository');
+
+        $criteria = (new Criteria())->addFilter(new EqualsFilter('config.documentNumber', $documentId));
+        $criteria->addAssociation('order');
+        $criteria->addAssociation('order.currency');
+        return $orderRepo->search($criteria, Context::createDefaultContext())->first();
+    }
+
 }
