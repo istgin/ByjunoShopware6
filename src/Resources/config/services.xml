@@ -6,19 +6,20 @@
 
     <services>
         <service id="Byjuno\ByjunoPayments\Service\ByjunoCorePayment">
-            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
-            <argument type="service" id="Psr\Container\ContainerInterface" />
-            <tag name="shopware.payment.method.async" />
+            <argument type="service"
+                      id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
+            <argument type="service" id="Psr\Container\ContainerInterface"/>
+            <tag name="shopware.payment.method.async"/>
         </service>
 
         <service id="Byjuno\ByjunoPayments\Controller\ByjunodataController" public="true">
             <argument type="service" id="Shopware\Core\Checkout\Cart\SalesChannel\CartService"/>
             <argument type="service" id="Shopware\Core\Checkout\Order\SalesChannel\OrderService"/>
-            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
             <argument type="service" id="sales_channel.salutation.repository"/>
-            <argument type="service" id="language.repository" />
-            <argument type="service" id="order_address.repository" />
-            <argument type="service" id="translator" />
+            <argument type="service" id="language.repository"/>
+            <argument type="service" id="order_address.repository"/>
+            <argument type="service" id="translator"/>
             <argument type="service" id="Shopware\Core\Content\MailTemplate\Service\MailService"/>
             <argument type="service" id="mail_template.repository"/>
             <call method="setContainer">
@@ -26,12 +27,12 @@
             </call>
         </service>
         <service id="Byjuno\ByjunoPayments\Service\ByjunoCDPOrderConverterSubscriber">
-            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService" />
-            <argument type="service" id="payment_method.repository" />
-            <argument type="service" id="language.repository" />
-            <argument type="service" id="order_address.repository" />
-            <argument type="service" id="Psr\Container\ContainerInterface" />
-            <argument type="service" id="translator" />
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="payment_method.repository"/>
+            <argument type="service" id="language.repository"/>
+            <argument type="service" id="order_address.repository"/>
+            <argument type="service" id="Psr\Container\ContainerInterface"/>
+            <argument type="service" id="translator"/>
             <tag name="kernel.event_subscriber"/>
         </service>
         <service id="Byjuno\ByjunoPayments\Controller\ByjunocancelController" public="true">
@@ -45,6 +46,9 @@
 
         <service id="Byjuno\ByjunoPayments\Resources\translations\en_GB\SnippetFile_en_GB">
             <tag name="shopware.snippet.file"/>
+        </service>
+        <service id="Byjuno\ByjunoPayments\Log\ByjunoLogEntityDefinition">
+            <tag name="shopware.entity.definition" entity="byjuno_log_entity"/>
         </service>
     </services>
 </container>

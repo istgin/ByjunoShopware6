@@ -9,11 +9,13 @@ use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Request;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Response;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS5Request;
 use Byjuno\ByjunoPayments\ByjunoPayments;
+use Shopware\Core\Framework\Uuid\Uuid;
 use Exception;
 use Psr\Container\ContainerInterface;
 use phpDocumentor\Reflection\Types\Array_;
 use RuntimeException;
 use Shopware\Core\Checkout\Cart\Cart;
+use Byjuno\ByjunoPayments\Log;
 use Shopware\Core\Checkout\Cart\Order\CartConvertedEvent;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\Checkout\Document\DocumentEntity;
@@ -125,7 +127,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                         $byjunoResponse->setRawResponse($response);
                         $byjunoResponse->processResponse();
                         $statusCDP = $byjunoResponse->getProcessingInfoClassification();
-                        //saveS5Log($request, $xml, $response, $statusCDP, $statusLog, "-", "-");
+                        $this->saveS5Log($event->getContext(), $request, $xml, $response, $statusCDP, $statusLog, "-", "-");
                     }
                 }
             }
@@ -144,14 +146,13 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
 
         if ($controllerName != null && $actionName != null) {
-           // var_dump(get_class($controllerName), $actionName);
-          //  exit();
             if ($controllerName instanceof NumberRangeController) {
 
             } else if ($controllerName instanceof DocumentGeneratorController && $actionName == 'createDocument' && $controllerArguments > 1) {
                 $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
                 $orderId = $controllerArguments[1];
                 $type = $controllerArguments[2];
+                $context = $controllerArguments[3];
                 $order = $this->getOrder($orderId);
                 if ($order != null) {
                     $paymentMethods = $order->getTransactions();
@@ -205,9 +206,9 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                                 $byjunoResponse->processResponse();
                                 $statusCDP = $byjunoResponse->getProcessingInfoClassification();
                                 if ($statusLog == "S4 Request") {
-                                    // saveS4Log($request, $xml, $response, $statusCDP, $statusLog, "-", "-");
+                                     $this->saveS4Log($context, $request, $xml, $response, $statusCDP, $statusLog, "-", "-");
                                 } else if ($statusLog == "S5 Refund request") {
-                                    //  saveS5Log($request, $xml, $response, $statusCDP, $statusLog, "-", "-");
+                                    $this->saveS5Log($context, $request, $xml, $response, $statusCDP, $statusLog, "-", "-");
                                 }
                             } else {
                                 throw new Exception("Error, response is empty");
@@ -711,6 +712,47 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $criteria->addAssociation('order');
         $criteria->addAssociation('order.currency');
         return $orderRepo->search($criteria, Context::createDefaultContext())->first();
+    }
+
+    private function saveS4Log(Context $context, ByjunoS4Request $request, $xml_request, $xml_response, $status, $type, $firstName, $lastName)
+    {
+        $entry = [
+            'id'             => Uuid::randomHex(),
+            'request_id' => $request->getRequestId(),
+            'request_type' => $type,
+            'firstname' => $firstName,
+            'lastname' => $lastName,
+            'ip' => $_SERVER['REMOTE_ADDR'],
+            'byjuno_status' => (($status != "") ? $status : 'Error'),
+            'xml_request' => $xml_request,
+            'xml_response' => $xml_response
+        ];
+        $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($entry): void {
+            /** @var EntityRepositoryInterface $logRepository */
+            $logRepository = $this->container->get('byjuno_log_entity.repository');
+            $logRepository->upsert([$entry], $context);
+        });
+    }
+
+    private function saveS5Log(Context $context, ByjunoS5Request $request, $xml_request, $xml_response, $status, $type, $firstName, $lastName)
+    {
+        $entry = [
+            'id'             => Uuid::randomHex(),
+            'request_id' => $request->getRequestId(),
+            'request_type' => $type,
+            'firstname' => $firstName,
+            'lastname' => $lastName,
+            'ip' => $_SERVER['REMOTE_ADDR'],
+            'byjuno_status' => (($status != "") ? $status : 'Error'),
+            'xml_request' => $xml_request,
+            'xml_response' => $xml_response
+        ];
+
+        $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($entry): void {
+            /** @var EntityRepositoryInterface $logRepository */
+            $logRepository = $this->container->get('byjuno_log_entity.repository');
+            $logRepository->upsert([$entry], $context);
+        });
     }
 
 }
