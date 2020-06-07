@@ -28,6 +28,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Exception\InconsistentCriteriaI
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\Event\MailActionInterface;
+use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\Framework\Validation\DataBag\DataBag;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\System\Language\LanguageEntity;
@@ -326,6 +327,7 @@ class ByjunodataController extends StorefrontController
                 $intrumResponse->setRawResponse($response);
                 $intrumResponse->processResponse();
                 $statusS1 = (int)$intrumResponse->getCustomerRequestStatus();
+                $this->saveLog($salesChannelContext->getContext(),$request, $xml, $response, $statusS1, $statusLog);
                 $transactionNumber = $intrumResponse->getTransactionNumber();
                 if (intval($statusS1) > 15) {
                     $statusS1 = 0;
@@ -365,6 +367,7 @@ class ByjunodataController extends StorefrontController
                     $byjunoResponse->setRawResponse($response);
                     $byjunoResponse->processResponse();
                     $statusS3 = (int)$byjunoResponse->getCustomerRequestStatus();
+                    $this->saveLog($salesChannelContext->getContext(), $request, $xml, $response, $statusS3, $statusLog);
                     if (intval($statusS3) > 15) {
                         $statusS3 = 0;
                     }
@@ -868,5 +871,25 @@ class ByjunodataController extends StorefrontController
         $criteria->addAssociation('mailTemplateType.technicalName');
         $mailTemplate = $this->mailTemplateRepository->search($criteria, $context)->first();
         return $mailTemplate;
+    }
+
+    public function saveLog(Context $context, ByjunoRequest $request, $xml_request, $xml_response, $status, $type) {
+        $entry = [
+            'id'             => Uuid::randomHex(),
+            'request_id' => $request->getRequestId(),
+            'request_type' => $type,
+            'firstname' => $request->getFirstName(),
+            'lastname' => $request->getLastName(),
+            'ip' => $_SERVER['REMOTE_ADDR'],
+            'byjuno_status' => (($status != "") ? $status.'' : 'Error'),
+            'xml_request' => $xml_request,
+            'xml_response' => $xml_response
+        ];
+
+        $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($entry): void {
+            /** @var EntityRepositoryInterface $logRepository */
+            $logRepository = $this->container->get('byjuno_log_entity.repository');
+            $logRepository->upsert([$entry], $context);
+        });
     }
 }

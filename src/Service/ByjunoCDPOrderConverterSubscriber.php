@@ -272,6 +272,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                 $intrumResponse->setRawResponse($response);
                 $intrumResponse->processResponse();
                 $statusCDP = (int)$intrumResponse->getCustomerRequestStatus();
+                $this->saveLog($event->getContext(), $request, $xml, $response, $statusCDP, $statusLog);
                 if (intval($statusCDP) > 15) {
                     $statusCDP = 0;
                 }
@@ -723,7 +724,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             'firstname' => $firstName,
             'lastname' => $lastName,
             'ip' => $_SERVER['REMOTE_ADDR'],
-            'byjuno_status' => (($status != "") ? $status : 'Error'),
+            'byjuno_status' => (($status != "") ? $status.'' : 'Error'),
             'xml_request' => $xml_request,
             'xml_response' => $xml_response
         ];
@@ -743,7 +744,27 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             'firstname' => $firstName,
             'lastname' => $lastName,
             'ip' => $_SERVER['REMOTE_ADDR'],
-            'byjuno_status' => (($status != "") ? $status : 'Error'),
+            'byjuno_status' => (($status != "") ? $status.'' : 'Error'),
+            'xml_request' => $xml_request,
+            'xml_response' => $xml_response
+        ];
+
+        $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($entry): void {
+            /** @var EntityRepositoryInterface $logRepository */
+            $logRepository = $this->container->get('byjuno_log_entity.repository');
+            $logRepository->upsert([$entry], $context);
+        });
+    }
+
+    public function saveLog(Context $context, ByjunoRequest $request, $xml_request, $xml_response, $status, $type) {
+        $entry = [
+            'id'             => Uuid::randomHex(),
+            'request_id' => $request->getRequestId(),
+            'request_type' => $type,
+            'firstname' => $request->getFirstName(),
+            'lastname' => $request->getLastName(),
+            'ip' => $_SERVER['REMOTE_ADDR'],
+            'byjuno_status' => (($status != "") ? $status.'' : 'Error'),
             'xml_request' => $xml_request,
             'xml_response' => $xml_response
         ];
