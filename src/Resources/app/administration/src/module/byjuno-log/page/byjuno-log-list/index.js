@@ -15,7 +15,8 @@ Component.register('byjuno-log-list', {
             repository: null,
             logs: null,
             editable: false,
-            settings: false
+            settings: false,
+            showSettings: false
         };
     },
 
@@ -32,17 +33,13 @@ Component.register('byjuno-log-list', {
                 dataIndex: 'request_id',
                 label: this.$t('byjuno-log.list.columnName'),
                 routerLink: 'byjuno.log.detail',
-                inlineEdit: 'string',
                 allowResize: true,
-                primary: true,
-                hideable: false
+                primary: true
             }, {
                 property: 'request_type',
                 dataIndex: 'request_type',
                 label: this.$t('byjuno-log.list.columnDiscount'),
-                inlineEdit: 'number',
                 allowResize: true,
-                hideable: false
             }, {
                 property: 'firstname',
                 dataIndex: 'firstname',
@@ -80,5 +77,10 @@ Component.register('byjuno-log-list', {
             .then((result) => {
                 this.logs = result;
             });
+    },
+    methods: {
+        openSettings() {
+            this.showSettings = false;
+        },
     }
 });

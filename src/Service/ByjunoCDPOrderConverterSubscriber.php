@@ -383,7 +383,10 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             $request->setDateOfBirth($customDob);
         }
 
-        $request->setTelephonePrivate($billingAddress["phoneNumber"]);
+        if (!empty($billingAddress["phoneNumber"]))
+        {
+            $request->setTelephonePrivate($billingAddress["phoneNumber"]);
+        }
         $request->setEmail($convertedCart["orderCustomer"]["email"]);
 
         $extraInfo["Name"] = 'ORDERCLOSED';
