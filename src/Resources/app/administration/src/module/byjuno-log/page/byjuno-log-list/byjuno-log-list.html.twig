@@ -11,8 +11,8 @@
         <template slot="content">
             {% block byjuno_log_entity_list_content %}
                 <sw-entity-listing
-                    v-if="bundles"
-                    :items="bundles"
+                    v-if="logs"
+                    :items="logs"
                     :repository="repository"
                     :showSelection="false"
                     :columns="columns"

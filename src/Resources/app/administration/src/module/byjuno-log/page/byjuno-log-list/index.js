@@ -13,7 +13,9 @@ Component.register('byjuno-log-list', {
     data() {
         return {
             repository: null,
-            bundles: null
+            logs: null,
+            editable: false,
+            settings: false
         };
     },
 
@@ -26,22 +28,44 @@ Component.register('byjuno-log-list', {
     computed: {
         columns() {
             return [{
-                property: 'name',
-                dataIndex: 'name',
+                property: 'request_id',
+                dataIndex: 'request_id',
                 label: this.$t('byjuno-log.list.columnName'),
                 routerLink: 'byjuno.log.detail',
                 inlineEdit: 'string',
                 allowResize: true,
-                primary: true
+                primary: true,
+                hideable: false
             }, {
-                property: 'discount',
-                dataIndex: 'discount',
+                property: 'request_type',
+                dataIndex: 'request_type',
                 label: this.$t('byjuno-log.list.columnDiscount'),
                 inlineEdit: 'number',
+                allowResize: true,
+                hideable: false
+            }, {
+                property: 'firstname',
+                dataIndex: 'firstname',
+                label: this.$t('byjuno-log.list.columnDiscountType'),
                 allowResize: true
             }, {
-                property: 'discountType',
-                dataIndex: 'discountType',
+                property: 'lastname',
+                dataIndex: 'lastname',
+                label: this.$t('byjuno-log.list.columnDiscountType'),
+                allowResize: true
+            }, {
+                property: 'ip',
+                dataIndex: 'ip',
+                label: this.$t('byjuno-log.list.columnDiscountType'),
+                allowResize: true
+            }, {
+                property: 'byjuno_status',
+                dataIndex: 'byjuno_status',
+                label: this.$t('byjuno-log.list.columnDiscountType'),
+                allowResize: true
+            }, {
+                property: 'createdAt',
+                dataIndex: 'createdAt',
                 label: this.$t('byjuno-log.list.columnDiscountType'),
                 allowResize: true
             }];
@@ -54,7 +78,7 @@ Component.register('byjuno-log-list', {
         this.repository
             .search(new Criteria(), Shopware.Context.api)
             .then((result) => {
-                this.bundles = result;
+                this.logs = result;
             });
     }
 });
