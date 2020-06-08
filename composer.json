@@ -1,5 +1,5 @@
 {
-  "name": "byjuno/payment",
+  "name": "byjuno/byjuno-payment",
   "description": "Byjuno.ch payment integration",
   "version": "1.0.0",
   "type": "shopware-platform-plugin",
@@ -12,6 +12,7 @@
   "require": {
     "shopware/core": "*",
     "shopware/storefront": "*",
+    "shopware/administration": "*",
     "ext-simplexml": "*",
     "ext-curl": "*"
   },

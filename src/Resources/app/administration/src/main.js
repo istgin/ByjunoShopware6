@@ -1,0 +1,2 @@
+import './module/byjuno-payment';
+
