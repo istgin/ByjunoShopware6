@@ -1,8 +1,8 @@
-import template from './swag-bundle-detail.html.twig';
+import template from './byjuno-log-detail.html.twig';
 
 const { Component, Mixin } = Shopware;
 
-Component.register('swag-bundle-detail', {
+Component.register('byjuno-log-detail', {
     template,
 
     inject: [
@@ -31,14 +31,14 @@ Component.register('swag-bundle-detail', {
     computed: {
         options() {
             return [
-                { value: 'absolute', name: this.$t('swag-bundle.detail.absoluteText') },
-                { value: 'percentage', name: this.$t('swag-bundle.detail.percentageText') }
+                { value: 'absolute', name: this.$t('byjuno-log.detail.absoluteText') },
+                { value: 'percentage', name: this.$t('byjuno-log.detail.percentageText') }
             ];
         }
     },
 
     created() {
-        this.repository = this.repositoryFactory.create('swag_bundle');
+        this.repository = this.repositoryFactory.create('byjuno_log');
         this.getBundle();
     },
 
@@ -63,7 +63,7 @@ Component.register('swag-bundle-detail', {
                 }).catch((exception) => {
                     this.isLoading = false;
                     this.createNotificationError({
-                        title: this.$t('swag-bundle.detail.errorTitle'),
+                        title: this.$t('byjuno-log.detail.errorTitle'),
                         message: exception
                     });
                 });

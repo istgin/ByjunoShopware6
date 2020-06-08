@@ -1,9 +1,9 @@
-import template from './swag-bundle-list.html.twig';
+import template from './byjuno-log-list.html.twig';
 
 const { Component } = Shopware;
 const { Criteria } = Shopware.Data;
 
-Component.register('swag-bundle-list', {
+Component.register('byjuno-log-list', {
     template,
 
     inject: [
@@ -28,28 +28,28 @@ Component.register('swag-bundle-list', {
             return [{
                 property: 'name',
                 dataIndex: 'name',
-                label: this.$t('swag-bundle.list.columnName'),
-                routerLink: 'swag.bundle.detail',
+                label: this.$t('byjuno-log.list.columnName'),
+                routerLink: 'byjuno.bundle.detail',
                 inlineEdit: 'string',
                 allowResize: true,
                 primary: true
             }, {
                 property: 'discount',
                 dataIndex: 'discount',
-                label: this.$t('swag-bundle.list.columnDiscount'),
+                label: this.$t('byjuno-log.list.columnDiscount'),
                 inlineEdit: 'number',
                 allowResize: true
             }, {
                 property: 'discountType',
                 dataIndex: 'discountType',
-                label: this.$t('swag-bundle.list.columnDiscountType'),
+                label: this.$t('byjuno-log.list.columnDiscountType'),
                 allowResize: true
             }];
         }
     },
 
     created() {
-        this.repository = this.repositoryFactory.create('swag_bundle');
+        this.repository = this.repositoryFactory.create('byjuno_log');
 
         this.repository
             .search(new Criteria(), Shopware.Context.api)

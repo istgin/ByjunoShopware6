@@ -1,8 +1,8 @@
 {
-    "swag-bundle": {
+    "byjuno-log": {
         "general": {
-            "mainMenuItemGeneral": "Bundle",
-            "descriptionTextModule": "Manage bundles here"
+            "mainMenuItemGeneral": "Byjuno log",
+            "descriptionTextModule": "View Byjuno logs"
         },
         "list": {
             "addButtonText": "Add bundle",

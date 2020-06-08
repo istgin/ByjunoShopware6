@@ -1,5 +1,5 @@
-import './page/swag-bundle-list';
-import './page/swag-bundle-detail';
+import './page/byjuno-log-list';
+import './page/byjuno-log-detail';
 import deDE from './snippet/de-DE.json';
 import enGB from './snippet/en-GB.json';
 
@@ -7,8 +7,8 @@ const { Module } = Shopware;
 
 Module.register('byjuno-payment', {
     type: 'plugin',
-    name: 'Bundle',
-    title: 'swag-bundle.general.mainMenuItemGeneral',
+    name: 'Byjunolog',
+    title: 'byjuno-log.general.mainMenuItemGeneral',
     description: 'sw-property.general.descriptionTextModule',
     color: '#ff3d58',
     icon: 'default-shopping-paper-bag-product',
@@ -20,22 +20,22 @@ Module.register('byjuno-payment', {
 
     routes: {
         list: {
-            component: 'swag-bundle-list',
+            component: 'byjuno-log-list',
             path: 'list'
         },
         detail: {
-            component: 'swag-bundle-detail',
+            component: 'byjuno-log-detail',
             path: 'detail/:id',
             meta: {
-                parentPath: 'swag.bundle.list'
+                parentPath: 'byjuno.bundle.list'
             }
         }
     },
 
     navigation: [{
-        label: 'swag-bundle.general.mainMenuItemGeneral',
+        label: 'byjuno-log.general.mainMenuItemGeneral',
         color: '#ff3d58',
-        path: 'swag.bundle.list',
+        path: 'byjuno.bundle.list',
         icon: 'default-shopping-paper-bag-product',
         position: 100
     }]

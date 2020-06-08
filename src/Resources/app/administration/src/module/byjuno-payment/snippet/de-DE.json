@@ -1,40 +1,40 @@
 {
-    "swag-bundle": {
+    "byjuno-log": {
         "general": {
-            "mainMenuItemGeneral": "Bundle",
-            "descriptionTextModule": "Verwalte die Bundles hier"
+            "mainMenuItemGeneral": "Byjuno log",
+            "descriptionTextModule": "View Byjuno logs"
         },
         "list": {
-            "addButtonText": "Bundle hinzufügen",
+            "addButtonText": "Add bundle",
             "columnName": "Name",
-            "columnDiscountType": "Rabatt Typ",
-            "columnDiscount": "Rabatt"
+            "columnDiscountType": "Discount type",
+            "columnDiscount": "Discount"
         },
         "detail": {
             "nameLabel": "Name",
-            "discountLabel": "Rabatt",
-            "discountTypeLabel": "Rabatt Typ",
-            "assignProductsLabel": "Produkte zuweisen",
-            "cancelButtonText": "Abbrechen",
-            "saveButtonText": "Speichern",
-            "errorTitle": "Fehler beim Speichern des Bundles",
-            "absoluteText": "Absolut",
-            "percentageText": "Prozentual"
+            "discountLabel": "Discount",
+            "discountTypeLabel": "Discount type",
+            "assignProductsLabel": "Assign products",
+            "cancelButtonText": "Cancel",
+            "saveButtonText": "Save",
+            "errorTitle": "Error saving the bundle",
+            "absoluteText": "Absolute",
+            "percentageText": "Percentage"
         }
     },
 
     "sw-product": {
         "detail": {
             "bundleCardLabel": "Bundles",
-            "bundleSelectLabel": "Zugewiesene Bundles",
-            "bundleSelectPlaceholder": "Bundle hinzufügen..."
+            "bundleSelectLabel": "Associated bundles",
+            "bundleSelectPlaceholder": "Add bundle..."
         }
     },
 
     "sw-condition": {
         "condition": {
             "cartContainsBundle": {
-                "label": "Warenkorb enthält Bundle"
+                "label": "Cart contains bundle"
             }
         }
     }
