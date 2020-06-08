@@ -29,7 +29,7 @@ Component.register('byjuno-log-list', {
                 property: 'name',
                 dataIndex: 'name',
                 label: this.$t('byjuno-log.list.columnName'),
-                routerLink: 'byjuno.bundle.detail',
+                routerLink: 'byjuno.log.detail',
                 inlineEdit: 'string',
                 allowResize: true,
                 primary: true
@@ -49,7 +49,7 @@ Component.register('byjuno-log-list', {
     },
 
     created() {
-        this.repository = this.repositoryFactory.create('byjuno_log');
+        this.repository = this.repositoryFactory.create('byjuno_log_entity');
 
         this.repository
             .search(new Criteria(), Shopware.Context.api)

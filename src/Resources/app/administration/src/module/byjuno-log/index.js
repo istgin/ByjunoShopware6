@@ -5,9 +5,9 @@ import enGB from './snippet/en-GB.json';
 
 const { Module } = Shopware;
 
-Module.register('byjuno-payment', {
+Module.register('byjuno-log', {
     type: 'plugin',
-    name: 'Byjunolog',
+    name: 'Bundle',
     title: 'byjuno-log.general.mainMenuItemGeneral',
     description: 'sw-property.general.descriptionTextModule',
     color: '#ff3d58',
@@ -27,7 +27,7 @@ Module.register('byjuno-payment', {
             component: 'byjuno-log-detail',
             path: 'detail/:id',
             meta: {
-                parentPath: 'byjuno.bundle.list'
+                parentPath: 'byjuno.log.list'
             }
         }
     },
@@ -35,7 +35,7 @@ Module.register('byjuno-payment', {
     navigation: [{
         label: 'byjuno-log.general.mainMenuItemGeneral',
         color: '#ff3d58',
-        path: 'byjuno.bundle.list',
+        path: 'byjuno.log.list',
         icon: 'default-shopping-paper-bag-product',
         position: 100
     }]

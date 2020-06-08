@@ -1,8 +1,8 @@
 {
     "byjuno-log": {
         "general": {
-            "mainMenuItemGeneral": "Byjuno log",
-            "descriptionTextModule": "View Byjuno logs"
+            "mainMenuItemGeneral": "Bundle",
+            "descriptionTextModule": "Manage bundles here"
         },
         "list": {
             "addButtonText": "Add bundle",

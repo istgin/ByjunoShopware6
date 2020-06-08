@@ -1,2 +1,1 @@
-import './module/byjuno-payment';
-
+import './module/byjuno-log';

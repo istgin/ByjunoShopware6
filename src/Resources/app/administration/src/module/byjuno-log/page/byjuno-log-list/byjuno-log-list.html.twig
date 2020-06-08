@@ -1,22 +1,22 @@
-{% block byjuno_log_list %}
+{% block byjuno_log_entity_list %}
     <sw-page class="byjuno-log-list">
-        {% block byjuno_log_list_smart_bar_actions %}
+        {% block byjuno_log_entity_list_smart_bar_actions %}
             <template slot="smart-bar-actions">
-                <sw-button variant="primary" :routerLink="{ name: 'byjuno.bundle.create' }">
+                <sw-button variant="primary" :routerLink="{ name: 'byjuno.log.create' }">
                     {{ $t('byjuno-log.list.addButtonText') }}
                 </sw-button>
             </template>
         {% endblock %}
 
         <template slot="content">
-            {% block byjuno_log_list_content %}
+            {% block byjuno_log_entity_list_content %}
                 <sw-entity-listing
                     v-if="bundles"
                     :items="bundles"
                     :repository="repository"
                     :showSelection="false"
                     :columns="columns"
-                    detailRoute="byjuno.bundle.detail">
+                    detailRoute="byjuno.log.detail">
                 </sw-entity-listing>
             {% endblock %}
         </template>
