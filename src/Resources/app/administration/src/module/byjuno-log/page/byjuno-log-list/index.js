@@ -31,39 +31,39 @@ Component.register('byjuno-log-list', {
             return [{
                 property: 'request_id',
                 dataIndex: 'request_id',
-                label: this.$t('byjuno-log.list.columnName'),
+                label: 'Request Id',
                 routerLink: 'byjuno.log.detail',
                 allowResize: true,
                 primary: true
             }, {
                 property: 'request_type',
                 dataIndex: 'request_type',
-                label: this.$t('byjuno-log.list.columnDiscount'),
+                label: 'Request Type',
                 allowResize: true,
             }, {
                 property: 'firstname',
                 dataIndex: 'firstname',
-                label: this.$t('byjuno-log.list.columnDiscountType'),
+                label: 'First Name',
                 allowResize: true
             }, {
                 property: 'lastname',
-                dataIndex: 'lastname',
-                label: this.$t('byjuno-log.list.columnDiscountType'),
+                dataIndex: 'last name',
+                label: 'Last Name',
                 allowResize: true
             }, {
                 property: 'ip',
                 dataIndex: 'ip',
-                label: this.$t('byjuno-log.list.columnDiscountType'),
+                label: 'IP',
                 allowResize: true
             }, {
                 property: 'byjuno_status',
                 dataIndex: 'byjuno_status',
-                label: this.$t('byjuno-log.list.columnDiscountType'),
+                label: 'Status',
                 allowResize: true
             }, {
                 property: 'createdAt',
                 dataIndex: 'createdAt',
-                label: this.$t('byjuno-log.list.columnDiscountType'),
+                label: 'Date',
                 allowResize: true
             }];
         }

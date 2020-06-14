@@ -63,7 +63,7 @@ Component.register('byjuno-log-detail', {
                 }).catch((exception) => {
                     this.isLoading = false;
                     this.createNotificationError({
-                        title: this.$t('byjuno-log.detail.errorTitle'),
+                        title: 'Error',
                         message: exception
                     });
                 });

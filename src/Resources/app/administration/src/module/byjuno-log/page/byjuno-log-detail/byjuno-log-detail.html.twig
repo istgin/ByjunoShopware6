@@ -2,37 +2,15 @@
     <sw-page class="byjuno-log-detail">
         <template slot="smart-bar-actions">
             <sw-button :routerLink="{ name: 'byjuno.log.list' }">
-                {{ $t('byjuno-log.detail.cancelButtonText') }}
+                Return
             </sw-button>
-
-            <sw-button-process
-                :isLoading="isLoading"
-                :processSuccess="processSuccess"
-                variant="primary"
-                @process-finish="saveFinish"
-                @click="onClickSave">
-                {{ $t('byjuno-log.detail.saveButtonText') }}
-            </sw-button-process>
         </template>
 
         <template slot="content">
             <sw-card-view>
                 <sw-card v-if="bundle" :isLoading="isLoading">
-                    <sw-field :label="$t('byjuno-log.detail.nameLabel')" v-model="bundle.name"></sw-field>
-                    <sw-field :label="$t('byjuno-log.detail.discountLabel')" v-model="bundle.discount" type="number"></sw-field>
-
-                    <sw-field type="radio"
-                              :label="$t('byjuno-log.detail.discountTypeLabel')"
-                              v-model="bundle.discountType"
-                              :options="options">
-                    </sw-field>
-
-                    <sw-entity-many-to-many-select
-                        :localMode="bundle.isNew()"
-                        :label="$t('byjuno-log.detail.assignProductsLabel')"
-                        v-model="bundle.products">
-                    </sw-entity-many-to-many-select>
-                </sw-card>
+                    <sw-textarea-field type="textarea" label="Request" v-model="bundle.xml_request"></sw-textarea-field>
+                    <sw-textarea-field type="textarea" label="Response" v-model="bundle.xml_response"></sw-textarea-field>
             </sw-card-view>
         </template>
     </sw-page>
