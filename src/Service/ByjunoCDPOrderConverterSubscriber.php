@@ -107,7 +107,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                     $paymentMethodId = $pm->getPaymentMethod()->getHandlerIdentifier();
                     break;
                 }
-                if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
+                if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment" && $this->systemConfigService->get("ByjunoPayments.config.byjunoS5") == 'enabled') {
                     $request = $this->CreateShopRequestS5Cancel($order->getAmountTotal(),
                         $order->getCurrency()->getIsoCode(),
                         $order->getOrderNumber(),
@@ -146,9 +146,8 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
 
         if ($controllerName != null && $actionName != null) {
-            if ($controllerName instanceof NumberRangeController) {
-
-            } else if ($controllerName instanceof DocumentGeneratorController && $actionName == 'createDocument' && $controllerArguments > 1) {
+            if ($controllerName instanceof DocumentGeneratorController && $actionName == 'createDocument'
+                && $controllerArguments > 1) {
                 $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
                 $orderId = $controllerArguments[1];
                 $type = $controllerArguments[2];
@@ -169,6 +168,9 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                             $date = date("Y-m-d", strtotime($config["documentDate"]));
                         }
                         if (!empty($config["custom"]["stornoNumber"]) && $type == 'storno') {
+                            if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS5") != 'enabled') {
+                                return;
+                            }
                             $invoiceNum = $config["custom"]["invoiceNumber"];
                             $doc = $this->getInvoice($invoiceNum);
                             if ($doc != null) {
@@ -182,6 +184,9 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                                 $statusLog = "S5 Refund request";
                             }
                         } else if (!empty($config["custom"]["invoiceNumber"]) && $type == 'invoice') {
+                            if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4") != 'enabled') {
+                                return;
+                            }
                             $request = $this->CreateShopRequestS4($config["custom"]["invoiceNumber"],
                                 $order->getAmountTotal(),
                                 $order->getAmountTotal(),

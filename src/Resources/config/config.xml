@@ -187,6 +187,40 @@
                 </option>
             </options>
         </input-field>
+        <input-field type="single-select">
+            <name>byjunoS4</name>
+            <label>S4 transactions</label>
+            <defaultValue>enabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>byjunoS5</name>
+            <label>S5 transactions</label>
+            <defaultValue>enabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
         <input-field>
             <name>byjunoprodemail</name>
             <label>Production email of Byjuno</label>

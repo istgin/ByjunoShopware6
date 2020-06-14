@@ -68,12 +68,13 @@ Component.register('byjuno-log-list', {
             }];
         }
     },
-
     created() {
         this.repository = this.repositoryFactory.create('byjuno_log_entity');
 
+        const criteria = new Criteria();
+        criteria.addSorting(Criteria.sort('createdAt', 'DESC'));
         this.repository
-            .search(new Criteria(), Shopware.Context.api)
+            .search(criteria, Shopware.Context.api)
             .then((result) => {
                 this.logs = result;
             });
