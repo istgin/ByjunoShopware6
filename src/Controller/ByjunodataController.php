@@ -453,6 +453,7 @@ class ByjunodataController extends StorefrontController
         $customerRepo = $this->container->get('customer.repository');
 
         $criteria = new Criteria();
+        $criteria->addAssociation('salutation');
         $criteria->addFilter(new EqualsFilter('id', $customerId));
         return $customerRepo->search($criteria, $context)->first();
     }
@@ -523,6 +524,23 @@ class ByjunodataController extends StorefrontController
         $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale");
         $genderMale = explode(",", $genderMaleStr);
         $genderFemale = explode(",", $genderFemaleStr);
+        $customer = $this->getCustomer($order->getOrderCustomer()->getCustomerId(), $context);
+        $sal = $customer->getSalutation();
+        if ($sal != null) {
+            $salName = $sal->getDisplayName();
+            if (!empty($salName)) {
+                foreach ($genderMale as $ml) {
+                    if (strtolower($salName) == strtolower(trim($ml))) {
+                        $request->setGender(1);
+                    }
+                }
+                foreach ($genderFemale as $feml) {
+                    if (strtolower($salName) == strtolower(trim($feml))) {
+                        $request->setGender(2);
+                    }
+                }
+            }
+        }
         if (!empty($additionalInfo)) {
             foreach ($genderMale as $ml) {
                 if (strtolower($additionalInfo) == strtolower(trim($ml))) {
@@ -548,7 +566,6 @@ class ByjunodataController extends StorefrontController
             }
         }
 
-        $customer = $this->getCustomer($order->getOrderCustomer()->getCustomerId(), $context);
         $dob = $customer->getBirthday();
         $dob_year = null;
         $dob_month = null;
