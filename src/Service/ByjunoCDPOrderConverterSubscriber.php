@@ -175,7 +175,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                             $doc = $this->getInvoice($invoiceNum);
                             if ($doc != null) {
                                 $order = $doc->getOrder();
-                                $request = $this->createShopRequestS5Refund($config["custom"]["stornoNumber"],
+                                $request = $this->createShopRequestS5Refund($invoiceNum,
                                     $order->getAmountTotal(),
                                     $order->getCurrency()->getIsoCode(),
                                     $order->getOrderNumber(),
