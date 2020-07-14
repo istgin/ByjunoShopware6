@@ -1,4 +1,4 @@
-{
+﻿{
   "ByjunoPayment": {
     "invoice": "Byjuno fattura singola",
     "invoice_byjuno": "Byjuno fattura con opzione di pagamento parziale",
@@ -21,7 +21,7 @@
     "payment_plan" : "Seleziona il piano di pagamento",
     "submit_payment" : "Procedere al pagamento",
     "send_email" : "Invio fattura tramite e-mail (senza spese aggiuntive)",
-    "send_postal" : "Invio fattura cartacea tramite posta (spese aggiuntive di CHF 3.50)",
+    "send_postal" : "Invio fattura cartacea tramite posta (spese aggiuntive di CHF 3.95)",
     "send_invoice" : "Seleziona il metodo di consegna della fattura",
     "send_installment" : "Seleziona il metodo di consegna della fattura",
     "cdp_error" : "L'istituto di credito ha rifiutato il pagamento. Si prega di provare un altro metodo di pagamento.",

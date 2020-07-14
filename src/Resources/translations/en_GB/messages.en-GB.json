@@ -21,7 +21,7 @@
     "payment_plan" : "Select payment plan",
     "submit_payment" : "Proceed payment",
     "send_email" : "Send invoice by e-mail",
-    "send_postal" : "Invoice dispatch in paper form by post (for a fee of CHF 3.50)",
+    "send_postal" : "Invoice dispatch in paper form by post (for a fee of CHF 3.95)",
     "send_invoice" : "Select invoice delivery method",
     "send_installment" : "Select invoice delivery method",
     "cdp_error" : "You are not allowed to pay with this payment method. Please try different.",

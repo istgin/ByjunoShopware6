@@ -1,4 +1,4 @@
-{
+﻿{
   "ByjunoPayment": {
     "invoice": "Byjuno Rechnung",
     "invoice_byjuno": "Byjuno Rechnung mit Teilzahlungsoption",
@@ -21,9 +21,9 @@
     "payment_plan" : "Zahlungsplan auswählen",
     "submit_payment" : "Zahlung abschliessen",
     "send_email" : "Rechnungsversand via E-Mail (ohne Gebühr)",
-    "send_postal" : "Rechnungsversand in Papierform via Post (gegen Gebühr von CHF 3.50)",
+    "send_postal" : "Rechnungsversand in Papierform via Post (gegen Gebühr von CHF 3.95)",
     "send_invoice" : "Rechnungszustellmethode auswählen",
-    "send_installment" : Rechnungszustellmethode auswählen",
+    "send_installment" : "Rechnungszustellmethode auswählen",
     "cdp_error" : "Der Zahlungsanbieter hat die Zahlung abgelehnt. Bitte versuchen Sie eine andere Zahlungsmethode.",
     "order_canceled" : "Zahlung fehlgeschlagen. Ihre Bestellung wurde storniert.",
     "back_to_shop" : "Zurück zum Shop",
