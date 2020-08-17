@@ -9,6 +9,7 @@ use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Request;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Response;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS5Request;
 use Byjuno\ByjunoPayments\ByjunoPayments;
+use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenEvent;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Exception;
 use Psr\Container\ContainerInterface;
@@ -31,6 +32,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
 use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\Currency\CurrencyEntity;
+use Shopware\Core\System\CustomField\CustomFieldTypes;
 use Shopware\Core\System\Language\LanguageEntity;
 use Shopware\Core\System\NumberRange\Api\NumberRangeController;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
@@ -65,15 +67,22 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
     private $languageRepository;
     /** @var EntityRepositoryInterface */
     private $orderAddressRepository;
+    /**
+     * @var EntityRepositoryInterface
+     */
+    private $documentRepository;
 
     /** @var TranslatorInterface */
     private $translator;
+    private static $writeRecursion;
+
 
     public function __construct(
         SystemConfigService $systemConfigService,
         EntityRepositoryInterface $paymentMethodRepository,
         EntityRepositoryInterface $languageRepository,
         EntityRepositoryInterface $orderAddressRepository,
+        EntityRepositoryInterface $documentRepository,
         ContainerInterface $container,
         TranslatorInterface $translator
     )
@@ -82,8 +91,10 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $this->paymentMethodRepository = $paymentMethodRepository;
         $this->languageRepository = $languageRepository;
         $this->orderAddressRepository = $orderAddressRepository;
+        $this->documentRepository = $documentRepository;
         $this->container = $container;
         $this->translator = $translator;
+        $writeRecursion = Array();
     }
 
     public static function getSubscribedEvents(): array
@@ -92,8 +103,40 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             StorefrontRenderEvent::class => 'onByjunoRender',
             CartConvertedEvent::class => 'converter',
             KernelEvents::CONTROLLER_ARGUMENTS => 'onByjunoKernelControllerArguments',
-            StateMachineTransitionEvent::class => 'onByjunoStateMachine'
+            StateMachineTransitionEvent::class => 'onByjunoStateMachine',
+            'document.written' => [
+                ['documentWritten', 0],
+            ],
         ];
+    }
+
+    public function documentWritten(EntityWrittenEvent $event): void
+    {
+        foreach ($event->getWriteResults() as $writeResult) {
+            $id = $writeResult->getPrimaryKey();
+            if (is_array($id)) $id = $id['id'];
+            /** @var DocumentEntity $document */
+            $doc = $this->getInvoiceById($id);
+            if ($doc != null) {
+                if (!isset(self::$writeRecursion[$doc->getId()])) {
+                    $customFields = $doc->getCustomFields() ?? [];
+                    $customFields = array_merge($customFields, ['byjuno_doc_retry' => 0, 'byjuno_doc_sent' => 0]);
+                    $update = [
+                        'id' => $doc->getId(),
+                        'customFields' => $customFields,
+                    ];
+                    self::$writeRecursion[$doc->getId()] = true;
+                    $this->documentRepository->update([$update], Context::createDefaultContext());
+
+                    /*
+                    $docs = $documentepository->search(
+                        (new Criteria())->addFilter(new EqualsFilter('customFields.byjuno_doc_sent', 0))
+                        , $event->getContext());
+                    */
+                }
+
+            }
+        }
     }
 
     public function onByjunoStateMachine(StateMachineTransitionEvent $event)
@@ -145,6 +188,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             $actionName = $controller[1];
         }
 
+        /*
         if ($controllerName != null && $actionName != null) {
             if ($controllerName instanceof DocumentGeneratorController && $actionName == 'createDocument'
                 && $controllerArguments > 1) {
@@ -223,6 +267,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                 }
             }
         }
+        */
     }
 
     public function onByjunoRender(StorefrontRenderEvent $event): void
@@ -712,15 +757,20 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         return $orderRepo->search($criteria, Context::createDefaultContext())->get($orderId);
     }
 
+    private function getInvoiceById(string $documentId): ?DocumentEntity
+    {
+        $criteria = (new Criteria([$documentId]));
+        $criteria->addAssociation('order');
+        $criteria->addAssociation('order.currency');
+        return $this->documentRepository->search($criteria, Context::createDefaultContext())->first();
+    }
+
     private function getInvoice(string $documentId): ?DocumentEntity
     {
-        /** @var EntityRepositoryInterface $orderRepo */
-        $orderRepo = $this->container->get('document.repository');
-
         $criteria = (new Criteria())->addFilter(new EqualsFilter('config.documentNumber', $documentId));
         $criteria->addAssociation('order');
         $criteria->addAssociation('order.currency');
-        return $orderRepo->search($criteria, Context::createDefaultContext())->first();
+        return $this->documentRepository->search($criteria, Context::createDefaultContext())->first();
     }
 
     private function saveS4Log(Context $context, ByjunoS4Request $request, $xml_request, $xml_response, $status, $type, $firstName, $lastName)

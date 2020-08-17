@@ -15,7 +15,9 @@ use Shopware\Core\Framework\Plugin\Context\ActivateContext;
 use Shopware\Core\Framework\Plugin\Context\DeactivateContext;
 use Shopware\Core\Framework\Plugin\Context\InstallContext;
 use Shopware\Core\Framework\Plugin\Context\UninstallContext;
+use Shopware\Core\Framework\Plugin\Context\UpdateContext;
 use Shopware\Core\Framework\Plugin\Util\PluginIdProvider;
+use Shopware\Core\System\CustomField\CustomFieldTypes;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
@@ -25,6 +27,9 @@ class ByjunoPayments extends Plugin
     public const BYJUNO_INVOICE             = '1f865e2aa66e41fa88f81decfa1ebb65';
     public const BYJUNO_INSTALLMENT         = '043946a0f1234380a7979f9fd12ff69f';
 
+    public const BYJUNO_RETRY = 'byjuno_doc_retry';
+    public const BYJUNO_SENT = 'byjuno_doc_sent';
+
     public function build(ContainerBuilder $container): void
     {
         parent::build($container);
@@ -33,13 +38,64 @@ class ByjunoPayments extends Plugin
         $loader->load('services.xml');
     }
 
+    public const CUSTOM_FIELDS = [
+    [
+            'id'     => '043946a045664646464649f9fd2ff69f',
+            'name'   => 'custom_byjuno',
+            'config' => [
+                'label' => [
+                    'en-GB' => 'Byjuno',
+                    'de-DE' => 'Byjuno',
+                ],
+            ],
+            'customFields' => [
+                [
+                    'name'   => self::BYJUNO_RETRY,
+                    'type'   => CustomFieldTypes::INT,
+                    'id'     => '6bb387512a5c0cb5fd654780a1e8998d',
+                    'config' => [
+                        'label' => [
+                            'en-GB' => 'Byjuno retry count',
+                            'de-DE' => 'Byjuno retry count',
+                        ],
+                    ],
+                ],
+                [
+                    'name'   => self::BYJUNO_SENT,
+                    'type'   => CustomFieldTypes::INT,
+                    'id'     => '494624b325aaf606184c15cb6217dc34',
+                    'config' => [
+                        'label' => [
+                            'en-GB' => 'Byjuno sent',
+                            'de-DE' => 'Byjuno sent',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ];
+
+    public function installCustom(InstallContext $context): void
+    {
+        $customFieldRepository = $this->container->get('custom_field_set.repository');
+        $customFieldRepository->upsert(self::CUSTOM_FIELDS, $context->getContext());
+    }
+
+    public function uninstallCustom(UninstallContext $context): void
+    {
+        $customFieldRepository = $this->container->get('custom_field_set.repository');
+        $customFieldRepository->delete(self::CUSTOM_FIELDS, $context->getContext());
+    }
+
     public function install(InstallContext $context): void
     {
+        $this->installCustom($context);
         $this->addPaymentMethod($context->getContext());
     }
 
     public function uninstall(UninstallContext $context): void
     {
+        $this->uninstallCustom($context);
         $this->setPaymentMethodIsActive(false, $context->getContext());
     }
 

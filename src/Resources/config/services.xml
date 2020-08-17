@@ -31,6 +31,7 @@
             <argument type="service" id="payment_method.repository"/>
             <argument type="service" id="language.repository"/>
             <argument type="service" id="order_address.repository"/>
+            <argument type="service" id="document.repository"/>
             <argument type="service" id="Psr\Container\ContainerInterface"/>
             <argument type="service" id="translator"/>
             <tag name="kernel.event_subscriber"/>
