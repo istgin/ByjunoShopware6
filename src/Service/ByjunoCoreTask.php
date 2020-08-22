@@ -184,7 +184,7 @@ class ByjunoCoreTask
             'request_type' => $type,
             'firstname' => $firstName,
             'lastname' => $lastName,
-            'ip' => $_SERVER['REMOTE_ADDR'],
+            'ip' => (isset($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : "127.0.0.1",
             'byjuno_status' => (($status != "") ? $status . '' : 'Error'),
             'xml_request' => $xml_request,
             'xml_response' => $xml_response
@@ -202,7 +202,7 @@ class ByjunoCoreTask
             'request_type' => $type,
             'firstname' => $firstName,
             'lastname' => $lastName,
-            'ip' => $_SERVER['REMOTE_ADDR'],
+            'ip' => (isset($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : "127.0.0.1",
             'byjuno_status' => (($status != "") ? $status . '' : 'Error'),
             'xml_request' => $xml_request,
             'xml_response' => $xml_response

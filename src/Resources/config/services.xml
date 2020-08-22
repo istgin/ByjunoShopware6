@@ -59,6 +59,8 @@
             <tag name="shopware.entity.definition" entity="byjuno_log_entity"/>
         </service>
 
+        <!-- Run as Shopware task -->
+        <!--
         <service id="Byjuno\ByjunoPayments\ScheduledTask\ByjunoTask">
             <tag name="shopware.scheduled.task" />
         </service>
@@ -67,6 +69,12 @@
             <argument type="service" id="scheduled_task.repository" />
             <argument type="service" id="Byjuno\ByjunoPayments\Service\ByjunoCoreTask"/>
             <tag name="messenger.message_handler" />
+        </service>
+        -->
+        <!-- Run as Console task -->
+        <service id="Byjuno\ByjunoPayments\ScheduledTask\ByjunoCommand">
+            <argument type="service" id="Byjuno\ByjunoPayments\Service\ByjunoCoreTask"/>
+            <tag name="console.command"/>
         </service>
 
     </services>
