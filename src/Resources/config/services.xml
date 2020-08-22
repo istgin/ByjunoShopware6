@@ -12,6 +12,12 @@
             <tag name="shopware.payment.method.async"/>
         </service>
 
+        <service id="Byjuno\ByjunoPayments\Service\ByjunoCoreTask">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="document.repository"/>
+            <argument type="service" id="byjuno_log_entity.repository"/>
+        </service>
+
         <service id="Byjuno\ByjunoPayments\Controller\ByjunodataController" public="true">
             <argument type="service" id="Shopware\Core\Checkout\Cart\SalesChannel\CartService"/>
             <argument type="service" id="Shopware\Core\Checkout\Order\SalesChannel\OrderService"/>
@@ -34,6 +40,7 @@
             <argument type="service" id="document.repository"/>
             <argument type="service" id="Psr\Container\ContainerInterface"/>
             <argument type="service" id="translator"/>
+            <argument type="service" id="Byjuno\ByjunoPayments\Service\ByjunoCoreTask"/>
             <tag name="kernel.event_subscriber"/>
         </service>
         <service id="Byjuno\ByjunoPayments\Controller\ByjunocancelController" public="true">
@@ -51,5 +58,16 @@
         <service id="Byjuno\ByjunoPayments\Log\ByjunoLogEntityDefinition">
             <tag name="shopware.entity.definition" entity="byjuno_log_entity"/>
         </service>
+
+        <service id="Byjuno\ByjunoPayments\ScheduledTask\ByjunoTask">
+            <tag name="shopware.scheduled.task" />
+        </service>
+
+        <service id="Byjuno\ByjunoPayments\ScheduledTask\ByjunoTaskHandler">
+            <argument type="service" id="scheduled_task.repository" />
+            <argument type="service" id="Byjuno\ByjunoPayments\Service\ByjunoCoreTask"/>
+            <tag name="messenger.message_handler" />
+        </service>
+
     </services>
 </container>

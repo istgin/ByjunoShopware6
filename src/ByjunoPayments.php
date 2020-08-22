@@ -29,6 +29,7 @@ class ByjunoPayments extends Plugin
 
     public const BYJUNO_RETRY = 'byjuno_doc_retry';
     public const BYJUNO_SENT = 'byjuno_doc_sent';
+    public const BYJUNO_TIME = 'byjuno_time';
 
     public function build(ContainerBuilder $container): void
     {
@@ -68,6 +69,17 @@ class ByjunoPayments extends Plugin
                         'label' => [
                             'en-GB' => 'Byjuno sent',
                             'de-DE' => 'Byjuno sent',
+                        ],
+                    ],
+                ],
+                [
+                    'name'   => self::BYJUNO_TIME,
+                    'type'   => CustomFieldTypes::INT,
+                    'id'     => '494624b325aaf606184c22666217dc34',
+                    'config' => [
+                        'label' => [
+                            'en-GB' => 'Byjuno time',
+                            'de-DE' => 'Byjuno time',
                         ],
                     ],
                 ],
