@@ -62,7 +62,7 @@ class ByjunoCoreTask
                     return;
                 }
                 $order = $getDoc->getOrder();
-                $request = $this->createShopRequestS5Refund($getDoc->getReferencedDocumentId(),
+                $request = $this->createShopRequestS5Refund($getDoc->getConfig()["documentNumber"],
                     $order->getAmountTotal(),
                     $order->getCurrency()->getIsoCode(),
                     $order->getOrderNumber(),
@@ -74,7 +74,7 @@ class ByjunoCoreTask
                     return;
                 }
                 $order = $getDoc->getOrder();
-                $request = $this->CreateShopRequestS4($getDoc->getReferencedDocumentId(),
+                $request = $this->CreateShopRequestS4($getDoc->getConfig()["documentNumber"],
                     $order->getAmountTotal(),
                     $order->getAmountTotal(),
                     $order->getCurrency()->getIsoCode(),
@@ -95,7 +95,6 @@ class ByjunoCoreTask
                 $fields = $getDoc->getCustomFields();
                 $customFields = $fields ?? [];
                 if (isset($response)) {
-                    $customFields = array_merge($customFields, ['byjuno_doc_retry' => 0, 'byjuno_doc_sent' => 1, 'byjuno_time' => time()]);
                     $byjunoResponse = new ByjunoS4Response();
                     $byjunoResponse->setRawResponse($response);
                     $byjunoResponse->processResponse();
@@ -105,11 +104,20 @@ class ByjunoCoreTask
                     } else if ($statusLog == "S5 Refund request") {
                         $this->saveS5Log($context, $request, $xml, $response, $statusCDP, $statusLog, "-", "-");
                     }
+                    if ($statusCDP != "ERR") {
+                        $customFields = array_merge($customFields, ['byjuno_doc_retry' => 0, 'byjuno_doc_sent' => 1, 'byjuno_time' => time()]);
+                    } else {
+                        if ($fields["byjuno_doc_retry"] < 10) {
+                            $customFields = array_merge($customFields, ['byjuno_doc_retry' => ++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
+                        } else {
+                            $customFields = array_merge($customFields, ['byjuno_doc_retry' => ++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 1, 'byjuno_time' => time()]);
+                        }
+                    }
                 } else {
                     if ($fields["byjuno_doc_retry"] < 10) {
-                        $customFields = array_merge($customFields, ['byjuno_doc_retry' => $fields["byjuno_doc_retry"]++, 'byjuno_doc_sent' => 0, 'byjuno_time' => time() + 30 * 60]);
+                        $customFields = array_merge($customFields, ['byjuno_doc_retry' =>++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
                     } else {
-                        $customFields = array_merge($customFields, ['byjuno_doc_retry' => $fields["byjuno_doc_retry"]++, 'byjuno_doc_sent' => 1, 'byjuno_time' => time()]);
+                        $customFields = array_merge($customFields, ['byjuno_doc_retry' => ++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 1, 'byjuno_time' => time()]);
                         if ($statusLog == "S4 Request") {
                             $this->saveS4Log($context, $request, $xml, "no response (network timeout)", 0, $statusLog, "-", "-");
                         } else if ($statusLog == "S5 Refund request") {

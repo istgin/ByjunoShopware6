@@ -10,6 +10,7 @@ use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Response;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS5Request;
 use Byjuno\ByjunoPayments\ByjunoPayments;
 use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenEvent;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\Framework\Uuid\Uuid;
 use Exception;
 use Psr\Container\ContainerInterface;
@@ -141,18 +142,29 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                             return;
 
                     }
-                    $fields = $doc->getCustomFields();
-                    if (isset($fields["byjuno_doc_retry"]) && isset($fields["byjuno_doc_sent"]) && isset($fields["byjuno_time"])) {
-                        return;
+                    $order = $this->getOrder($doc->getOrderId());
+                    if ($order != null) {
+                        $paymentMethods = $order->getTransactions();
+                        $paymentMethodId = '';
+                        foreach ($paymentMethods as $pm) {
+                            $paymentMethodId = $pm->getPaymentMethod()->getHandlerIdentifier();
+                            break;
+                        }
+                        if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
+                            $fields = $doc->getCustomFields();
+                            if (isset($fields["byjuno_doc_retry"]) && isset($fields["byjuno_doc_sent"]) && isset($fields["byjuno_time"])) {
+                                return;
+                            }
+                            $customFields = $fields ?? [];
+                            $customFields = array_merge($customFields, ['byjuno_doc_retry' => 0, 'byjuno_doc_sent' => 0, 'byjuno_time' => 0]);
+                            $update = [
+                                'id' => $doc->getId(),
+                                'customFields' => $customFields,
+                            ];
+                            self::$writeRecursion[$doc->getId()] = true;
+                            $this->documentRepository->update([$update], $event->getContext());
+                        }
                     }
-                    $customFields = $fields ?? [];
-                    $customFields = array_merge($customFields, ['byjuno_doc_retry' => 0, 'byjuno_doc_sent' => 0, 'byjuno_time' => 0]);
-                    $update = [
-                        'id' => $doc->getId(),
-                        'customFields' => $customFields,
-                    ];
-                    self::$writeRecursion[$doc->getId()] = true;
-                    $this->documentRepository->update([$update], $event->getContext());
                 }
             }
         }
