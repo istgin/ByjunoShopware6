@@ -62,7 +62,7 @@ class ByjunoCoreTask
                     return;
                 }
                 $order = $getDoc->getOrder();
-                $request = $this->createShopRequestS5Refund($getDoc->getConfig()["documentNumber"],
+                $request = $this->createShopRequestS5Refund($getDoc->getConfig()["custom"]["invoiceNumber"],
                     $order->getAmountTotal(),
                     $order->getCurrency()->getIsoCode(),
                     $order->getOrderNumber(),
