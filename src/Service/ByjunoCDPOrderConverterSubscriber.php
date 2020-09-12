@@ -445,7 +445,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->setExtraInfo($extraInfo);
 
         $extraInfo["Name"] = 'CONNECTIVTY_MODULE';
-        $extraInfo["Value"] = 'Byjuno ShopWare 6 module 1.0.2';
+        $extraInfo["Value"] = 'Byjuno ShopWare 6 module 1.0.3';
         $request->setExtraInfo($extraInfo);
         return $request;
     }
