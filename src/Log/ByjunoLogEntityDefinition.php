@@ -9,7 +9,6 @@ use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Required;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\SearchRanking;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\IdField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\LongTextField;
-use Shopware\Core\Framework\DataAbstractionLayer\Field\LongTextWithHtmlField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\UpdatedAtField;
 use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
@@ -41,8 +40,8 @@ class ByjunoLogEntityDefinition extends EntityDefinition
             new StringField('lastname', 'lastname'),
             new StringField('ip', 'ip'),
             new StringField('byjuno_status', 'byjuno_status'),
-            (new LongTextWithHtmlField('xml_request', 'xml_request'))->addFlags(new Required(), new SearchRanking(SearchRanking::LOW_SEARCH_RAKING)),
-            (new LongTextWithHtmlField('xml_response', 'xml_response'))->addFlags(new Required(), new SearchRanking(SearchRanking::LOW_SEARCH_RAKING)),
+            (new LongTextField('xml_request', 'xml_request'))->addFlags(new Required(), new SearchRanking(SearchRanking::LOW_SEARCH_RAKING)),
+            (new LongTextField('xml_response', 'xml_response'))->addFlags(new Required(), new SearchRanking(SearchRanking::LOW_SEARCH_RAKING)),
             new CreatedAtField(),
             new UpdatedAtField(),
         ]);
