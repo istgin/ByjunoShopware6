@@ -71,7 +71,7 @@ class ByjunoCorePayment implements AsynchronousPaymentHandlerInterface
         $context = $salesChannelContext->getContext();
         if ($paymentState === 'completed') {
             // Payment completed, set transaction status to "paid"
-            $this->transactionStateHandler->pay($transaction->getOrderTransaction()->getId(), $context);
+            $this->transactionStateHandler->paid($transaction->getOrderTransaction()->getId(), $context);
         } else {
             // Payment not completed, set transaction status to "cancel"
             $this->transactionStateHandler->cancel($transaction->getOrderTransaction()->getId(), $context);
