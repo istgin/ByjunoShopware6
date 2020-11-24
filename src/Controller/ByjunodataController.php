@@ -317,7 +317,11 @@ class ByjunodataController extends StorefrontController
                 $xml = $request->createRequest();
             }
             $communicator = new ByjunoCommunicator();
-            $communicator->setServer($this->systemConfigService->get("ByjunoPayments.config.mode"));
+            if (isset($mode) && strtolower($mode) == 'live') {
+                $communicator->setServer('live');
+            } else {
+                $communicator->setServer('test');
+            }
             $response = $communicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
             $statusS1 = 0;
             $statusS3 = 0;
@@ -356,7 +360,7 @@ class ByjunodataController extends StorefrontController
                     $xml = $requestS3->createRequest();
                 }
                 $byjunoCommunicator = new ByjunoCommunicator();
-                if (isset($mode) && $mode == 'live') {
+                if (isset($mode) && strtolower($mode) == 'live') {
                     $byjunoCommunicator->setServer('live');
                 } else {
                     $byjunoCommunicator->setServer('test');

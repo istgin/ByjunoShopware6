@@ -84,14 +84,15 @@ class ByjunoCoreTask
                 $statusLog = "S4 Request";
             }
             if ($statusLog != '') {
+                $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
                 $xml = $request->createRequest();
                 $byjunoCommunicator = new ByjunoCommunicator();
-                if (isset($mode) && $mode == 'Live') {
+                if (isset($mode) && strtolower($mode) == 'live') {
                     $byjunoCommunicator->setServer('live');
                 } else {
                     $byjunoCommunicator->setServer('test');
                 }
-                $response = $byjunoCommunicator->sendS4Request($xml);
+                $response = $byjunoCommunicator->sendS4Request($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
                 $fields = $getDoc->getCustomFields();
                 $customFields = $fields ?? [];
                 if (isset($response)) {

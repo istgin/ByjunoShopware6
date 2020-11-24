@@ -182,6 +182,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                     break;
                 }
                 if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment" && $this->systemConfigService->get("ByjunoPayments.config.byjunoS5") == 'enabled') {
+                    $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
                     $request = $this->CreateShopRequestS5Cancel($order->getAmountTotal(),
                         $order->getCurrency()->getIsoCode(),
                         $order->getOrderNumber(),
@@ -190,12 +191,12 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                     $statusLog = "S5 Cancel request";
                     $xml = $request->createRequest();
                     $byjunoCommunicator = new ByjunoCommunicator();
-                    if (isset($mode) && $mode == 'Live') {
+                    if (isset($mode) && strtolower($mode) == 'live') {
                         $byjunoCommunicator->setServer('live');
                     } else {
                         $byjunoCommunicator->setServer('test');
                     }
-                    $response = $byjunoCommunicator->sendS4Request($xml);
+                    $response = $byjunoCommunicator->sendS4Request($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
                     if (isset($response)) {
                         $byjunoResponse = new ByjunoS4Response();
                         $byjunoResponse->setRawResponse($response);
@@ -237,6 +238,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
     {
         if ($this->systemConfigService->get("ByjunoPayments.config.byjunousecdp") == 'enabled' && $event->getSalesChannelContext()->getPaymentMethod()->getHandlerIdentifier() == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
             $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b");
+            $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
             $paymentMethod = "";
             if ($event->getSalesChannelContext()->getPaymentMethod()->getId() == ByjunoPayments::BYJUNO_INVOICE) {
                 $paymentMethod = "byjuno_payment_invoice";
@@ -252,7 +254,11 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                 $xml = $request->createRequest();
             }
             $communicator = new ByjunoCommunicator();
-            $communicator->setServer($this->systemConfigService->get("ByjunoPayments.config.mode"));
+            if (isset($mode) && strtolower($mode) == 'live') {
+                $communicator->setServer('live');
+            } else {
+                $communicator->setServer('test');
+            }
             $response = $communicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
             $statusCDP = 0;
             if ($response) {
