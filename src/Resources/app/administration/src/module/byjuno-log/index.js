@@ -4,7 +4,6 @@ import deDE from './snippet/de-DE.json';
 import enGB from './snippet/en-GB.json';
 
 const { Module } = Shopware;
-
 Module.register('byjuno-log', {
     type: 'plugin',
     name: 'Bundle',
@@ -33,10 +32,12 @@ Module.register('byjuno-log', {
     },
 
     navigation: [{
+        id: 'sw-byjuno-log',
+        parent: 'sw-extension',
         label: 'byjuno-log.general.mainMenuItemGeneral',
         color: '#ff3d58',
         path: 'byjuno.log.list',
         icon: 'default-shopping-paper-bag-product',
-        position: 100
+        position: 100,
     }]
 });

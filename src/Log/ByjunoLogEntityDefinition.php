@@ -40,8 +40,8 @@ class ByjunoLogEntityDefinition extends EntityDefinition
             new StringField('lastname', 'lastname'),
             new StringField('ip', 'ip'),
             new StringField('byjuno_status', 'byjuno_status'),
-            (new LongTextField('xml_request', 'xml_request'))->addFlags(new Required(), new SearchRanking(SearchRanking::LOW_SEARCH_RAKING)),
-            (new LongTextField('xml_response', 'xml_response'))->addFlags(new Required(), new SearchRanking(SearchRanking::LOW_SEARCH_RAKING)),
+            (new LongTextField('xml_request', 'xml_request'))->addFlags(new Required(), new SearchRanking(SearchRanking::LOW_SEARCH_RANKING)),
+            (new LongTextField('xml_response', 'xml_response'))->addFlags(new Required(), new SearchRanking(SearchRanking::LOW_SEARCH_RANKING)),
             new CreatedAtField(),
             new UpdatedAtField(),
         ]);
