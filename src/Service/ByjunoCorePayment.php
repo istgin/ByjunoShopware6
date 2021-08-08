@@ -6,6 +6,7 @@ use Psr\Container\ContainerInterface;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
 use Shopware\Core\Checkout\Payment\Cart\AsyncPaymentTransactionStruct;
 use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\AsynchronousPaymentHandlerInterface;
+use Shopware\Core\Checkout\Payment\Exception\AsyncPaymentFinalizeException;
 use Shopware\Core\Checkout\Payment\Exception\AsyncPaymentProcessException;
 use Shopware\Core\Checkout\Payment\Exception\CustomerCanceledAsyncPaymentException;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
@@ -71,13 +72,12 @@ class ByjunoCorePayment implements AsynchronousPaymentHandlerInterface
         $context = $salesChannelContext->getContext();
         if ($paymentState === 'completed') {
             // Payment completed, set transaction status to "paid"
-            $this->transactionStateHandler->paid($transaction->getOrderTransaction()->getId(), $context);
+            $this->transactionStateHandler->paid($transactionId, $context);
         } else {
-            // Payment not completed, set transaction status to "cancel"
-            $this->transactionStateHandler->cancel($transaction->getOrderTransaction()->getId(), $context);
-            $url = $this->container->get('router')->generate("frontend.checkout.byjunocancel", [], UrlGeneratorInterface::ABSOLUTE_PATH);
-            header("Location:".$url);
-            exit();
+            throw new AsyncPaymentFinalizeException(
+                $transactionId,
+                'CDP cancel payment'
+            );
         }
     }
 
