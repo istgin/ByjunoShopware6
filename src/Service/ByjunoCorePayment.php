@@ -74,9 +74,9 @@ class ByjunoCorePayment implements AsynchronousPaymentHandlerInterface
             // Payment completed, set transaction status to "paid"
             $this->transactionStateHandler->paid($transactionId, $context);
         } else {
-            throw new AsyncPaymentFinalizeException(
+            throw new CustomerCanceledAsyncPaymentException(
                 $transactionId,
-                'CDP cancel payment'
+                'CDP canceled the payment'
             );
         }
     }

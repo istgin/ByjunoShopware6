@@ -136,6 +136,7 @@ class ByjunoPayments extends Plugin
             'id' => self::BYJUNO_INVOICE,
             'position' => 0,
             'active' => false,
+            'afterOrderEnabled' => true,
             'pluginId' => $pluginId,
             'translations' => [
                 'de-DE' => [
@@ -153,6 +154,7 @@ class ByjunoPayments extends Plugin
             'id' => self::BYJUNO_INSTALLMENT,
             'position' => 0,
             'active' => false,
+            'afterOrderEnabled' => true,
             'pluginId' => $pluginId,
             'translations' => [
                 'de-DE' => [
