@@ -4,6 +4,7 @@ namespace Byjuno\ByjunoPayments\Log;
 
 use Shopware\Core\Framework\DataAbstractionLayer\EntityDefinition;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\CreatedAtField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\AllowHtml;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\PrimaryKey;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Required;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\SearchRanking;
@@ -40,8 +41,8 @@ class ByjunoLogEntityDefinition extends EntityDefinition
             new StringField('lastname', 'lastname'),
             new StringField('ip', 'ip'),
             new StringField('byjuno_status', 'byjuno_status'),
-            (new LongTextField('xml_request', 'xml_request'))->addFlags(new Required(), new SearchRanking(SearchRanking::LOW_SEARCH_RANKING)),
-            (new LongTextField('xml_response', 'xml_response'))->addFlags(new Required(), new SearchRanking(SearchRanking::LOW_SEARCH_RANKING)),
+            (new LongTextField('xml_request', 'xml_request'))->addFlags(new Required(), new AllowHtml(), new SearchRanking(SearchRanking::LOW_SEARCH_RANKING)),
+            (new LongTextField('xml_response', 'xml_response'))->addFlags(new Required(), new AllowHtml(), new SearchRanking(SearchRanking::LOW_SEARCH_RANKING)),
             new CreatedAtField(),
             new UpdatedAtField(),
         ]);
