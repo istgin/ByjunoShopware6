@@ -46,6 +46,8 @@ class ByjunoCorePayment implements AsynchronousPaymentHandlerInterface
         $customer = $salesChannelContext->getCustomer();
         // Method that sends the return URL to the external gateway and gets a redirect URL back
         try {
+            $transactionId = $transaction->getOrderTransaction()->getId();
+            $this->transactionStateHandler->process($transactionId, $salesChannelContext->getContext());
             $redirectUrl = $this->sendReturnUrlToExternalGateway($transaction);
         } catch (\Exception $e) {
             throw new AsyncPaymentProcessException(
