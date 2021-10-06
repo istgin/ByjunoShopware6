@@ -523,7 +523,10 @@ class ByjunodataController extends StorefrontController
         }
 
         $request->setGender(0);
-        $additionalInfo = $billingAddress->getSalutation();
+
+        /* @var $additionalInfoSalutation \Shopware\Core\System\Salutation\SalutationEntity */
+        $additionalInfoSalutation = $billingAddress->getSalutation();
+
         $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale");
         $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale");
         $genderMale = explode(",", $genderMaleStr);
@@ -545,14 +548,15 @@ class ByjunodataController extends StorefrontController
                 }
             }
         }
-        if (!empty($additionalInfo)) {
+        if (!empty($additionalInfoSalutation)) {
+            $name = $additionalInfoSalutation->getDisplayName();
             foreach ($genderMale as $ml) {
-                if (strtolower($additionalInfo) == strtolower(trim($ml))) {
+                if (strtolower($name) == strtolower(trim($ml))) {
                     $request->setGender(1);
                 }
             }
             foreach ($genderFemale as $feml) {
-                if (strtolower($additionalInfo) == strtolower(trim($feml))) {
+                if (strtolower($name) == strtolower(trim($feml))) {
                     $request->setGender(2);
                 }
             }
