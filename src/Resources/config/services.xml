@@ -44,6 +44,10 @@
             <tag name="kernel.event_subscriber"/>
         </service>
         <service id="Byjuno\ByjunoPayments\Controller\ByjunocancelController" public="true">
+            <argument type="service" id="Shopware\Core\Checkout\Cart\SalesChannel\CartService"/>
+            <argument type="service" id="Shopware\Core\Checkout\Cart\LineItemFactoryRegistry"/>
+            <argument type="service" id="Shopware\Core\Checkout\Order\SalesChannel\OrderRoute"/>
+            <argument type="service" id="Shopware\Core\Checkout\Order\SalesChannel\OrderService"/>
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
             </call>

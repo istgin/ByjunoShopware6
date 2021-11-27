@@ -3,17 +3,20 @@
 namespace Byjuno\ByjunoPayments\Service;
 
 use Psr\Container\ContainerInterface;
+use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
 use Shopware\Core\Checkout\Payment\Cart\AsyncPaymentTransactionStruct;
 use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\AsynchronousPaymentHandlerInterface;
 use Shopware\Core\Checkout\Payment\Exception\AsyncPaymentFinalizeException;
 use Shopware\Core\Checkout\Payment\Exception\AsyncPaymentProcessException;
 use Shopware\Core\Checkout\Payment\Exception\CustomerCanceledAsyncPaymentException;
+use Shopware\Core\Content\Product\Cart\ProductLineItemFactory;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Shopware\Core\Checkout\Order\SalesChannel\OrderService;
 
 class ByjunoCorePayment implements AsynchronousPaymentHandlerInterface
 {
@@ -76,10 +79,11 @@ class ByjunoCorePayment implements AsynchronousPaymentHandlerInterface
             // Payment completed, set transaction status to "paid"
             $this->transactionStateHandler->paid($transactionId, $context);
         } else {
-            throw new CustomerCanceledAsyncPaymentException(
-                $transactionId,
-                'CDP canceled the payment'
-            );
+            $this->transactionStateHandler->cancel($transaction->getOrderTransaction()->getId(), $context);
+            $order = $transaction->getOrder();
+            $url = $this->container->get('router')->generate("frontend.checkout.byjunocancel", ["orderid" => $order->getId()], UrlGeneratorInterface::ABSOLUTE_PATH);
+            header("Location:".$url);
+            exit();
         }
     }
 
@@ -89,4 +93,6 @@ class ByjunoCorePayment implements AsynchronousPaymentHandlerInterface
         $paymentProviderUrl = $url.'?returnurl='.urlencode($transaction->getReturnUrl())."&orderid=".$transaction->getOrder()->getId();
         return $paymentProviderUrl;
     }
+
+
 }
