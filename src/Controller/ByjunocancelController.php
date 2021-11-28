@@ -5,27 +5,47 @@ declare(strict_types=1);
 namespace Byjuno\ByjunoPayments\Controller;
 
 
+use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
+use Byjuno\ByjunoPayments\Api\Classes\ByjunoRequest;
+use Byjuno\ByjunoPayments\Api\Classes\ByjunoResponse;
 use Byjuno\ByjunoPayments\Utils\CustomProductsLineItemTypes;
+use Exception;
+use phpDocumentor\Reflection\Types\Array_;
+use RuntimeException;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Checkout\Cart\Exception\OrderNotFoundException;
 use Shopware\Core\Checkout\Cart\LineItemFactoryRegistry;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
+use Shopware\Core\Checkout\Customer\CustomerEntity;
+use Shopware\Core\Checkout\Order\Aggregate\OrderAddress\OrderAddressEntity;
+use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderLineItem\OrderLineItemCollection;
 use Shopware\Core\Checkout\Order\Aggregate\OrderLineItem\OrderLineItemEntity;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Checkout\Order\SalesChannel\AbstractOrderRoute;
 use Shopware\Core\Checkout\Order\SalesChannel\OrderService;
+use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
+use Shopware\Core\Framework\DataAbstractionLayer\Exception\InconsistentCriteriaIdsException;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\Framework\Routing\Exception\MissingRequestParameterException;
 use Shopware\Core\Framework\Uuid\Exception\InvalidUuidException;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
+use Shopware\Core\System\Language\LanguageEntity;
+use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepositoryInterface;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
+use Shopware\Core\System\Salutation\SalutationCollection;
+use Shopware\Core\System\Salutation\SalutationEntity;
 use Shopware\Core\System\StateMachine\Aggregation\StateMachineTransition\StateMachineTransitionActions;
+use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Storefront\Controller\StorefrontController;
 use Symfony\Component\HttpFoundation\ParameterBag;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Routing\Annotation\Route;
+use Shopware\Core\Framework\Routing\Annotation\RouteScope;
 
 class ByjunocancelController extends StorefrontController
 {
@@ -78,30 +98,6 @@ class ByjunocancelController extends StorefrontController
         // return $this->forwardToRoute("frontend.checkout.cart.page");
     }
 
-    public function addToCart(SalesChannelContext $salesChannelContext): void
-    {
-        if ($_SESSION["__BYJUNO_CART_SAVED"] == null) {
-            return;
-        }
-        $lineitmes = null;
-        try {
-            $lineitmes = @unserialize($_SESSION["__BYJUNO_CART_SAVED"]);
-            $_SESSION["__BYJUNO_CART_SAVED"] = null;
-        } catch (\Exception $e) {
-            //silent
-        }
-        if ($lineitmes != null) {
-            $cart = $this->cartService->getCart($salesChannelContext->getToken(), $salesChannelContext);
-            foreach ($lineitmes as $item) {
-                try {
-                    $this->cartService->add($cart, $item, $salesChannelContext);
-                } catch (\Exception $e) {
-                    //silent
-                }
-            }
-        }
-    }
-
     private function recreateCart(Cart $cart, Request $request, SalesChannelContext $salesChannelContext)
     {
         $orderId = $request->query->get('orderid');
@@ -118,7 +114,7 @@ class ByjunocancelController extends StorefrontController
                 return $this->redirectToRoute('frontend.home.page');
             }
 
-            $this->addFlash('danger', "XXXX");
+            $this->addFlash('danger', $this->trans('ByjunoPayment.cdp_error'));
 
             $orderItems        = $orderEntity->getLineItems();
             $hasCustomProducts = $this->hasCustomProducts($orderItems);
@@ -169,11 +165,6 @@ class ByjunocancelController extends StorefrontController
             ->addAssociation('lineItems.cover')
             ->addAssociation('transactions.paymentMethod')
             ->addAssociation('deliveries.shippingMethod');
-
-        $customer = $salesChannelContext->getCustomer();
-        if ($customer === null) {
-            $criteria = $criteria->addFilter(new EqualsFilter('order.orderCustomer.customerId', $customer->getId()));
-        }
 
         $criteria->getAssociation('transactions')->addSorting(new FieldSorting('createdAt'));
 
