@@ -689,7 +689,7 @@ class ByjunodataController extends StorefrontController
         }
 
         $extraInfo["Name"] = 'CONNECTIVTY_MODULE';
-        $extraInfo["Value"] = 'Byjuno ShopWare 6 module 1.1.1';
+        $extraInfo["Value"] = 'Byjuno ShopWare 6 module 1.2.0';
         $request->setExtraInfo($extraInfo);
         return $request;
 
