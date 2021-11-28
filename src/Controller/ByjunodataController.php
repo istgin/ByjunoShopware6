@@ -549,7 +549,7 @@ class ByjunodataController extends StorefrontController
             }
         }
         if (!empty($additionalInfoSalutation)) {
-            $name = $additionalInfoSalutation->getDisplayName();
+            $name = $additionalInfoSalutation->getSalutationKey();
             foreach ($genderMale as $ml) {
                 if (strtolower($name) == strtolower(trim($ml))) {
                     $request->setGender(1);
@@ -731,6 +731,7 @@ class ByjunodataController extends StorefrontController
     {
         $criteria = new Criteria([$order->getBillingAddressId()]);
         $criteria->addAssociation('country');
+        $criteria->addAssociation('salutation');
 
         /** @var null|OrderAddressEntity $address */
         $address = $this->orderAddressRepository->search($criteria, $context)->first();
