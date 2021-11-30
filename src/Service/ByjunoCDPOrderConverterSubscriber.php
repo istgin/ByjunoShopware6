@@ -203,6 +203,8 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                         $byjunoResponse->processResponse();
                         $statusCDP = $byjunoResponse->getProcessingInfoClassification();
                         $this->saveS5Log($event->getContext(), $request, $xml, $response, $statusCDP, $statusLog, "-", "-");
+                    } else {
+                        $this->saveS5Log($event->getContext(), $request, $xml, "Empty response", 0, $statusLog, "-", "-");
                     }
                 }
             }
@@ -270,6 +272,8 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                 if (intval($statusCDP) > 15) {
                     $statusCDP = 0;
                 }
+            } else {
+                $this->saveLog($event->getContext(), $request, $xml, "Empty response", $statusCDP, $statusLog);
             }
             if (!$this->isStatusOkCDP($statusCDP)) {
                 $violation = new ConstraintViolation(

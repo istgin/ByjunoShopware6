@@ -336,6 +336,8 @@ class ByjunodataController extends StorefrontController
                 if (intval($statusS1) > 15) {
                     $statusS1 = 0;
                 }
+            } else {
+                $this->saveLog($salesChannelContext->getContext(),$request, $xml, "Empty response", $statusS1, $statusLog);
             }
             if ($this->isStatusOkS2($statusS1)) {
                 $risk = $this->getStatusRisk($statusS1);
@@ -375,6 +377,8 @@ class ByjunodataController extends StorefrontController
                     if (intval($statusS3) > 15) {
                         $statusS3 = 0;
                     }
+                } else {
+                    $this->saveLog($salesChannelContext->getContext(), $request, $xml, "Empty response", $statusS3, $statusLog);
                 }
             } else {
                 return new RedirectResponse($returnUrlFail);
