@@ -77,6 +77,9 @@ class ByjunodataController extends StorefrontController
     /** @var EntityRepositoryInterface */
     private $orderAddressRepository;
 
+    /** @var EntityRepositoryInterface */
+    private $orderRepository;
+
     /** @var TranslatorInterface */
     private $translator;
     /**
@@ -96,6 +99,7 @@ class ByjunodataController extends StorefrontController
         SalesChannelRepositoryInterface $salutationRepository,
         EntityRepositoryInterface $languageRepository,
         EntityRepositoryInterface $orderAddressRepository,
+        EntityRepositoryInterface $orderRepository,
         TranslatorInterface $translator,
         MailService $mailService,
         EntityRepositoryInterface $mailTemplateRepository)
@@ -106,6 +110,7 @@ class ByjunodataController extends StorefrontController
         $this->salutationRepository = $salutationRepository;
         $this->languageRepository = $languageRepository;
         $this->orderAddressRepository = $orderAddressRepository;
+        $this->orderRepository = $orderRepository;
         $this->translator = $translator;
         $this->mailService = $mailService;
         $this->mailTemplateRepository = $mailTemplateRepository;
@@ -380,6 +385,15 @@ class ByjunodataController extends StorefrontController
                 } else {
                     $this->saveLog($salesChannelContext->getContext(), $request, $xml, "Empty response", $statusS3, $statusLog);
                 }
+
+                $fields = $order->getCustomFields();
+                $customFields = $fields ?? [];
+                $customFields = array_merge($customFields, ['byjuno_s3_sent' => 1]);
+                $update = [
+                    'id' => $order->getId(),
+                    'customFields' => $customFields,
+                ];
+                $this->orderRepository->update([$update], $salesChannelContext->getContext());
             } else {
                 return new RedirectResponse($returnUrlFail);
             }

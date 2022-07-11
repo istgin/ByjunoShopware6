@@ -10,13 +10,13 @@
                         <div class="card-body">
 
                             <p class="finish-ordernumber">
-                                {{ "ByjunoPayment.order_canceled" | trans }}
+                                {{ "ByjunoPayment.order_canceled" | trans | raw }}
                             </p>
 
                             <div class="finish-content">
                                 <div class="finish-action">
-                                    <a href="{{ path('frontend.home.page') }}" class="btn btn-primary finish-back-button" title="{{ "ByjunoPayment.back_to_shop" | trans }}">
-                                        {{ "ByjunoPayment.back_to_shop" | trans }}
+                                    <a href="{{ path('frontend.home.page') }}" class="btn btn-primary finish-back-button" title="{{ "ByjunoPayment.back_to_shop" | trans | raw }}">
+                                        {{ "ByjunoPayment.back_to_shop" | trans | raw }}
                                     </a>
                                 </div>
                             </div>

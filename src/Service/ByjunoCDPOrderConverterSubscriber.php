@@ -175,13 +175,16 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         if ($event->getEntityName() == 'order' && $event->getToPlace()->getTechnicalName() == "cancelled") {
             $order = $this->getOrder($event->getEntityId());
             if ($order != null) {
+                $customFields = $order->getCustomFields();
                 $paymentMethods = $order->getTransactions();
                 $paymentMethodId = '';
                 foreach ($paymentMethods as $pm) {
                     $paymentMethodId = $pm->getPaymentMethod()->getHandlerIdentifier();
                     break;
                 }
-                if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment" && $this->systemConfigService->get("ByjunoPayments.config.byjunoS5") == 'enabled') {
+                if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment" && $this->systemConfigService->get("ByjunoPayments.config.byjunoS5") == 'enabled'
+                    && !empty($customFields["byjuno_s3_sent"])
+                    && $customFields["byjuno_s3_sent"] == 1) {
                     $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
                     $request = $this->CreateShopRequestS5Cancel($order->getAmountTotal(),
                         $order->getCurrency()->getIsoCode(),
