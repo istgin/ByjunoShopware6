@@ -568,14 +568,16 @@ class ByjunodataController extends StorefrontController
         }
         if (!empty($additionalInfoSalutation)) {
             $name = $additionalInfoSalutation->getSalutationKey();
-            foreach ($genderMale as $ml) {
-                if (strtolower($name) == strtolower(trim($ml))) {
-                    $request->setGender(1);
+            if (!empty($name)) {
+                foreach ($genderMale as $ml) {
+                    if (strtolower($name) == strtolower(trim($ml))) {
+                        $request->setGender(1);
+                    }
                 }
-            }
-            foreach ($genderFemale as $feml) {
-                if (strtolower($name) == strtolower(trim($feml))) {
-                    $request->setGender(2);
+                foreach ($genderFemale as $feml) {
+                    if (strtolower($name) == strtolower(trim($feml))) {
+                        $request->setGender(2);
+                    }
                 }
             }
         }
