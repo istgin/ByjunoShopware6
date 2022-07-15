@@ -7,6 +7,7 @@ use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Request;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Response;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS5Request;
 use Shopware\Core\Checkout\Document\DocumentEntity;
+use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -17,6 +18,7 @@ use Shopware\Core\System\SystemConfig\SystemConfigService;
 
 class ByjunoCoreTask
 {
+    private static $MAX_RETRY_COUNT = 10;
     /**
      * @var SystemConfigService
      */
@@ -25,6 +27,10 @@ class ByjunoCoreTask
      * @var EntityRepositoryInterface
      */
     private $documentRepository;
+    /**
+     * @var EntityRepositoryInterface
+     */
+    private $orderRepository;
 
     /**
      * @var EntityRepositoryInterface
@@ -34,16 +40,78 @@ class ByjunoCoreTask
     public function __construct(
         SystemConfigService $systemConfigService,
         EntityRepositoryInterface $documentRepository,
+        EntityRepositoryInterface $orderRepository,
         EntityRepositoryInterface $logEntry)
     {
         $this->systemConfigService = $systemConfigService;
         $this->documentRepository = $documentRepository;
+        $this->orderRepository = $orderRepository;
         $this->logEntry = $logEntry;
     }
 
     public function TaskRun() {
 
         $context = Context::createDefaultContext();
+        if (true) {
+            $orders = $this->orderRepository->search(
+                (new Criteria())
+                    ->addFilter(new EqualsFilter('customFields.byjuno_s4_sent', 0))
+                    ->addSorting(new FieldSorting('createdAt', FieldSorting::ASCENDING))
+                , $context);
+            foreach ($orders as $simpleOrder) {
+                $order = $this->getOrder($simpleOrder->getId());
+                $date = $order->getCreatedAt()->format("Y-m-d");
+                $request = $this->CreateShopRequestS4($order->getOrderNumber(),
+                    $order->getAmountTotal(),
+                    $order->getAmountTotal(),
+                    $order->getCurrency()->getIsoCode(),
+                    $order->getOrderNumber(),
+                    $order->getOrderCustomer()->getId(),
+                    $date);
+                $statusLog = "S4 Request (order status)";
+
+                $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
+                $xml = $request->createRequest();
+                $byjunoCommunicator = new ByjunoCommunicator();
+                if (isset($mode) && strtolower($mode) == 'live') {
+                    $byjunoCommunicator->setServer('live');
+                } else {
+                    $byjunoCommunicator->setServer('test');
+                }
+                $response = $byjunoCommunicator->sendS4Request($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
+                $fields = $order->getCustomFields();
+                $customFields = $fields ?? [];
+                if (isset($response)) {
+                    $byjunoResponse = new ByjunoS4Response();
+                    $byjunoResponse->setRawResponse($response);
+                    $byjunoResponse->processResponse();
+                    $statusCDP = $byjunoResponse->getProcessingInfoClassification();
+                    $this->saveS4Log($context, $request, $xml, $response, $statusCDP, $statusLog, "-", "-");
+                    if ($statusCDP != "ERR") {
+                        $customFields = array_merge($customFields, ['byjuno_s4_retry' => 0, 'byjuno_s4_sent' => 1, 'byjuno_time' => time()]);
+                    } else {
+                        if ($fields["byjuno_s4_retry"] < self::$MAX_RETRY_COUNT) {
+                            $customFields = array_merge($customFields, ['byjuno_s4_retry' => ++$fields["byjuno_s4_retry"], 'byjuno_s4_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
+                        } else {
+                            $customFields = array_merge($customFields, ['byjuno_s4_retry' => ++$fields["byjuno_s4_retry"], 'byjuno_s4_sent' => 1, 'byjuno_time' => time()]);
+                        }
+                    }
+                } else {
+                    if ($fields["byjuno_doc_retry"] < self::$MAX_RETRY_COUNT) {
+                        $customFields = array_merge($customFields, ['byjuno_s4_retry' =>++$fields["byjuno_s4_retry"], 'byjuno_s4_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
+                    } else {
+                        $customFields = array_merge($customFields, ['byjuno_s4_retry' => ++$fields["byjuno_s4_retry"], 'byjuno_s4_sent' => 1, 'byjuno_time' => time()]);
+                        $this->saveS4Log($context, $request, $xml, "no response (network timeout)", 0, $statusLog, "-", "-");
+                    }
+                }
+                $update = [
+                    'id' => $order->getId(),
+                    'customFields' => $customFields,
+                ];
+                $this->orderRepository->update([$update], $context);
+            }
+        }
+
         $docs = $this->documentRepository->search(
             (new Criteria())->addFilter(new EqualsFilter('customFields.byjuno_doc_sent', 0))->addSorting(new FieldSorting('createdAt', FieldSorting::ASCENDING))
             , $context);
@@ -108,14 +176,14 @@ class ByjunoCoreTask
                     if ($statusCDP != "ERR") {
                         $customFields = array_merge($customFields, ['byjuno_doc_retry' => 0, 'byjuno_doc_sent' => 1, 'byjuno_time' => time()]);
                     } else {
-                        if ($fields["byjuno_doc_retry"] < 10) {
+                        if ($fields["byjuno_doc_retry"] < self::$MAX_RETRY_COUNT) {
                             $customFields = array_merge($customFields, ['byjuno_doc_retry' => ++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
                         } else {
                             $customFields = array_merge($customFields, ['byjuno_doc_retry' => ++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 1, 'byjuno_time' => time()]);
                         }
                     }
                 } else {
-                    if ($fields["byjuno_doc_retry"] < 10) {
+                    if ($fields["byjuno_doc_retry"] < self::$MAX_RETRY_COUNT) {
                         $customFields = array_merge($customFields, ['byjuno_doc_retry' =>++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
                     } else {
                         $customFields = array_merge($customFields, ['byjuno_doc_retry' => ++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 1, 'byjuno_time' => time()]);
@@ -221,6 +289,31 @@ class ByjunoCoreTask
         $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($entry): void {
             $this->logEntry->upsert([$entry], $context);
         });
+    }
+
+    public function getOrder(string $orderId): ?OrderEntity
+    {
+        $criteria = new Criteria([$orderId]);
+        $criteria->addAssociation('transactions');
+        $criteria->addAssociation('addresses');
+        $criteria->addAssociation('addresses.country');
+        $criteria->addAssociation('deliveries');
+        $criteria->addAssociation('deliveries.shippingMethod');
+        $criteria->addAssociation('deliveries.shippingOrderAddress.country');
+        $criteria->addAssociation('language');
+        $criteria->addAssociation('currency');
+        $criteria->addAssociation('salesChannel');
+        $criteria->addAssociation('billingAddress');
+        $criteria->addAssociation('billingAddress.country');
+        $criteria->addAssociation('salesChannel.paymentMethod');
+        $criteria->addAssociation('orderCustomer.customer');
+        $criteria->addAssociation('orderCustomer.salutation');
+        $criteria->addAssociation('transactions');
+        $criteria->addAssociation('transactions.paymentMethod');
+        $criteria->addAssociation('tags');
+        $criteria->addAssociation('transactions.paymentMethod');
+        $criteria->addAssociation('addresses');
+        return $this->orderRepository->search($criteria, Context::createDefaultContext())->get($orderId);
     }
 
 }

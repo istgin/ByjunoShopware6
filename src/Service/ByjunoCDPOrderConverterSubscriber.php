@@ -142,7 +142,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                             return;
 
                     }
-                    $order = $this->getOrder($doc->getOrderId());
+                    $order = $this->byjunoCoreTask->getOrder($doc->getOrderId());
                     if ($order != null) {
                         $paymentMethods = $order->getTransactions();
                         $paymentMethodId = '';
@@ -172,8 +172,40 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     public function onByjunoStateMachine(StateMachineTransitionEvent $event)
     {
+        /*
+        if ($event->getEntityName() == 'order_delivery') {
+            $order = $this->getOrderByDelivery($event->getEntityId());
+            file_put_contents("/tmp/xxx.txt", $order->getId());
+        }
+        */
+        if (true) {
+            if ($event->getEntityName() == 'order_delivery' && $event->getToPlace()->getTechnicalName() == 'shipped') {
+                $order = $this->getOrderByDelivery($event->getEntityId());
+                if ($order != null) {
+                    $fields = $order->getCustomFields();
+                    if (empty($fields["byjuno_s4_need"])) {
+                        $paymentMethods = $order->getTransactions();
+                        $paymentMethodId = '';
+                        foreach ($paymentMethods as $pm) {
+                            $paymentMethodId = $pm->getPaymentMethod()->getHandlerIdentifier();
+                            break;
+                        }
+                        if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
+                            $customFields = $fields ?? [];
+                            $customFields = array_merge($customFields, ['byjuno_s4_sent' => 0, 'byjuno_s4_retry' => 0, 'byjuno_time' => 0]);
+                            $update = [
+                                'id' => $order->getId(),
+                                'customFields' => $customFields,
+                            ];
+                            $orderRepo = $this->container->get('order.repository');
+                            $orderRepo->update([$update], $event->getContext());
+                        }
+                    }
+                }
+            }
+        }
         if ($event->getEntityName() == 'order' && $event->getToPlace()->getTechnicalName() == "cancelled") {
-            $order = $this->getOrder($event->getEntityId());
+            $order = $this->byjunoCoreTask->getOrder($event->getEntityId());
             if ($order != null) {
                 $customFields = $order->getCustomFields();
                 $paymentMethods = $order->getTransactions();
@@ -635,33 +667,19 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         return $request;
     }
 
-
-    private function getOrder(string $orderId): ?OrderEntity
+    private function getOrderByDelivery(string $deliveryId): ?OrderEntity
     {
-        /** @var EntityRepositoryInterface $orderRepo */
-        $orderRepo = $this->container->get('order.repository');
+        /** @var EntityRepositoryInterface $orderDeliveryRepo */
+        $orderDeliveryRepo = $this->container->get('order_delivery.repository');
 
-        $criteria = new Criteria([$orderId]);
-        $criteria->addAssociation('transactions');
-        $criteria->addAssociation('addresses');
-        $criteria->addAssociation('addresses.country');
-        $criteria->addAssociation('deliveries');
-        $criteria->addAssociation('deliveries.shippingMethod');
-        $criteria->addAssociation('deliveries.shippingOrderAddress.country');
-        $criteria->addAssociation('language');
-        $criteria->addAssociation('currency');
-        $criteria->addAssociation('salesChannel');
-        $criteria->addAssociation('billingAddress');
-        $criteria->addAssociation('billingAddress.country');
-        $criteria->addAssociation('salesChannel.paymentMethod');
-        $criteria->addAssociation('orderCustomer.customer');
-        $criteria->addAssociation('orderCustomer.salutation');
-        $criteria->addAssociation('transactions');
-        $criteria->addAssociation('transactions.paymentMethod');
-        $criteria->addAssociation('tags');
-        $criteria->addAssociation('transactions.paymentMethod');
-        $criteria->addAssociation('addresses');
-        return $orderRepo->search($criteria, Context::createDefaultContext())->get($orderId);
+        $criteria = new Criteria([$deliveryId]);
+        /* @var $orderDeliveryEntity OrderDeliveryEntity */
+        $orderDeliveryEntity = $orderDeliveryRepo->search($criteria, Context::createDefaultContext())->get($deliveryId);
+        if ($orderDeliveryEntity == null) {
+            return null;
+        }
+        $orderId = $orderDeliveryEntity->getOrderId();
+        return $this->byjunoCoreTask->getOrder($orderId);
     }
 
     private function getInvoiceById(string $documentId): ?DocumentEntity
