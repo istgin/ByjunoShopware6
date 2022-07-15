@@ -151,10 +151,12 @@ class ByjunodataController extends StorefrontController
         $dob_year = null;
         $dob_month = null;
         $dob_day = null;
+        $customer_dob_provided = false;
         if ($dob != null) {
             $dob_year = intval($dob->format("Y"));
             $dob_month = intval($dob->format("m"));
             $dob_day = intval($dob->format("d"));
+            $customer_dob_provided = true;
         }
         $paymentplans = Array();
         $selected = "";
@@ -232,6 +234,7 @@ class ByjunodataController extends StorefrontController
         }
 
         $this->systemConfigService->get("ByjunoPayments.config.singleinvoice");
+        $customerSalutation = $order->getOrderCustomer()->getSalutationId();
         $params = Array(
             "payment_method" => $payment_method,
             "send_invoice" => $send_invoice,
@@ -243,12 +246,18 @@ class ByjunodataController extends StorefrontController
             "salutations" => $this->getSalutations($context),
             "paymentplans" => $paymentplans,
             "selected" => $selected,
-            "current_salutation" => $order->getOrderCustomer()->getSalutationId(),
+            "current_salutation" => $customerSalutation,
             "current_year" => $dob_year,
             "current_month" => $dob_month,
             "current_day" => $dob_day
         );
         if (!$invoiceDeliveryEnabled && !$custom_gender_enable && !$custom_bd_enable && count($paymentplans) == 1) {
+            $_SESSION["_byjuno_single_payment"] = $selected;
+            $url = $this->container->get('router')->generate("frontend.checkout.byjunosubmit", [], UrlGeneratorInterface::ABSOLUTE_PATH);
+            $singleReturnUrl = $url.'?returnurl='.urlencode($request->query->get("returnurl")).'&orderid='.$request->query->get("orderid");
+            return new RedirectResponse($singleReturnUrl);
+        }
+        if (!$invoiceDeliveryEnabled && count($paymentplans) == 1 && $customer_dob_provided && !empty($customerSalutation)) {
             $_SESSION["_byjuno_single_payment"] = $selected;
             $url = $this->container->get('router')->generate("frontend.checkout.byjunosubmit", [], UrlGeneratorInterface::ABSOLUTE_PATH);
             $singleReturnUrl = $url.'?returnurl='.urlencode($request->query->get("returnurl")).'&orderid='.$request->query->get("orderid");
@@ -466,6 +475,7 @@ class ByjunodataController extends StorefrontController
         $criteria->addAssociation('tags');
         $criteria->addAssociation('transactions.paymentMethod');
         $criteria->addAssociation('addresses');
+        $criteria->addAssociation('lineItems');
         return $orderRepo->search($criteria, Context::createDefaultContext())->get($orderId);
     }
 
