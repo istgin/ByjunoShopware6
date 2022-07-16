@@ -52,7 +52,8 @@ class ByjunoCoreTask
     public function TaskRun() {
 
         $context = Context::createDefaultContext();
-        if (true) {
+        if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger") == 'orderstatus' &&
+            $this->systemConfigService->get("ByjunoPayments.config.byjunoS4") == 'enabled' ) {
             $orders = $this->orderRepository->search(
                 (new Criteria())
                     ->addFilter(new EqualsFilter('customFields.byjuno_s4_sent', 0))
@@ -97,7 +98,7 @@ class ByjunoCoreTask
                         }
                     }
                 } else {
-                    if ($fields["byjuno_doc_retry"] < self::$MAX_RETRY_COUNT) {
+                    if ($fields["byjuno_s4_retry"] < self::$MAX_RETRY_COUNT) {
                         $customFields = array_merge($customFields, ['byjuno_s4_retry' =>++$fields["byjuno_s4_retry"], 'byjuno_s4_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
                     } else {
                         $customFields = array_merge($customFields, ['byjuno_s4_retry' => ++$fields["byjuno_s4_retry"], 'byjuno_s4_sent' => 1, 'byjuno_time' => time()]);
@@ -138,7 +139,8 @@ class ByjunoCoreTask
                     $date);
                 $statusLog = "S5 Refund request";
             } else if ($name == "invoice") {
-                if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4") != 'enabled') {
+                if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4") != 'enabled'
+                    || $this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger") != 'invoice') {
                     return;
                 }
                 $order = $getDoc->getOrder();

@@ -25,5 +25,6 @@ class ByjunoCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->byjunoCoreTask->TaskRun();
+        return 1;
     }
 }

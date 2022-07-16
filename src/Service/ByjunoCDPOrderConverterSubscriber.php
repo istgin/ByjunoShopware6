@@ -137,6 +137,9 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                             if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4") != 'enabled') {
                                 return;
                             }
+                            if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger") != 'invoice') {
+                                return;
+                            }
                             break;
                         default:
                             return;
@@ -172,18 +175,17 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     public function onByjunoStateMachine(StateMachineTransitionEvent $event)
     {
-        /*
-        if ($event->getEntityName() == 'order_delivery') {
-            $order = $this->getOrderByDelivery($event->getEntityId());
-            file_put_contents("/tmp/xxx.txt", $order->getId());
+
+        if ($event->getEntityName() == 'order') {
+            file_put_contents("/tmp/xxx.txt", $event->getToPlace()->getTechnicalName().'-'.$this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger").'-'.$this->systemConfigService->get("ByjunoPayments.config.byjunoS4triggername"));
         }
-        */
-        if (true) {
-            if ($event->getEntityName() == 'order_delivery' && $event->getToPlace()->getTechnicalName() == 'shipped') {
-                $order = $this->getOrderByDelivery($event->getEntityId());
+
+        if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger") == 'orderstatus') {
+            if ($event->getEntityName() == 'order' && $event->getToPlace()->getTechnicalName() == $this->systemConfigService->get("ByjunoPayments.config.byjunoS4triggername")) {
+                $order = $this->byjunoCoreTask->getOrder($event->getEntityId());
                 if ($order != null) {
                     $fields = $order->getCustomFields();
-                    if (empty($fields["byjuno_s4_need"])) {
+                    if (empty($fields["byjuno_s4_sent"])) {
                         $paymentMethods = $order->getTransactions();
                         $paymentMethodId = '';
                         foreach ($paymentMethods as $pm) {

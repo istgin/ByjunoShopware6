@@ -205,6 +205,29 @@
             </options>
         </input-field>
         <input-field type="single-select">
+            <name>byjunoS4trigger</name>
+            <label>S4 trigger place</label>
+            <defaultValue>invoice</defaultValue>
+            <options>
+                <option>
+                    <id>invoice</id>
+                    <name>On invoice created</name>
+                    <name lang="de-DE">On invoice created</name>
+                </option>
+                <option>
+                    <id>orderstatus</id>
+                    <name>On order status change (Specify order status below)</name>
+                    <name lang="de-DE">On order status change (Specify order status below)</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field>
+            <name>byjunoS4triggername</name>
+            <label>Specify order status to trigger S4 (open,in_progress,completed)</label>
+            <label lang="de-DE">Specify order status to trigger S4 (open,in_progress,completed)</label>
+            <defaultValue>completed</defaultValue>
+        </input-field>
+        <input-field type="single-select">
             <name>byjunoS5</name>
             <label>S5 transactions</label>
             <defaultValue>enabled</defaultValue>
