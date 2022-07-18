@@ -234,8 +234,31 @@ class ByjunodataController extends StorefrontController
         }
 
         $this->systemConfigService->get("ByjunoPayments.config.singleinvoice");
-        $customerSalutation = $order->getOrderCustomer()->getSalutationId();
-        $params = Array(
+        $customerSalutationSpecified = false;
+        $customerSalutationId = $order->getOrderCustomer()->getSalutationId();
+        $customerSalutationObj = $order->getOrderCustomer()->getSalutation();
+        $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale");
+        $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale");
+        $genderMale = explode(",", $genderMaleStr);
+        $genderFemale = explode(",", $genderFemaleStr);
+        if ($customerSalutationObj != null) {
+            $salName = $customerSalutationObj->getDisplayName();
+            if (!empty($salName)) {
+                foreach ($genderMale as $ml) {
+                    if (strtolower($salName) == strtolower(trim($ml))) {
+                        $customerSalutationSpecified = true;
+                        break;
+                    }
+                }
+                foreach ($genderFemale as $feml) {
+                    if (strtolower($salName) == strtolower(trim($feml))) {
+                        $customerSalutationSpecified = true;
+                        break;
+                    }
+                }
+            }
+        }
+       $params = Array(
             "payment_method" => $payment_method,
             "send_invoice" => $send_invoice,
             "returnurl" => urlencode($request->query->get("returnurl")),
@@ -246,7 +269,7 @@ class ByjunodataController extends StorefrontController
             "salutations" => $this->getSalutations($context),
             "paymentplans" => $paymentplans,
             "selected" => $selected,
-            "current_salutation" => $customerSalutation,
+            "current_salutation" => $customerSalutationId,
             "current_year" => $dob_year,
             "current_month" => $dob_month,
             "current_day" => $dob_day
@@ -257,7 +280,10 @@ class ByjunodataController extends StorefrontController
             $singleReturnUrl = $url.'?returnurl='.urlencode($request->query->get("returnurl")).'&orderid='.$request->query->get("orderid");
             return new RedirectResponse($singleReturnUrl);
         }
-        if (!$invoiceDeliveryEnabled && count($paymentplans) == 1 && $customer_dob_provided && !empty($customerSalutation)) {
+        if (!$invoiceDeliveryEnabled
+            && count($paymentplans) == 1
+            && ($customer_dob_provided || !$custom_bd_enable)
+            && ($customerSalutationSpecified || !$custom_gender_enable)) {
             $_SESSION["_byjuno_single_payment"] = $selected;
             $url = $this->container->get('router')->generate("frontend.checkout.byjunosubmit", [], UrlGeneratorInterface::ABSOLUTE_PATH);
             $singleReturnUrl = $url.'?returnurl='.urlencode($request->query->get("returnurl")).'&orderid='.$request->query->get("orderid");
