@@ -221,11 +221,29 @@
                 </option>
             </options>
         </input-field>
-        <input-field>
+
+        <input-field type="single-select">
             <name>byjunoS4triggername</name>
-            <label>Specify order status to trigger S4 (open,in_progress,completed)</label>
-            <label lang="de-DE">Specify order status to trigger S4 (open,in_progress,completed)</label>
+            <label>Specify order status to trigger S4 (completed,open,in_progress)</label>
+            <label lang="de-DE">Specify order status to trigger S4 (completed,open,in_progress)</label>
             <defaultValue>completed</defaultValue>
+            <options>
+                <option>
+                    <id>completed</id>
+                    <name>completed</name>
+                    <name lang="de-DE">completed</name>
+                </option>
+                <option>
+                    <id>open</id>
+                    <name>open</name>
+                    <name lang="de-DE">open</name>
+                </option>
+                <option>
+                    <id>in_progress</id>
+                    <name>in_progress</name>
+                    <name lang="de-DE">in_progress</name>
+                </option>
+            </options>
         </input-field>
         <input-field type="single-select">
             <name>byjunoS5</name>
