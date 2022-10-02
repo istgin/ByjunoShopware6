@@ -176,10 +176,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
     public function onByjunoStateMachine(StateMachineTransitionEvent $event)
     {
 
-        if ($event->getEntityName() == 'order') {
-            file_put_contents("/tmp/xxx.txt", $event->getToPlace()->getTechnicalName().'-'.$this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger").'-'.$this->systemConfigService->get("ByjunoPayments.config.byjunoS4triggername"));
-        }
-
         if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger") == 'orderstatus') {
             if ($event->getEntityName() == 'order' && $event->getToPlace()->getTechnicalName() == $this->systemConfigService->get("ByjunoPayments.config.byjunoS4triggername")) {
                 $order = $this->byjunoCoreTask->getOrder($event->getEntityId());
