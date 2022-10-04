@@ -27,6 +27,7 @@
     "cdp_error" : "You are not allowed to pay with this payment method. Please try different.",
     "order_canceled" : "Payment unsuccessful. Your order is canceled",
     "back_to_shop" : "Back to the shop",
-    "t_and_c": "(T&C)"
+    "t_and_c": "(T&C)",
+    "byjunoauthflow": "ByjunoAuth"
   }
 }

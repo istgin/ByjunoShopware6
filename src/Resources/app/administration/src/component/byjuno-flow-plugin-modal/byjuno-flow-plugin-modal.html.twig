@@ -1,0 +1,39 @@
+{% block byjuno_flow_plugin_modal %}
+<sw-modal
+    class="byjuno-flow-plugin-modal"
+    :title="$tc('ByjunoPayment.byjunoCreateAuth')"
+    @modal-close="onClose"
+>
+    {% block byjuno_flow_plugin_modal_content %}
+        <div>
+           {{ $tc('ByjunoPayment.byjunoCreateAuthText') }}
+        </div>
+    {% endblock %}
+
+    {% block byjuno_flow_plugin_modal_footer %}
+    <template #modal-footer>
+        {% block byjuno_flow_plugin_modal_footer_cancel_button %}
+        <sw-button
+            class="byjuno-flow-plugin-modal__cancel-button"
+            size="small"
+            @click="onClose"        >
+            {{ $tc('global.default.cancel') }}
+        </sw-button>
+        {% endblock %}
+
+        {% block byjuno_flow_plugin_modal_footer_save_button %}
+        <sw-button
+            class="byjuno-flow-plugin-modal__save-button"
+            variant="primary"
+            size="small"
+            @click="onAddAction"
+        >
+            {{ sequence.id
+            ? $tc('ByjunoPayment.byjunoButtonSaveAction')
+            : $tc('ByjunoPayment.byjunoButtonAddAction') }}
+        </sw-button>
+        {% endblock %}
+    </template>
+    {% endblock %}
+</sw-modal>
+{% endblock %}
