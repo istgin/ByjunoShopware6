@@ -59,7 +59,7 @@ class ByjunoCoreTask
     {
 
         $context = Context::createDefaultContext();
-        if (/* $this->systemConfigService->get("ByjunoPayments.config.byjunoS3Action") == 'enabled' */ true) {
+        if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionEnable") == 'enabled') {
 
             $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b");
             $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
@@ -77,10 +77,10 @@ class ByjunoCoreTask
                     $fullOrder,
                     $context,
                     $fullOrder->getOrderNumber(),
-                    "byjuno_payment_invoice",
-                    "single_invoice",
+                    $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionPaymentMethod"),
+                    $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionRepayment"),
                     "",
-                    "email",
+                    $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionDelivery"),
                     "",
                     "",
                     "",
@@ -123,10 +123,10 @@ class ByjunoCoreTask
                         $fullOrder,
                         $context,
                         $fullOrder->getOrderNumber(),
-                        "byjuno_payment_invoice",
-                        "single_invoice",
+                        $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionPaymentMethod"),
+                        $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionRepayment"),
                         $risk,
-                        "email",
+                        $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionDelivery"),
                         "",
                         "",
                         $transactionNumber,
@@ -176,6 +176,8 @@ class ByjunoCoreTask
                 $this->orderRepository->update([$update], $context);
             }
         }
+
+
         if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger") == 'orderstatus' &&
             $this->systemConfigService->get("ByjunoPayments.config.byjunoS4") == 'enabled') {
             $orders = $this->orderRepository->search(

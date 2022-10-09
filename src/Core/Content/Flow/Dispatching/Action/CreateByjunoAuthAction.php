@@ -7,15 +7,20 @@ use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Content\Flow\Dispatching\Action\FlowAction;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\Event\FlowEvent;
+use Shopware\Core\System\SystemConfig\SystemConfigService;
 
 class CreateByjunoAuthAction extends FlowAction
 {
     private $orderRepository;
+    /**
+     * @var SystemConfigService
+     */
+    private $systemConfigService;
 
-    public function __construct(EntityRepositoryInterface $orderRepository)
+    public function __construct(EntityRepositoryInterface $orderRepository, SystemConfigService $systemConfigService)
     {
-        // you would need this repository to create a tag
         $this->orderRepository = $orderRepository;
+        $this->systemConfigService = $systemConfigService;
     }
 
     public static function getName(): string
@@ -38,6 +43,9 @@ class CreateByjunoAuthAction extends FlowAction
 
     public function handle(FlowEvent $event): void
     {
+        if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionEnable") != 'enabled') {
+            return;
+        }
         $event = $event->getEvent();
         if (!method_exists($event, 'getOrder')) {
             return;

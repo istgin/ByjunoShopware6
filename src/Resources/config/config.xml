@@ -291,6 +291,104 @@
             <label lang="de-DE">Accepted statuses for S3 response</label>
             <defaultValue>2</defaultValue>
         </input-field>
+        <input-field type="single-select">
+            <name>byjunoS3ActionEnable</name>
+            <label>Enable byjuno flow action</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>byjunoS3ActionPaymentMethod</name>
+            <label>Byjuno flow payment method</label>
+            <defaultValue>byjuno_payment_invoice</defaultValue>
+            <options>
+                <option>
+                    <id>byjuno_payment_invoice</id>
+                    <name>Invoice</name>
+                    <name lang="de-DE">Invoice</name>
+                </option>
+                <option>
+                    <id>byjuno_payment_installment</id>
+                    <name>Installment</name>
+                    <name lang="de-DE">installment</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>byjunoS3ActionRepayment</name>
+            <label>Byjuno flow payment plan</label>
+            <defaultValue>byjuno_invoice</defaultValue>
+            <options>
+                <option>
+                    <id>single_invoice</id>
+                    <name>Single invoice</name>
+                    <name lang="de-DE">Single invoice</name>
+                </option>
+                <option>
+                    <id>byjuno_invoice</id>
+                    <name>Byjuno invoice</name>
+                    <name lang="de-DE">Byjuno invoice</name>
+                </option>
+                <option>
+                    <id>installment_3</id>
+                    <name>3 Installments</name>
+                    <name lang="de-DE">3 Installments</name>
+                </option>
+                <option>
+                    <id>installment_10</id>
+                    <name>10 Installments</name>
+                    <name lang="de-DE">10 Installments</name>
+                </option>
+                <option>
+                    <id>installment_12</id>
+                    <name>12 Installments</name>
+                    <name lang="de-DE">12 Installments</name>
+                </option>
+                <option>
+                    <id>installment_24</id>
+                    <name>24 Installments</name>
+                    <name lang="de-DE">24 Installments</name>
+                </option>
+                <option>
+                    <id>installment_4x12</id>
+                    <name>4 Installments in 12 months</name>
+                    <name lang="de-DE">4 Installments in 12 months</name>
+                </option>
+                <option>
+                    <id>installment_36</id>
+                    <name>36 Installments</name>
+                    <name lang="de-DE">36 Installments</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>byjunoS3ActionDelivery</name>
+            <label>Byjuno flow invoice delivery method</label>
+            <defaultValue>email</defaultValue>
+            <options>
+                <option>
+                    <id>email</id>
+                    <name>Email</name>
+                    <name lang="de-DE">Email</name>
+                </option>
+                <option>
+                    <id>postal</id>
+                    <name>Postal</name>
+                    <name lang="de-DE">Postal</name>
+                </option>
+            </options>
+        </input-field>
 
     </card>
     <card>
