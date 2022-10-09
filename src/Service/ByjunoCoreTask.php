@@ -3,6 +3,7 @@
 namespace Byjuno\ByjunoPayments\Service;
 
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
+use Byjuno\ByjunoPayments\Api\Classes\ByjunoResponse;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Request;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Response;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS5Request;
@@ -52,6 +53,115 @@ class ByjunoCoreTask
     public function TaskRun() {
 
         $context = Context::createDefaultContext();
+        if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS3Action") == 'enabled' ) {
+
+            $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b");
+            $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
+
+            $ordersForS3 = $this->orderRepository->search(
+                (new Criteria())
+                    ->addFilter(new EqualsFilter('customFields.byjuno_s3_sent', 0))
+                    ->addSorting(new FieldSorting('createdAt', FieldSorting::ASCENDING))
+                , $context);
+            foreach ($ordersForS3 as $simpleOrder) {
+                $request = $this->Byjuno_CreateShopWareShopRequestUserBilling(
+                    $context,
+                    $simpleOrder,
+                    $context,
+                    $simpleOrder->getOrderNumber(),
+                    $_SESSION["_byjyno_payment_method"],
+                    $this->systemConfigService->get("ByjunoPayments.config.byjunoS3PaymentPlan"),
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "NO");
+                $statusLog = "Order request (S1)";
+                if ($request->getCompanyName1() != '' && $b2b == 'enabled') {
+                    $statusLog = "Order request for company (S1)";
+                    $xml = $request->createRequestCompany();
+                } else {
+                    $xml = $request->createRequest();
+                }
+                $communicator = new ByjunoCommunicator();
+                if (isset($mode) && strtolower($mode) == 'live') {
+                    $communicator->setServer('live');
+                } else {
+                    $communicator->setServer('test');
+                }
+                $response = $communicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
+                $statusS1 = 0;
+                $statusS3 = 0;
+                $transactionNumber = "";
+                if ($response) {
+                    $intrumResponse = new ByjunoResponse();
+                    $intrumResponse->setRawResponse($response);
+                    $intrumResponse->processResponse();
+                    $statusS1 = (int)$intrumResponse->getCustomerRequestStatus();
+                    $this->saveLog($context->getContext(),$request, $xml, $response, $statusS1, $statusLog);
+                    $transactionNumber = $intrumResponse->getTransactionNumber();
+                    if (intval($statusS1) > 15) {
+                        $statusS1 = 0;
+                    }
+                } else {
+                    $this->saveLog($context->getContext(),$request, $xml, "Empty response", $statusS1, $statusLog);
+                }
+                if ($this->isStatusOkS2($statusS1)) {
+                    $risk = $this->getStatusRisk($statusS1);
+                    $requestS3 = $this->Byjuno_CreateShopWareShopRequestUserBilling(
+                        $context,
+                        $simpleOrder,
+                        $context,
+                        $simpleOrder->getOrderNumber(),
+                        $_SESSION["_byjyno_payment_method"],
+                        $paymentplan,
+                        $risk,
+                        $invoiceDelivery,
+                        "",
+                        "",
+                        $transactionNumber,
+                        "YES");
+                    $statusLog = "Order complete (S3)";
+                    if ($requestS3->getCompanyName1() != '' && $b2b == 'enabled') {
+                        $statusLog = "Order complete for company (S3)";
+                        $xml = $requestS3->createRequestCompany();
+                    } else {
+                        $xml = $requestS3->createRequest();
+                    }
+                    $byjunoCommunicator = new ByjunoCommunicator();
+                    if (isset($mode) && strtolower($mode) == 'live') {
+                        $byjunoCommunicator->setServer('live');
+                    } else {
+                        $byjunoCommunicator->setServer('test');
+                    }
+                    $response = $byjunoCommunicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
+                    if (isset($response)) {
+                        $byjunoResponse = new ByjunoResponse();
+                        $byjunoResponse->setRawResponse($response);
+                        $byjunoResponse->processResponse();
+                        $statusS3 = (int)$byjunoResponse->getCustomerRequestStatus();
+                        $this->saveLog($salesChannelContext->getContext(), $request, $xml, $response, $statusS3, $statusLog);
+                        if (intval($statusS3) > 15) {
+                            $statusS3 = 0;
+                        }
+                    } else {
+                        $this->saveLog($salesChannelContext->getContext(), $request, $xml, "Empty response", $statusS3, $statusLog);
+                    }
+
+                    $fields = $order->getCustomFields();
+                    $customFields = $fields ?? [];
+                    $customFields = array_merge($customFields, ['byjuno_s3_sent' => 1]);
+                    $update = [
+                        'id' => $order->getId(),
+                        'customFields' => $customFields,
+                    ];
+                    $this->orderRepository->update([$update], $salesChannelContext->getContext());
+                } else {
+                    return new RedirectResponse($returnUrlFail);
+                }
+            }
+        }
         if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger") == 'orderstatus' &&
             $this->systemConfigService->get("ByjunoPayments.config.byjunoS4") == 'enabled' ) {
             $orders = $this->orderRepository->search(

@@ -51,12 +51,20 @@ class CreateByjunoAuthAction extends FlowAction
         if (!empty($fields["byjuno_s3_sent"])) {
             return;
         }
-        $customFields = $fields ?? [];
-        $customFields = array_merge($customFields, ['byjuno_s3_sent' => 0]);
-        $update = [
-            'id' => $order->getId(),
-            'customFields' => $customFields,
-        ];
-        $this->orderRepository->update([$update], $event->getContext());
+        $paymentMethods = $order->getTransactions();
+        $paymentMethodId = '';
+        foreach ($paymentMethods as $pm) {
+            $paymentMethodId = $pm->getPaymentMethod()->getHandlerIdentifier();
+            break;
+        }
+        if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
+            $customFields = $fields ?? [];
+            $customFields = array_merge($customFields, ['byjuno_s3_sent' => 0]);
+            $update = [
+                'id' => $order->getId(),
+                'customFields' => $customFields,
+            ];
+            $this->orderRepository->update([$update], $event->getContext());
+        }
     }
 }
