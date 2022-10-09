@@ -8,7 +8,6 @@ use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Request;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Response;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS5Request;
 use Shopware\Core\Checkout\Document\DocumentEntity;
-use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -37,23 +36,30 @@ class ByjunoCoreTask
      * @var EntityRepositoryInterface
      */
     private $logEntry;
+    /**
+     * @var ByjunoCDPOrderConverterSubscriber
+     */
+    private $byjuno;
 
     public function __construct(
         SystemConfigService $systemConfigService,
         EntityRepositoryInterface $documentRepository,
         EntityRepositoryInterface $orderRepository,
-        EntityRepositoryInterface $logEntry)
+        EntityRepositoryInterface $logEntry,
+        ByjunoCDPOrderConverterSubscriber $byjuno)
     {
         $this->systemConfigService = $systemConfigService;
         $this->documentRepository = $documentRepository;
         $this->orderRepository = $orderRepository;
         $this->logEntry = $logEntry;
+        $this->byjuno = $byjuno;
     }
 
-    public function TaskRun() {
+    public function TaskRun()
+    {
 
         $context = Context::createDefaultContext();
-        if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS3Action") == 'enabled' ) {
+        if (/* $this->systemConfigService->get("ByjunoPayments.config.byjunoS3Action") == 'enabled' */ true) {
 
             $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b");
             $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
@@ -64,22 +70,24 @@ class ByjunoCoreTask
                     ->addSorting(new FieldSorting('createdAt', FieldSorting::ASCENDING))
                 , $context);
             foreach ($ordersForS3 as $simpleOrder) {
-                $request = $this->Byjuno_CreateShopWareShopRequestUserBilling(
+                $fullOrder = $this->byjuno->getOrder($simpleOrder->getId());
+                $lastTransaction = $fullOrder->getTransactions()->last();
+                $request = $this->byjuno->Byjuno_CreateShopWareShopRequestUserBilling(
                     $context,
-                    $simpleOrder,
+                    $fullOrder,
                     $context,
-                    $simpleOrder->getOrderNumber(),
-                    $_SESSION["_byjyno_payment_method"],
-                    $this->systemConfigService->get("ByjunoPayments.config.byjunoS3PaymentPlan"),
+                    $fullOrder->getOrderNumber(),
+                    "byjuno_payment_invoice",
+                    "single_invoice",
                     "",
-                    "",
+                    "email",
                     "",
                     "",
                     "",
                     "NO");
-                $statusLog = "Order request (S1)";
+                $statusLog = "Order request backend (S1)";
                 if ($request->getCompanyName1() != '' && $b2b == 'enabled') {
-                    $statusLog = "Order request for company (S1)";
+                    $statusLog = "Order request for company backend (S1)";
                     $xml = $request->createRequestCompany();
                 } else {
                     $xml = $request->createRequest();
@@ -99,32 +107,33 @@ class ByjunoCoreTask
                     $intrumResponse->setRawResponse($response);
                     $intrumResponse->processResponse();
                     $statusS1 = (int)$intrumResponse->getCustomerRequestStatus();
-                    $this->saveLog($context->getContext(),$request, $xml, $response, $statusS1, $statusLog);
+                    $this->byjuno->saveLog($context, $request, $xml, $response, $statusS1, $statusLog);
                     $transactionNumber = $intrumResponse->getTransactionNumber();
                     if (intval($statusS1) > 15) {
                         $statusS1 = 0;
                     }
                 } else {
-                    $this->saveLog($context->getContext(),$request, $xml, "Empty response", $statusS1, $statusLog);
+                    $this->byjuno->saveLog($context, $request, $xml, "Empty response backend", $statusS1, $statusLog);
+                    continue;
                 }
-                if ($this->isStatusOkS2($statusS1)) {
-                    $risk = $this->getStatusRisk($statusS1);
-                    $requestS3 = $this->Byjuno_CreateShopWareShopRequestUserBilling(
+                if ($this->byjuno->isStatusOkS2($statusS1)) {
+                    $risk = $this->byjuno->getStatusRisk($statusS1);
+                    $requestS3 = $this->byjuno->Byjuno_CreateShopWareShopRequestUserBilling(
                         $context,
-                        $simpleOrder,
+                        $fullOrder,
                         $context,
-                        $simpleOrder->getOrderNumber(),
-                        $_SESSION["_byjyno_payment_method"],
-                        $paymentplan,
+                        $fullOrder->getOrderNumber(),
+                        "byjuno_payment_invoice",
+                        "single_invoice",
                         $risk,
-                        $invoiceDelivery,
+                        "email",
                         "",
                         "",
                         $transactionNumber,
                         "YES");
-                    $statusLog = "Order complete (S3)";
+                    $statusLog = "Order complete backend (S3)";
                     if ($requestS3->getCompanyName1() != '' && $b2b == 'enabled') {
-                        $statusLog = "Order complete for company (S3)";
+                        $statusLog = "Order complete for company backend (S3)";
                         $xml = $requestS3->createRequestCompany();
                     } else {
                         $xml = $requestS3->createRequest();
@@ -141,36 +150,41 @@ class ByjunoCoreTask
                         $byjunoResponse->setRawResponse($response);
                         $byjunoResponse->processResponse();
                         $statusS3 = (int)$byjunoResponse->getCustomerRequestStatus();
-                        $this->saveLog($salesChannelContext->getContext(), $request, $xml, $response, $statusS3, $statusLog);
+                        $this->byjuno->saveLog($context, $request, $xml, $response, $statusS3, $statusLog);
                         if (intval($statusS3) > 15) {
                             $statusS3 = 0;
                         }
                     } else {
-                        $this->saveLog($salesChannelContext->getContext(), $request, $xml, "Empty response", $statusS3, $statusLog);
+                        $this->byjuno->saveLog($context, $request, $xml, "Empty response backend", $statusS3, $statusLog);
+                        continue;
                     }
-
-                    $fields = $order->getCustomFields();
-                    $customFields = $fields ?? [];
-                    $customFields = array_merge($customFields, ['byjuno_s3_sent' => 1]);
-                    $update = [
-                        'id' => $order->getId(),
-                        'customFields' => $customFields,
-                    ];
-                    $this->orderRepository->update([$update], $salesChannelContext->getContext());
+                    if ($this->byjuno->isStatusOkS2($statusS1) && $this->byjuno->isStatusOkS3($statusS3)) {
+                        $this->byjuno->transactionStateHandler->paid($lastTransaction->getId(), $context);
+                    } else {
+                        $this->byjuno->transactionStateHandler->cancel($lastTransaction->getId(), $context);
+                    }
                 } else {
-                    return new RedirectResponse($returnUrlFail);
+                    $this->byjuno->transactionStateHandler->cancel($lastTransaction->getId(), $context);
                 }
+                $fields = $fullOrder->getCustomFields();
+                $customFields = $fields ?? [];
+                $customFields = array_merge($customFields, ['byjuno_s3_sent' => 1]);
+                $update = [
+                    'id' => $fullOrder->getId(),
+                    'customFields' => $customFields,
+                ];
+                $this->orderRepository->update([$update], $context);
             }
         }
         if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger") == 'orderstatus' &&
-            $this->systemConfigService->get("ByjunoPayments.config.byjunoS4") == 'enabled' ) {
+            $this->systemConfigService->get("ByjunoPayments.config.byjunoS4") == 'enabled') {
             $orders = $this->orderRepository->search(
                 (new Criteria())
                     ->addFilter(new EqualsFilter('customFields.byjuno_s4_sent', 0))
                     ->addSorting(new FieldSorting('createdAt', FieldSorting::ASCENDING))
                 , $context);
             foreach ($orders as $simpleOrder) {
-                $order = $this->getOrder($simpleOrder->getId());
+                $order = $this->byjuno->getOrder($simpleOrder->getId());
                 $date = $order->getCreatedAt()->format("Y-m-d");
                 $request = $this->CreateShopRequestS4($order->getOrderNumber(),
                     $order->getAmountTotal(),
@@ -209,7 +223,7 @@ class ByjunoCoreTask
                     }
                 } else {
                     if ($fields["byjuno_s4_retry"] < self::$MAX_RETRY_COUNT) {
-                        $customFields = array_merge($customFields, ['byjuno_s4_retry' =>++$fields["byjuno_s4_retry"], 'byjuno_s4_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
+                        $customFields = array_merge($customFields, ['byjuno_s4_retry' => ++$fields["byjuno_s4_retry"], 'byjuno_s4_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
                     } else {
                         $customFields = array_merge($customFields, ['byjuno_s4_retry' => ++$fields["byjuno_s4_retry"], 'byjuno_s4_sent' => 1, 'byjuno_time' => time()]);
                         $this->saveS4Log($context, $request, $xml, "no response (network timeout)", 0, $statusLog, "-", "-");
@@ -296,7 +310,7 @@ class ByjunoCoreTask
                     }
                 } else {
                     if ($fields["byjuno_doc_retry"] < self::$MAX_RETRY_COUNT) {
-                        $customFields = array_merge($customFields, ['byjuno_doc_retry' =>++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
+                        $customFields = array_merge($customFields, ['byjuno_doc_retry' => ++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
                     } else {
                         $customFields = array_merge($customFields, ['byjuno_doc_retry' => ++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 1, 'byjuno_time' => time()]);
                         if ($statusLog == "S4 Request") {
@@ -401,31 +415,6 @@ class ByjunoCoreTask
         $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($entry): void {
             $this->logEntry->upsert([$entry], $context);
         });
-    }
-
-    public function getOrder(string $orderId): ?OrderEntity
-    {
-        $criteria = new Criteria([$orderId]);
-        $criteria->addAssociation('transactions');
-        $criteria->addAssociation('addresses');
-        $criteria->addAssociation('addresses.country');
-        $criteria->addAssociation('deliveries');
-        $criteria->addAssociation('deliveries.shippingMethod');
-        $criteria->addAssociation('deliveries.shippingOrderAddress.country');
-        $criteria->addAssociation('language');
-        $criteria->addAssociation('currency');
-        $criteria->addAssociation('salesChannel');
-        $criteria->addAssociation('billingAddress');
-        $criteria->addAssociation('billingAddress.country');
-        $criteria->addAssociation('salesChannel.paymentMethod');
-        $criteria->addAssociation('orderCustomer.customer');
-        $criteria->addAssociation('orderCustomer.salutation');
-        $criteria->addAssociation('transactions');
-        $criteria->addAssociation('transactions.paymentMethod');
-        $criteria->addAssociation('tags');
-        $criteria->addAssociation('transactions.paymentMethod');
-        $criteria->addAssociation('addresses');
-        return $this->orderRepository->search($criteria, Context::createDefaultContext())->get($orderId);
     }
 
 }

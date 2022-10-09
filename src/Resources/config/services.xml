@@ -12,13 +12,6 @@
             <tag name="shopware.payment.method.async"/>
         </service>
 
-        <service id="Byjuno\ByjunoPayments\Service\ByjunoCoreTask">
-            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
-            <argument type="service" id="document.repository"/>
-            <argument type="service" id="order.repository"/>
-            <argument type="service" id="byjuno_log_entity.repository"/>
-        </service>
-
         <service id="Byjuno\ByjunoPayments\Service\ByjunoCDPOrderConverterSubscriber">
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
             <argument type="service" id="payment_method.repository"/>
@@ -27,10 +20,10 @@
             <argument type="service" id="document.repository"/>
             <argument type="service" id="Psr\Container\ContainerInterface"/>
             <argument type="service" id="translator"/>
-            <argument type="service" id="Byjuno\ByjunoPayments\Service\ByjunoCoreTask"/>
             <argument type="service" id="sales_channel.salutation.repository"/>
             <argument type="service" id="mail_template.repository"/>
             <argument type="service" id="Shopware\Core\Content\Mail\Service\MailService"/>
+            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
             <tag name="kernel.event_subscriber"/>
         </service>
 
@@ -50,6 +43,15 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+
+        <service id="Byjuno\ByjunoPayments\Service\ByjunoCoreTask">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="document.repository"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="byjuno_log_entity.repository"/>
+            <argument type="service" id="Byjuno\ByjunoPayments\Service\ByjunoCDPOrderConverterSubscriber"/>
+        </service>
+
         <service id="Byjuno\ByjunoPayments\Controller\ByjunocancelController" public="true">
             <argument type="service" id="Shopware\Core\Checkout\Cart\SalesChannel\CartService"/>
             <argument type="service" id="Shopware\Core\Checkout\Cart\LineItemFactoryRegistry"/>
@@ -93,12 +95,11 @@
         </service>
 
         <!-- Run as Console task -->
-        <!--
+
         <service id="Byjuno\ByjunoPayments\ScheduledTask\ByjunoCommand">
             <argument type="service" id="Byjuno\ByjunoPayments\Service\ByjunoCoreTask"/>
             <tag name="console.command"/>
         </service>
-        -->
 
     </services>
 </container>

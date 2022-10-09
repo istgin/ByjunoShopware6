@@ -16,6 +16,7 @@ use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\Checkout\Document\DocumentEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderAddress\OrderAddressEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryEntity;
+use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Checkout\Payment\PaymentMethodEntity;
 use Shopware\Core\Content\Mail\Service\MailService;
@@ -63,10 +64,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
      * @var EntityRepositoryInterface
      */
     private $documentRepository;
-    /**
-     * @var ByjunoCoreTask
-     */
-    private $byjunoCoreTask;
 
     /**
      * @var SalesChannelRepositoryInterface
@@ -81,6 +78,10 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
      * @var MailService
      */
     private $mailService;
+    /**
+     * @var OrderTransactionStateHandler
+     */
+    public $transactionStateHandler;
 
     /** @var TranslatorInterface */
     private $translator;
@@ -95,10 +96,10 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         EntityRepositoryInterface $documentRepository,
         ContainerInterface $container,
         TranslatorInterface $translator,
-        ByjunoCoreTask $byjunoCoreTask,
         SalesChannelRepositoryInterface $salutationRepository,
         EntityRepositoryInterface $mailTemplateRepository,
-        MailService $mailService
+        MailService $mailService,
+        OrderTransactionStateHandler $transactionStateHandler
     )
     {
         $this->systemConfigService = $systemConfigService;
@@ -108,10 +109,10 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $this->documentRepository = $documentRepository;
         $this->container = $container;
         $this->translator = $translator;
-        $this->byjunoCoreTask = $byjunoCoreTask;
         $this->salutationRepository = $salutationRepository;
         $this->mailTemplateRepository = $mailTemplateRepository;
         $this->mailService = $mailService;
+        $this->transactionStateHandler = $transactionStateHandler;
         $writeRecursion = Array();
     }
 
@@ -155,7 +156,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                             return;
 
                     }
-                    $order = $this->byjunoCoreTask->getOrder($doc->getOrderId());
+                    $order = $this->getOrder($doc->getOrderId());
                     if ($order != null) {
                         $paymentMethods = $order->getTransactions();
                         $paymentMethodId = '';
@@ -188,7 +189,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
         if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger") == 'orderstatus') {
             if ($event->getEntityName() == 'order' && $event->getToPlace()->getTechnicalName() == $this->systemConfigService->get("ByjunoPayments.config.byjunoS4triggername")) {
-                $order = $this->byjunoCoreTask->getOrder($event->getEntityId());
+                $order = $this->getOrder($event->getEntityId());
                 if ($order != null) {
                     $fields = $order->getCustomFields();
                     if (empty($fields["byjuno_s4_sent"])) {
@@ -213,7 +214,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             }
         }
         if ($event->getEntityName() == 'order' && $event->getToPlace()->getTechnicalName() == "cancelled") {
-            $order = $this->byjunoCoreTask->getOrder($event->getEntityId());
+            $order = $this->getOrder($event->getEntityId());
             if ($order != null) {
                 $customFields = $order->getCustomFields();
                 $paymentMethods = $order->getTransactions();
@@ -687,7 +688,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             return null;
         }
         $orderId = $orderDeliveryEntity->getOrderId();
-        return $this->byjunoCoreTask->getOrder($orderId);
+        return $this->getOrder($orderId);
     }
 
     private function getInvoiceById(string $documentId): ?DocumentEntity
@@ -727,7 +728,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             'request_type' => $type,
             'firstname' => $request->getFirstName(),
             'lastname' => $request->getLastName(),
-            'ip' => $_SERVER['REMOTE_ADDR'],
+            'ip' => empty($_SERVER['REMOTE_ADDR']) ? "no ip" : $_SERVER['REMOTE_ADDR'],
             'byjuno_status' => (($status != "") ? $status . '' : 'Error'),
             'xml_request' => $xml_request,
             'xml_response' => $xml_response
@@ -1168,9 +1169,9 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     private function getOrderShippingAddressOrder(OrderEntity $orderEntity): ?OrderAddressEntity
     {
+        //var_dump($orderEntity->getShippingAddress());
         /** @var OrderDeliveryEntity[] $deliveries */
         $deliveries = $orderEntity->getDeliveries();
-
         // TODO: Only one shipping address is supported currently, this could change in the future
         foreach ($deliveries as $delivery) {
             if ($delivery->getShippingOrderAddress() === null) {
