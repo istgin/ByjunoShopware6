@@ -7,6 +7,7 @@ use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoRequest;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoResponse;
 use Byjuno\ByjunoPayments\ByjunoPayments;
+use Byjuno\ByjunoPayments\Service\ByjunoCDPOrderConverterSubscriber;
 use Exception;
 use phpDocumentor\Reflection\Types\Array_;
 use RuntimeException;
