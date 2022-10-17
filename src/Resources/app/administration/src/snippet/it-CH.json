@@ -1,0 +1,9 @@
+{
+    "ByjunoPayment": {
+        "byjunoCreateAuth": "Call Byjuno Auth Request",
+        "byjunoCreateAuthText": "This will call byjuno auth request. Base event should contains getOrder function that return order.",
+        "byjunoAuthFlow": "Call Byjuno Auth Request",
+        "byjunoButtonSaveAction": "Save action",
+        "byjunoButtonAddAction": "Add action"
+    }
+}

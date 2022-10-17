@@ -27,6 +27,7 @@
     "cdp_error" : "Der Zahlungsanbieter hat die Zahlung abgelehnt. Bitte versuchen Sie eine andere Zahlungsmethode.",
     "order_canceled" : "Zahlung fehlgeschlagen. Ihre Bestellung wurde storniert.",
     "back_to_shop" : "Zurück zum Shop",
-    "t_and_c": "(AGB)"
+    "t_and_c": "(AGB)",
+    "byjunoauthflow": "ByjunoAuth"
   }
 }

@@ -27,6 +27,7 @@
     "cdp_error" : "L'istituto di credito ha rifiutato il pagamento. Si prega di provare un altro metodo di pagamento.",
     "order_canceled" : "Pagamento fallito. L'ordine è stato annullato.",
     "back_to_shop" : "Torna alla pagina iniziale",
-    "t_and_c": "(CGC)"
+    "t_and_c": "(CGC)",
+    "byjunoauthflow": "ByjunoAuth"
   }
 }

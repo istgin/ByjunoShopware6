@@ -27,6 +27,7 @@
     "cdp_error" : "L'institution de crédit a refusé le paiement. Veuillez essayer un autre moyen de paiement.",
     "order_canceled" : "Le paiement a échoué. La commande a été annulée.",
     "back_to_shop" : "Retour à la page d'accueil",
-    "t_and_c": "(CGV)"
+    "t_and_c": "(CGV)",
+    "byjunoauthflow": "ByjunoAuth"
   }
 }
