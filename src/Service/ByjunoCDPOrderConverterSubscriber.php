@@ -39,6 +39,7 @@ use Shopware\Core\System\Salutation\SalutationEntity;
 use Shopware\Core\System\StateMachine\Event\StateMachineTransitionEvent;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Storefront\Event\StorefrontRenderEvent;
+use Shopware\Storefront\Page\Checkout\Confirm\CheckoutConfirmPageLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
@@ -125,7 +126,39 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             'document.written' => [
                 ['documentWritten', 0],
             ],
+            CheckoutConfirmPageLoadedEvent::class => ['onCheckoutConfirmLoaded', 1]
         ];
+    }
+
+    public function onCheckoutConfirmLoaded(CheckoutConfirmPageLoadedEvent $event): void
+    {
+        if ($event->getRequest()->attributes->get("_controller") != "Shopware\Storefront\Controller\CheckoutController::confirmPage") {
+            return;
+        }
+        $confirmPage = $event->getPage();
+        $cart = $confirmPage->getCart();
+        if ($cart == null) {
+            return;
+        }
+        $totalPrice = $cart->getPrice()->getTotalPrice();
+        if ($totalPrice == 0) {
+            return;
+        }
+        $paymentMethods = $confirmPage->getPaymentMethods();
+        if ($paymentMethods == null) {
+            return;
+        }
+        $event->getSalesChannelContext()->getSalesChannelId();
+        /* @var PaymentMethodEntity $paymentMethod */
+        foreach ($paymentMethods as $key => $paymentMethod) {
+            if ($paymentMethod->getHandlerIdentifier() == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment" &&
+                ($totalPrice < $this->systemConfigService->get("ByjunoPayments.config.byjunominimum", $event->getSalesChannelContext()->getSalesChannelId())
+                    || $totalPrice > $this->systemConfigService->get("ByjunoPayments.config.byjunomaximum", $event->getSalesChannelContext()->getSalesChannelId())
+                )) {
+                $paymentMethods->remove($key);
+            }
+        }
+        $confirmPage->setPaymentMethods($paymentMethods);
     }
 
     public function documentWritten(EntityWrittenEvent $event): void
@@ -283,8 +316,29 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     public function converter(CartConvertedEvent $event)
     {
-        if ($this->systemConfigService->get("ByjunoPayments.config.byjunousecdp", $event->getSalesChannelContext()->getSalesChannelId()) == 'enabled'
-            && $event->getSalesChannelContext()->getPaymentMethod()->getHandlerIdentifier() == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
+        if ($event->getSalesChannelContext()->getPaymentMethod()->getHandlerIdentifier() != "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
+            return;
+        }
+        $convertedCart = $event->getConvertedCart();
+        if ($convertedCart["price"] == null) {
+            return;
+        }
+        $totalPrice = $convertedCart["price"]->getTotalPrice();
+        if ($totalPrice < $this->systemConfigService->get("ByjunoPayments.config.byjunominimum", $event->getSalesChannelContext()->getSalesChannelId())
+            || $totalPrice > $this->systemConfigService->get("ByjunoPayments.config.byjunomaximum", $event->getSalesChannelContext()->getSalesChannelId())
+        ) {
+            $violation = new ConstraintViolation(
+                $this->translator->trans('ByjunoPayment.cdp_error'),
+                '',
+                [],
+                '',
+                '',
+                ''
+            );
+            $violations = new ConstraintViolationList([$violation]);
+            throw new ConstraintViolationException($violations, []);
+        }
+        if ($this->systemConfigService->get("ByjunoPayments.config.byjunousecdp", $event->getSalesChannelContext()->getSalesChannelId()) == 'enabled') {
             $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b", $event->getSalesChannelContext()->getSalesChannelId());
             $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $event->getSalesChannelContext()->getSalesChannelId());
             $paymentMethod = "";
