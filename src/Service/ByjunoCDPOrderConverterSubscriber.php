@@ -138,26 +138,26 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             if ($doc != null) {
                 if (!isset(self::$writeRecursion[$doc->getId()])) {
                     $name = $doc->getConfig()["name"];
-                    switch ($name) {
-                        case "storno":
-                            if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS5") != 'enabled') {
-                                return;
-                            }
-                            break;
-                        case "invoice":
-                            if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4") != 'enabled') {
-                                return;
-                            }
-                            if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger") != 'invoice') {
-                                return;
-                            }
-                            break;
-                        default:
-                            return;
-
-                    }
                     $order = $this->getOrder($doc->getOrderId());
                     if ($order != null) {
+                        switch ($name) {
+                            case "storno":
+                                if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS5", $order->getSalesChannelId()) != 'enabled') {
+                                    return;
+                                }
+                                break;
+                            case "invoice":
+                                if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4", $order->getSalesChannelId()) != 'enabled') {
+                                    return;
+                                }
+                                if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger", $order->getSalesChannelId()) != 'invoice') {
+                                    return;
+                                }
+                                break;
+                            default:
+                                return;
+
+                        }
                         $paymentMethods = $order->getTransactions();
                         $paymentMethodId = '';
                         foreach ($paymentMethods as $pm) {
@@ -187,27 +187,27 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
     public function onByjunoStateMachine(StateMachineTransitionEvent $event)
     {
 
-        if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger") == 'orderstatus') {
-            if ($event->getEntityName() == 'order' && $event->getToPlace()->getTechnicalName() == $this->systemConfigService->get("ByjunoPayments.config.byjunoS4triggername")) {
-                $order = $this->getOrder($event->getEntityId());
-                if ($order != null) {
-                    $fields = $order->getCustomFields();
-                    if (empty($fields["byjuno_s4_sent"])) {
-                        $paymentMethods = $order->getTransactions();
-                        $paymentMethodId = '';
-                        foreach ($paymentMethods as $pm) {
-                            $paymentMethodId = $pm->getPaymentMethod()->getHandlerIdentifier();
-                            break;
-                        }
-                        if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
-                            $customFields = $fields ?? [];
-                            $customFields = array_merge($customFields, ['byjuno_s4_sent' => 0, 'byjuno_s4_retry' => 0, 'byjuno_time' => 0]);
-                            $update = [
-                                'id' => $order->getId(),
-                                'customFields' => $customFields,
-                            ];
-                            $orderRepo = $this->container->get('order.repository');
-                            $orderRepo->update([$update], $event->getContext());
+        $order = $this->getOrder($event->getEntityId());
+        if ($order != null) {
+            if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger", $order->getSalesChannelId()) == 'orderstatus') {
+                if ($event->getEntityName() == 'order' && $event->getToPlace()->getTechnicalName() == $this->systemConfigService->get("ByjunoPayments.config.byjunoS4triggername", $order->getSalesChannelId())) {
+                        $fields = $order->getCustomFields();
+                        if (empty($fields["byjuno_s4_sent"])) {
+                            $paymentMethods = $order->getTransactions();
+                            $paymentMethodId = '';
+                            foreach ($paymentMethods as $pm) {
+                                $paymentMethodId = $pm->getPaymentMethod()->getHandlerIdentifier();
+                                break;
+                            }
+                            if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
+                                $customFields = $fields ?? [];
+                                $customFields = array_merge($customFields, ['byjuno_s4_sent' => 0, 'byjuno_s4_retry' => 0, 'byjuno_time' => 0]);
+                                $update = [
+                                    'id' => $order->getId(),
+                                    'customFields' => $customFields,
+                                ];
+                                $orderRepo = $this->container->get('order.repository');
+                                $orderRepo->update([$update], $event->getContext());
                         }
                     }
                 }
@@ -223,15 +223,16 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                     $paymentMethodId = $pm->getPaymentMethod()->getHandlerIdentifier();
                     break;
                 }
-                if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment" && $this->systemConfigService->get("ByjunoPayments.config.byjunoS5") == 'enabled'
+                if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment" && $this->systemConfigService->get("ByjunoPayments.config.byjunoS5", $order->getSalesChannelId()) == 'enabled'
                     && !empty($customFields["byjuno_s3_sent"])
                     && $customFields["byjuno_s3_sent"] == 1) {
-                    $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
+                    $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $order->getSalesChannelId());
                     $request = $this->CreateShopRequestS5Cancel($order->getAmountTotal(),
                         $order->getCurrency()->getIsoCode(),
                         $order->getOrderNumber(),
                         $order->getOrderCustomer()->getId(),
-                        date("Y-m-d"));
+                        date("Y-m-d"),
+                        $order->getSalesChannelId());
                     $statusLog = "S5 Cancel request";
                     $xml = $request->createRequest();
                     $byjunoCommunicator = new ByjunoCommunicator();
@@ -240,7 +241,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                     } else {
                         $byjunoCommunicator->setServer('test');
                     }
-                    $response = $byjunoCommunicator->sendS4Request($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
+                    $response = $byjunoCommunicator->sendS4Request($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $order->getSalesChannelId()));
                     if (isset($response)) {
                         $byjunoResponse = new ByjunoS4Response();
                         $byjunoResponse->setRawResponse($response);
@@ -262,10 +263,10 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             && $event->getRequest()->attributes->get("_controller") == 'Shopware\Storefront\Controller\CheckoutController::confirmPage') {
             $byjuno_tmx = array();
             $tmx_enable = false;
-            if ($this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable") == 'enabled') {
+            if ($this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable", $event->getSalesChannelContext()->getSalesChannelId()) == 'enabled') {
                 $tmx_enable = true;
             }
-            $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix");
+            $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix", $event->getSalesChannelContext()->getSalesChannelId());
             if (isset($tmx_enable) && $tmx_enable == true && isset($tmxorgid) && $tmxorgid != '' && empty($_SESSION["byjuno_tmx"])) {
                 $_SESSION["byjuno_tmx"] = session_id();
                 $byjuno_tmx["tmx_orgid"] = $tmxorgid;
@@ -282,16 +283,17 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     public function converter(CartConvertedEvent $event)
     {
-        if ($this->systemConfigService->get("ByjunoPayments.config.byjunousecdp") == 'enabled' && $event->getSalesChannelContext()->getPaymentMethod()->getHandlerIdentifier() == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
-            $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b");
-            $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
+        if ($this->systemConfigService->get("ByjunoPayments.config.byjunousecdp", $event->getSalesChannelContext()->getSalesChannelId()) == 'enabled'
+            && $event->getSalesChannelContext()->getPaymentMethod()->getHandlerIdentifier() == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment") {
+            $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b", $event->getSalesChannelContext()->getSalesChannelId());
+            $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $event->getSalesChannelContext()->getSalesChannelId());
             $paymentMethod = "";
             if ($event->getSalesChannelContext()->getPaymentMethod()->getId() == ByjunoPayments::BYJUNO_INVOICE) {
                 $paymentMethod = "byjuno_payment_invoice";
             } else if ($event->getSalesChannelContext()->getPaymentMethod()->getId() == ByjunoPayments::BYJUNO_INSTALLMENT) {
                 $paymentMethod = "byjuno_payment_installment";
             }
-            $request = $this->Byjuno_CreateShopWareShopRequestCDP($event->getContext(), $event->getConvertedCart(), $paymentMethod);
+            $request = $this->Byjuno_CreateShopWareShopRequestCDP($event->getSalesChannelContext(), $event->getConvertedCart(), $paymentMethod);
             $statusLog = "CDP request (S1)";
             if ($request->getCompanyName1() != '' && $b2b == 'enabled') {
                 $statusLog = "CDP for company (S1)";
@@ -305,7 +307,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             } else {
                 $communicator->setServer('test');
             }
-            $response = $communicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
+            $response = $communicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $event->getSalesChannelContext()->getSalesChannelId()));
             $statusCDP = 0;
             if ($response) {
                 $intrumResponse = new ByjunoResponse();
@@ -319,7 +321,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             } else {
                 $this->saveLog($event->getContext(), $request, $xml, "Empty response", $statusCDP, $statusLog);
             }
-            if (!$this->isStatusOkCDP($statusCDP)) {
+            if (!$this->isStatusOkCDP($statusCDP, $event->getSalesChannelContext())) {
                 $violation = new ConstraintViolation(
                     $this->translator->trans('ByjunoPayment.cdp_error'),
                     '',
@@ -335,15 +337,15 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
     }
 
-    public function Byjuno_CreateShopWareShopRequestCDP(Context $context, Array $convertedCart, $paymentmethod)
+    public function Byjuno_CreateShopWareShopRequestCDP(SalesChannelContext $context, Array $convertedCart, $paymentmethod)
     {
         $request = new ByjunoRequest();
-        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid"));
-        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid"));
-        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword"));
+        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid", $context->getSalesChannelId()));
+        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid",$context->getSalesChannelId()));
+        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword", $context->getSalesChannelId()));
         $request->setVersion("1.00");
-        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail"));
-        $request->setLanguage($this->getCustomerLanguage($context, $convertedCart["languageId"]));
+        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail", $context->getSalesChannelId()));
+        $request->setLanguage($this->getCustomerLanguage($context->getContext(), $convertedCart["languageId"]));
 
         $request->setRequestId(uniqid($convertedCart["billingAddressId"] . "_"));
         $reference = $convertedCart["orderCustomer"]["customerId"];
@@ -361,11 +363,11 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             $deliveries = $convertedCart["deliveries"];
         }
         $billingAddress = $this->getBillingAddress($convertedCart["billingAddressId"], $addresses, $deliveries);
-        $billingAddressCountry = $this->getCountry($billingAddress["countryId"], $context);
+        $billingAddressCountry = $this->getCountry($billingAddress["countryId"], $context->getContext());
         $shippingAddress = $this->getOrderShippingAddress($convertedCart["deliveries"]);
-        $shippingAddressCountry = $this->getCountry($shippingAddress["countryId"], $context);
-        $billingAddressSalutation = $this->getSalutation($billingAddress["salutationId"], $context);
-        $currency = $this->getCurrency($convertedCart["currencyId"], $context);
+        $shippingAddressCountry = $this->getCountry($shippingAddress["countryId"], $context->getContext());
+        $billingAddressSalutation = $this->getSalutation($billingAddress["salutationId"], $context->getContext());
+        $currency = $this->getCurrency($convertedCart["currencyId"], $context->getContext());
         $request->setFirstName($billingAddress["firstName"]);
         $request->setLastName($billingAddress["lastName"]);
         $addressAdd = '';
@@ -391,8 +393,8 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
         $request->setGender(0);
         $additionalInfo = $billingAddressSalutation->getDisplayName();
-        $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale");
-        $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale");
+        $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale", $context->getSalesChannelId());
+        $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale", $context->getSalesChannelId());
         $genderMale = explode(",", $genderMaleStr);
         $genderFemale = explode(",", $genderFemaleStr);
         if (!empty($additionalInfo)) {
@@ -407,7 +409,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                 }
             }
         }
-        $customer = $this->getCustomer($convertedCart["orderCustomer"]["customerId"], $context);
+        $customer = $this->getCustomer($convertedCart["orderCustomer"]["customerId"], $context->getContext());
         $dob = $customer->getBirthday();
         $dob_year = null;
         $dob_month = null;
@@ -446,8 +448,8 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->setExtraInfo($extraInfo);
 
 
-        $tmx_enable = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable");
-        $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix");
+        $tmx_enable = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable", $context->getSalesChannelId());
+        $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix", $context->getSalesChannelId());
         if (isset($tmx_enable) && $tmx_enable == 'enabled' && isset($tmxorgid) && $tmxorgid != '' && !empty($_SESSION["byjuno_tmx"])) {
             $extraInfo["Name"] = 'DEVICE_FINGERPRINT_ID';
             $extraInfo["Value"] = $_SESSION["byjuno_tmx"];
@@ -633,10 +635,10 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
     }
 
-    protected function isStatusOkCDP($status)
+    protected function isStatusOkCDP($status, SalesChannelContext $context)
     {
         try {
-            $accepted_CDP = $this->systemConfigService->get("ByjunoPayments.config.allowedcdp");
+            $accepted_CDP = $this->systemConfigService->get("ByjunoPayments.config.allowedcdp", $context->getSalesChannelId());
             $ijStatus = Array();
             if (!empty(trim((String)$accepted_CDP))) {
                 $ijStatus = explode(",", trim((String)$accepted_CDP));
@@ -654,15 +656,15 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
     }
 
-    function CreateShopRequestS5Cancel($amount, $orderCurrency, $orderId, $customerId, $date)
+    function CreateShopRequestS5Cancel($amount, $orderCurrency, $orderId, $customerId, $date, $salesChannelId)
     {
 
         $request = new ByjunoS5Request();
-        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid"));
-        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid"));
-        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword"));
+        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid", $salesChannelId));
+        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid", $salesChannelId));
+        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword", $salesChannelId));
         $request->setVersion("1.00");
-        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail"));
+        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail", $salesChannelId));
 
         $request->setRequestId(uniqid((String)$orderId . "_"));
         $request->setOrderId($orderId);
@@ -747,11 +749,11 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $mailTemplate = $this->getMailTemplate($context, "order_confirmation_mail", $order);
         if ($mailTemplate !== null) {
             $data = new DataBag();
-            $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
+            $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $salesChanhhelId);
             if (isset($mode) && $mode == 'live') {
-                $recipients = Array($this->systemConfigService->get("ByjunoPayments.config.byjunoprodemail") => "Byjuno order confirmation");
+                $recipients = Array($this->systemConfigService->get("ByjunoPayments.config.byjunoprodemail", $salesChanhhelId) => "Byjuno order confirmation");
             } else {
-                $recipients = Array($this->systemConfigService->get("ByjunoPayments.config.byjunotestemail") => "Byjuno order confirmation");
+                $recipients = Array($this->systemConfigService->get("ByjunoPayments.config.byjunotestemail", $salesChanhhelId) => "Byjuno order confirmation");
             }
             $data->set('recipients', $recipients);
             $data->set('senderName', $mailTemplate->getTranslation('senderName'));
@@ -817,15 +819,15 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         return $salutations;
     }
 
-    public function Byjuno_CreateShopWareShopRequestUserBilling(Context $context, OrderEntity $order, Context $salesChannelContext, $orderId, $paymentmethod, $repayment, $riskOwner, $invoiceDelivery, $customGender = "", $customDob = "", $transactionNumber = "", $orderClosed = "NO")
+    public function Byjuno_CreateShopWareShopRequestUserBilling(Context $context, $salesChannelId, OrderEntity $order, $orderId, $paymentmethod, $repayment, $riskOwner, $invoiceDelivery, $customGender = "", $customDob = "", $transactionNumber = "", $orderClosed = "NO")
     {
         $request = new ByjunoRequest();
-        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid"));
-        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid"));
-        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword"));
+        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid", $salesChannelId));
+        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid", $salesChannelId));
+        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword", $salesChannelId));
         $request->setVersion("1.00");
-        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail"));
-        $request->setLanguage($this->getCustomerLanguage($salesChannelContext, $order->getLanguageId()));
+        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail", $salesChannelId));
+        $request->setLanguage($this->getCustomerLanguage($context, $order->getLanguageId()));
 
         $request->setRequestId(uniqid($order->getBillingAddressId() . "_"));
         $reference = $order->getOrderCustomer()->getCustomerId();
@@ -835,7 +837,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             $request->setCustomerReference($reference);
         }
         $shippingAddress = $this->getOrderShippingAddressOrder($order);
-        $billingAddress = $this->getBillingAddressOrder($order, $salesChannelContext);
+        $billingAddress = $this->getBillingAddressOrder($order, $context);
 
         $request->setFirstName($billingAddress->getFirstName());
         $request->setLastName($billingAddress->getLastName());
@@ -866,8 +868,8 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         /* @var $additionalInfoSalutation \Shopware\Core\System\Salutation\SalutationEntity */
         $additionalInfoSalutation = $billingAddress->getSalutation();
 
-        $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale");
-        $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale");
+        $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale", $salesChannelId);
+        $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale", $salesChannelId);
         $genderMale = explode(",", $genderMaleStr);
         $genderFemale = explode(",", $genderFemaleStr);
         $customer = $this->getCustomer($order->getOrderCustomer()->getCustomerId(), $context);
@@ -957,8 +959,8 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $extraInfo["Value"] = $this->Byjuno_getClientIp();
         $request->setExtraInfo($extraInfo);
 
-        $tmx_enable = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable");
-        $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix");
+        $tmx_enable = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable", $salesChannelId);
+        $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix", $salesChannelId);
         if (isset($tmx_enable) && $tmx_enable == 'enabled' && isset($tmxorgid) && $tmxorgid != '' && !empty($_SESSION["byjuno_tmx"])) {
             $extraInfo["Name"] = 'DEVICE_FINGERPRINT_ID';
             $extraInfo["Value"] = $_SESSION["byjuno_tmx"];
@@ -1073,11 +1075,11 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
     }
 
-    public function isStatusOkS2($status)
+    public function isStatusOkS2($status, $salesChannhelId)
     {
         try {
-            $accepted_S2_ij = $this->systemConfigService->get("ByjunoPayments.config.alloweds2");
-            $accepted_S2_merhcant = $this->systemConfigService->get("ByjunoPayments.config.alloweds2merchant");
+            $accepted_S2_ij = $this->systemConfigService->get("ByjunoPayments.config.alloweds2", $salesChannhelId);
+            $accepted_S2_merhcant = $this->systemConfigService->get("ByjunoPayments.config.alloweds2merchant", $salesChannhelId);
 
             $ijStatus = Array();
             if (!empty(trim((String)$accepted_S2_ij))) {
@@ -1105,10 +1107,10 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
     }
 
-    public function isStatusOkS3($status)
+    public function isStatusOkS3($status, $salesChannhelId)
     {
         try {
-            $accepted_S3 = $this->systemConfigService->get("ByjunoPayments.config.alloweds3");
+            $accepted_S3 = $this->systemConfigService->get("ByjunoPayments.config.alloweds3", $salesChannhelId);
             $ijStatus = Array();
             if (!empty(trim((String)$accepted_S3))) {
                 $ijStatus = explode(",", trim((String)$accepted_S3));
@@ -1126,11 +1128,11 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
     }
 
-    public function getStatusRisk($status)
+    public function getStatusRisk($status, $salesChannhelId)
     {
         try {
-            $accepted_S2_ij = $this->systemConfigService->get("ByjunoPayments.config.alloweds2");
-            $accepted_S2_merhcant = $this->systemConfigService->get("ByjunoPayments.config.alloweds2merchant");
+            $accepted_S2_ij = $this->systemConfigService->get("ByjunoPayments.config.alloweds2", $salesChannhelId);
+            $accepted_S2_merhcant = $this->systemConfigService->get("ByjunoPayments.config.alloweds2merchant", $salesChannhelId);
             $ijStatus = Array();
             if (!empty(trim((String)$accepted_S2_ij))) {
                 $ijStatus = explode(",", trim((String)$accepted_S2_ij));

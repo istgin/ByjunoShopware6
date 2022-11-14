@@ -14,6 +14,8 @@ use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
 use Shopware\Core\Framework\Uuid\Uuid;
+use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepository;
+use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
 class ByjunoCoreTask
@@ -23,6 +25,10 @@ class ByjunoCoreTask
      * @var SystemConfigService
      */
     private $systemConfigService;
+    /**
+     * @var SalesChannelRepository
+     */
+    private $salesChannelReposiotry;
     /**
      * @var EntityRepositoryInterface
      */
@@ -43,12 +49,14 @@ class ByjunoCoreTask
 
     public function __construct(
         SystemConfigService $systemConfigService,
+        EntityRepositoryInterface $salesChannelReposiotry,
         EntityRepositoryInterface $documentRepository,
         EntityRepositoryInterface $orderRepository,
         EntityRepositoryInterface $logEntry,
         ByjunoCDPOrderConverterSubscriber $byjuno)
     {
         $this->systemConfigService = $systemConfigService;
+        $this->salesChannelReposiotry = $salesChannelReposiotry;
         $this->documentRepository = $documentRepository;
         $this->orderRepository = $orderRepository;
         $this->logEntry = $logEntry;
@@ -57,13 +65,26 @@ class ByjunoCoreTask
 
     public function TaskRun()
     {
-
+        $criteria = new Criteria();
         $context = Context::createDefaultContext();
-        if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionEnable") == 'enabled') {
-
-            $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b");
-            $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
-
+        $salesChannelIds = $this->salesChannelReposiotry->search($criteria, $context);
+        /** @var SalesChannelEntity $salesChannel */
+        $byjunoS3ActionEnable = false;
+        $byjunoS4trigger = false;
+        $byjunoS4 = false;
+        foreach($salesChannelIds->getEntities()->getElements() as $key => $salesChannel){
+           // var_dump($salesChannel->getId());
+            if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionEnable", $salesChannel->getId()) == 'enabled')  {
+                $byjunoS3ActionEnable = true;
+            }
+            if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger", $salesChannel->getId()) == 'orderstatus')  {
+                $byjunoS4trigger = true;
+            }
+            if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4", $salesChannel->getId()) == 'enabled')  {
+                $byjunoS4 = true;
+            }
+        }
+        if ($byjunoS3ActionEnable) {
             $ordersForS3 = $this->orderRepository->search(
                 (new Criteria())
                     ->addFilter(new EqualsFilter('customFields.byjuno_s3_sent', 0))
@@ -71,16 +92,18 @@ class ByjunoCoreTask
                 , $context);
             foreach ($ordersForS3 as $simpleOrder) {
                 $fullOrder = $this->byjuno->getOrder($simpleOrder->getId());
+                $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b", $fullOrder->getSalesChannelId());
+                $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $fullOrder->getSalesChannelId());
                 $lastTransaction = $fullOrder->getTransactions()->last();
                 $request = $this->byjuno->Byjuno_CreateShopWareShopRequestUserBilling(
                     $context,
+                    $fullOrder->getSalesChannelId(),
                     $fullOrder,
-                    $context,
                     $fullOrder->getOrderNumber(),
-                    $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionPaymentMethod"),
-                    $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionRepayment"),
+                    $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionPaymentMethod", $fullOrder->getSalesChannelId()),
+                    $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionRepayment", $fullOrder->getSalesChannelId()),
                     "",
-                    $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionDelivery"),
+                    $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionDelivery", $fullOrder->getSalesChannelId()),
                     "",
                     "",
                     "",
@@ -98,7 +121,7 @@ class ByjunoCoreTask
                 } else {
                     $communicator->setServer('test');
                 }
-                $response = $communicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
+                $response = $communicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $fullOrder->getSalesChannelId()));
                 $statusS1 = 0;
                 $statusS3 = 0;
                 $transactionNumber = "";
@@ -116,17 +139,17 @@ class ByjunoCoreTask
                     $this->byjuno->saveLog($context, $request, $xml, "Empty response backend", $statusS1, $statusLog);
                     continue;
                 }
-                if ($this->byjuno->isStatusOkS2($statusS1)) {
-                    $risk = $this->byjuno->getStatusRisk($statusS1);
+                if ($this->byjuno->isStatusOkS2($statusS1, $fullOrder->getSalesChannelId())) {
+                    $risk = $this->byjuno->getStatusRisk($statusS1, $fullOrder->getSalesChannelId());
                     $requestS3 = $this->byjuno->Byjuno_CreateShopWareShopRequestUserBilling(
                         $context,
+                        $fullOrder->getSalesChannelId(),
                         $fullOrder,
-                        $context,
                         $fullOrder->getOrderNumber(),
-                        $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionPaymentMethod"),
-                        $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionRepayment"),
+                        $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionPaymentMethod", $fullOrder->getSalesChannelId()),
+                        $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionRepayment", $fullOrder->getSalesChannelId()),
                         $risk,
-                        $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionDelivery"),
+                        $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionDelivery", $fullOrder->getSalesChannelId()),
                         "",
                         "",
                         $transactionNumber,
@@ -144,7 +167,7 @@ class ByjunoCoreTask
                     } else {
                         $byjunoCommunicator->setServer('test');
                     }
-                    $response = $byjunoCommunicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
+                    $response = $byjunoCommunicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $fullOrder->getSalesChannelId()));
                     if (isset($response)) {
                         $byjunoResponse = new ByjunoResponse();
                         $byjunoResponse->setRawResponse($response);
@@ -158,7 +181,7 @@ class ByjunoCoreTask
                         $this->byjuno->saveLog($context, $request, $xml, "Empty response backend", $statusS3, $statusLog);
                         continue;
                     }
-                    if ($this->byjuno->isStatusOkS2($statusS1) && $this->byjuno->isStatusOkS3($statusS3)) {
+                    if ($this->byjuno->isStatusOkS2($statusS1, $fullOrder->getSalesChannelId()) && $this->byjuno->isStatusOkS3($statusS3, $fullOrder->getSalesChannelId())) {
                         $this->byjuno->transactionStateHandler->paid($lastTransaction->getId(), $context);
                     } else {
                         $this->byjuno->transactionStateHandler->cancel($lastTransaction->getId(), $context);
@@ -178,8 +201,8 @@ class ByjunoCoreTask
         }
 
 
-        if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger") == 'orderstatus' &&
-            $this->systemConfigService->get("ByjunoPayments.config.byjunoS4") == 'enabled') {
+        if ($byjunoS4trigger &&
+            $byjunoS4) {
             $orders = $this->orderRepository->search(
                 (new Criteria())
                     ->addFilter(new EqualsFilter('customFields.byjuno_s4_sent', 0))
@@ -188,7 +211,8 @@ class ByjunoCoreTask
             foreach ($orders as $simpleOrder) {
                 $order = $this->byjuno->getOrder($simpleOrder->getId());
                 $date = $order->getCreatedAt()->format("Y-m-d");
-                $request = $this->CreateShopRequestS4($order->getOrderNumber(),
+                $request = $this->CreateShopRequestS4($order->getSalesChannelId(),
+                    $order->getOrderNumber(),
                     $order->getAmountTotal(),
                     $order->getAmountTotal(),
                     $order->getCurrency()->getIsoCode(),
@@ -197,7 +221,7 @@ class ByjunoCoreTask
                     $date);
                 $statusLog = "S4 Request (order status)";
 
-                $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
+                $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $order->getSalesChannelId());
                 $xml = $request->createRequest();
                 $byjunoCommunicator = new ByjunoCommunicator();
                 if (isset($mode) && strtolower($mode) == 'live') {
@@ -205,7 +229,7 @@ class ByjunoCoreTask
                 } else {
                     $byjunoCommunicator->setServer('test');
                 }
-                $response = $byjunoCommunicator->sendS4Request($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
+                $response = $byjunoCommunicator->sendS4Request($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $order->getSalesChannelId()));
                 $fields = $order->getCustomFields();
                 $customFields = $fields ?? [];
                 if (isset($response)) {
@@ -252,12 +276,13 @@ class ByjunoCoreTask
             $getDoc = $this->getInvoiceById($doc->getId());
             $name = $getDoc->getConfig()["name"];
             $date = $getDoc->getCreatedAt()->format("Y-m-d");
+            $order = $getDoc->getOrder();
             if ($name == "storno") {
-                if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS5") != 'enabled') {
+                if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS5", $order->getSalesChannelId()) != 'enabled') {
                     return;
                 }
-                $order = $getDoc->getOrder();
-                $request = $this->createShopRequestS5Refund($getDoc->getConfig()["custom"]["invoiceNumber"],
+                $request = $this->createShopRequestS5Refund($order->getSalesChannelId(),
+                    $getDoc->getConfig()["custom"]["invoiceNumber"],
                     $order->getAmountTotal(),
                     $order->getCurrency()->getIsoCode(),
                     $order->getOrderNumber(),
@@ -265,12 +290,13 @@ class ByjunoCoreTask
                     $date);
                 $statusLog = "S5 Refund request";
             } else if ($name == "invoice") {
-                if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4") != 'enabled'
-                    || $this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger") != 'invoice') {
+                if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4", $order->getSalesChannelId()) != 'enabled'
+                    || $this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger", $order->getSalesChannelId()) != 'invoice') {
                     return;
                 }
                 $order = $getDoc->getOrder();
-                $request = $this->CreateShopRequestS4($getDoc->getConfig()["documentNumber"],
+                $request = $this->CreateShopRequestS4($order->getSalesChannelId(),
+                    $getDoc->getConfig()["documentNumber"],
                     $order->getAmountTotal(),
                     $order->getAmountTotal(),
                     $order->getCurrency()->getIsoCode(),
@@ -280,7 +306,7 @@ class ByjunoCoreTask
                 $statusLog = "S4 Request";
             }
             if ($statusLog != '') {
-                $mode = $this->systemConfigService->get("ByjunoPayments.config.mode");
+                $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $order->getSalesChannelId());
                 $xml = $request->createRequest();
                 $byjunoCommunicator = new ByjunoCommunicator();
                 if (isset($mode) && strtolower($mode) == 'live') {
@@ -288,7 +314,7 @@ class ByjunoCoreTask
                 } else {
                     $byjunoCommunicator->setServer('test');
                 }
-                $response = $byjunoCommunicator->sendS4Request($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout"));
+                $response = $byjunoCommunicator->sendS4Request($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $order->getSalesChannelId()));
                 $fields = $getDoc->getCustomFields();
                 $customFields = $fields ?? [];
                 if (isset($response)) {
@@ -339,14 +365,14 @@ class ByjunoCoreTask
         return $this->documentRepository->search($criteria, Context::createDefaultContext())->first();
     }
 
-    function CreateShopRequestS4($doucmentId, $amount, $orderAmount, $orderCurrency, $orderId, $customerId, $date)
+    function CreateShopRequestS4($salesChannelId, $doucmentId, $amount, $orderAmount, $orderCurrency, $orderId, $customerId, $date)
     {
         $request = new ByjunoS4Request();
-        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid"));
-        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid"));
-        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword"));
+        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid", $salesChannelId));
+        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid", $salesChannelId));
+        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword", $salesChannelId));
         $request->setVersion("1.00");
-        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail"));
+        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail", $salesChannelId));
 
         $request->setRequestId(uniqid((String)$orderId . "_"));
         $request->setOrderId($orderId);
@@ -362,14 +388,14 @@ class ByjunoCoreTask
 
     }
 
-    function CreateShopRequestS5Refund($doucmentId, $amount, $orderCurrency, $orderId, $customerId, $date)
+    function CreateShopRequestS5Refund($salesChannelId, $doucmentId, $amount, $orderCurrency, $orderId, $customerId, $date)
     {
         $request = new ByjunoS5Request();
-        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid"));
-        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid"));
-        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword"));
+        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid", $salesChannelId));
+        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid", $salesChannelId));
+        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword", $salesChannelId));
         $request->setVersion("1.00");
-        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail"));
+        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail", $salesChannelId));
 
         $request->setRequestId(uniqid((String)$orderId . "_"));
         $request->setOrderId($orderId);

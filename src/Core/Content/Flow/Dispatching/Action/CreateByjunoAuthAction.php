@@ -43,9 +43,6 @@ class CreateByjunoAuthAction extends FlowAction
 
     public function handle(FlowEvent $event): void
     {
-        if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionEnable") != 'enabled') {
-            return;
-        }
         $event = $event->getEvent();
         if (!method_exists($event, 'getOrder')) {
             return;
@@ -57,6 +54,9 @@ class CreateByjunoAuthAction extends FlowAction
         }
         $fields = $order->getCustomFields();
         if (!empty($fields["byjuno_s3_sent"])) {
+            return;
+        }
+        if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionEnable", $order->getSalesChannelId()) != 'enabled') {
             return;
         }
         $paymentMethods = $order->getTransactions();
