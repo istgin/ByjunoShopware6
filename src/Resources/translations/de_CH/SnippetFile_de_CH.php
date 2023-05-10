@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Byjuno\ByjunoPayments\Resources\translations\de_DE;
+namespace Byjuno\ByjunoPayments\Resources\translations\de_CH;
 
 use Shopware\Core\System\Snippet\Files\SnippetFileInterface;
 
