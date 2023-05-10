@@ -62,13 +62,26 @@
                 <argument type="service" id="service_container"/>
             </call>
         </service>
+
+        <service id="Byjuno\ByjunoPayments\Resources\translations\de_CH\SnippetFile_de_CH">
+            <tag name="shopware.snippet.file"/>
+        </service>
         <service id="Byjuno\ByjunoPayments\Resources\translations\de_DE\SnippetFile_de_DE">
             <tag name="shopware.snippet.file"/>
         </service>
-
         <service id="Byjuno\ByjunoPayments\Resources\translations\en_GB\SnippetFile_en_GB">
             <tag name="shopware.snippet.file"/>
         </service>
+        <service id="Byjuno\ByjunoPayments\Resources\translations\fr_FR\SnippetFile_fr_FR">
+            <tag name="shopware.snippet.file"/>
+        </service>
+        <service id="Byjuno\ByjunoPayments\Resources\translations\it_CH\SnippetFile_it_CH">
+            <tag name="shopware.snippet.file"/>
+        </service>
+        <service id="Byjuno\ByjunoPayments\Resources\translations\it_IT\SnippetFile_it_IT">
+            <tag name="shopware.snippet.file"/>
+        </service>
+
         <service id="Byjuno\ByjunoPayments\Log\ByjunoLogEntityDefinition">
             <tag name="shopware.entity.definition" entity="byjuno_log_entity"/>
         </service>
