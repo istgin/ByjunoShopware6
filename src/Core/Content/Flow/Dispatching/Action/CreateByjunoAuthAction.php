@@ -5,11 +5,14 @@ namespace Byjuno\ByjunoPayments\Core\Content\Flow\Dispatching\Action;
 use Byjuno\ByjunoPayments\Core\Framework\Event\ByjunoAuthAware;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Content\Flow\Dispatching\Action\FlowAction;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
-use Shopware\Core\Framework\Event\FlowEvent;
+use Shopware\Core\Content\Flow\Dispatching\DelayableAction;
+use Shopware\Core\Content\Flow\Dispatching\StorableFlow;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Core\Framework\Event\FlowEventAware;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class CreateByjunoAuthAction extends FlowAction
+class CreateByjunoAuthAction extends FlowAction implements EventSubscriberInterface
 {
     private $orderRepository;
     /**
@@ -17,7 +20,7 @@ class CreateByjunoAuthAction extends FlowAction
      */
     private $systemConfigService;
 
-    public function __construct(EntityRepositoryInterface $orderRepository, SystemConfigService $systemConfigService)
+    public function __construct(EntityRepository$orderRepository, SystemConfigService $systemConfigService)
     {
         $this->orderRepository = $orderRepository;
         $this->systemConfigService = $systemConfigService;
@@ -41,9 +44,9 @@ class CreateByjunoAuthAction extends FlowAction
         return [ByjunoAuthAware::class];
     }
 
-    public function handle(FlowEvent $event): void
+    public function handleFlow(StorableFlow $flow): void
     {
-        $event = $event->getEvent();
+        $event = $flow->getEvent();
         if (!method_exists($event, 'getOrder')) {
             return;
         }

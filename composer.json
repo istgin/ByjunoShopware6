@@ -1,7 +1,7 @@
 {
   "name": "byjuno/byjuno-payment",
   "description": "Byjuno.ch payment integration",
-  "version": "2.0.1",
+  "version": "2.0.0",
   "type": "shopware-platform-plugin",
   "license": "MIT",
   "authors": [
@@ -22,18 +22,12 @@
     "label": {
       "de-CH": "Byjuno payments",
       "de-DE": "Byjuno payments",
-      "en-GB": "Byjuno payments",
-      "fr-FR": "Byjuno payments",
-      "it-CH": "Byjuno payments",
-      "it-IT": "Byjuno payments"
+      "en-GB": "Byjuno payments"
     },
     "description": {
       "de-CH": "Byjuno payments. Byjuno invoice. Byjuno installment",
       "de-DE": "Byjuno payments. Byjuno invoice. Byjuno installment",
-      "en-GB": "Byjuno payments. Byjuno invoice. Byjuno installment",
-      "fr-FR": "Byjuno payments. Byjuno invoice. Byjuno installment",
-      "it-CH": "Byjuno payments. Byjuno invoice. Byjuno installment",
-      "it-IT": "Byjuno payments. Byjuno invoice. Byjuno installment"
+      "en-GB": "Byjuno payments. Byjuno invoice. Byjuno installment"
     }
   },
   "autoload": {

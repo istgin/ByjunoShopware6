@@ -21,6 +21,7 @@ use Shopware\Core\Content\MailTemplate\Exception\MailEventConfigurationException
 use Shopware\Core\Content\MailTemplate\MailTemplateEntity;
 use Shopware\Core\Content\Mail\Service\MailService;;
 use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Exception\InconsistentCriteriaIdsException;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -30,6 +31,7 @@ use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\Framework\Validation\DataBag\DataBag;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\System\Language\LanguageEntity;
+use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepository;
 use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepositoryInterface;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\Salutation\SalutationCollection;
@@ -43,8 +45,8 @@ use Symfony\Component\Routing\Annotation\Route;
 use Shopware\Core\Framework\Routing\Annotation\RouteScope;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
-;
 
+#[Route(defaults: ['_routeScope' => ['byjuno']])]
 class ByjunodataController extends StorefrontController
 {
     /**
@@ -62,13 +64,13 @@ class ByjunodataController extends StorefrontController
      */
     private $systemConfigService;
 
-    /** @var EntityRepositoryInterface */
+    /** @var EntityRepository */
     private $languageRepository;
 
-    /** @var EntityRepositoryInterface */
+    /** @var EntityRepository */
     private $orderAddressRepository;
 
-    /** @var EntityRepositoryInterface */
+    /** @var EntityRepository */
     private $orderRepository;
 
     /** @var TranslatorInterface */
@@ -79,7 +81,7 @@ class ByjunodataController extends StorefrontController
     private $mailService;
 
     /**
-     * @var EntityRepositoryInterface
+     * @var EntityRepository
      */
     private $mailTemplateRepository;
 
@@ -92,13 +94,13 @@ class ByjunodataController extends StorefrontController
         CartService $cartService,
         OrderService $orderService,
         SystemConfigService $systemConfigService,
-        SalesChannelRepositoryInterface $salutationRepository,
-        EntityRepositoryInterface $languageRepository,
-        EntityRepositoryInterface $orderAddressRepository,
-        EntityRepositoryInterface $orderRepository,
+        SalesChannelRepository $salutationRepository,
+        EntityRepository $languageRepository,
+        EntityRepository $orderAddressRepository,
+        EntityRepository $orderRepository,
         TranslatorInterface $translator,
         MailService $mailService,
-        EntityRepositoryInterface $mailTemplateRepository,
+        EntityRepository $mailTemplateRepository,
         ByjunoCDPOrderConverterSubscriber $byjuno)
     {
         $this->cartService = $cartService;
@@ -115,10 +117,7 @@ class ByjunodataController extends StorefrontController
 
     }
 
-    /**
-     * @RouteScope(scopes={"storefront"})
-     * @Route("/byjuno/byjunodata", name="frontend.checkout.byjunodata", options={"seo"="false"}, methods={"GET"})
-     */
+    #[Route(path: 'byjunodata', name: 'frontend.checkout.byjunodata', methods: ['GET'])]
     public function submitData(Request $request, SalesChannelContext $context)
     {
         $_SESSION["_byjuno_key"] = "ok";
@@ -295,10 +294,7 @@ class ByjunodataController extends StorefrontController
         return $this->renderStorefront('@Storefront/storefront/page/checkout/cart/byjunodata.html.twig', ["page" => $params]);
     }
 
-    /**
-     * @RouteScope(scopes={"storefront"})
-     * @Route("/byjuno/byjunosubmit", name="frontend.checkout.byjunosubmit", options={"seo"="false"}, methods={"POST", "GET"})
-     */
+    #[Route(path: 'byjunosubmit', name: 'frontend.checkout.byjunosubmit', methods: ['POST', 'GET'])]
     public function finalizeTransaction(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
     {
         if (!empty($_SESSION["_byjuno_key"]) && !empty($_SESSION["_byjyno_payment_method"])) {

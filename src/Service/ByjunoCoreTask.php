@@ -9,6 +9,7 @@ use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Response;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS5Request;
 use Shopware\Core\Checkout\Document\DocumentEntity;
 use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
@@ -30,16 +31,16 @@ class ByjunoCoreTask
      */
     private $salesChannelReposiotry;
     /**
-     * @var EntityRepositoryInterface
+     * @var EntityRepository
      */
     private $documentRepository;
     /**
-     * @var EntityRepositoryInterface
+     * @var EntityRepository
      */
     private $orderRepository;
 
     /**
-     * @var EntityRepositoryInterface
+     * @var EntityRepository
      */
     private $logEntry;
     /**
@@ -49,10 +50,10 @@ class ByjunoCoreTask
 
     public function __construct(
         SystemConfigService $systemConfigService,
-        EntityRepositoryInterface $salesChannelReposiotry,
-        EntityRepositoryInterface $documentRepository,
-        EntityRepositoryInterface $orderRepository,
-        EntityRepositoryInterface $logEntry,
+        EntityRepository $salesChannelReposiotry,
+        EntityRepository $documentRepository,
+        EntityRepository $orderRepository,
+        EntityRepository $logEntry,
         ByjunoCDPOrderConverterSubscriber $byjuno)
     {
         $this->systemConfigService = $systemConfigService;
