@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Byjuno\ByjunoPayments\Controller;
+namespace Byjuno\ByjunoPayments\Storefront\Controller;
 
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoRequest;
@@ -44,9 +44,8 @@ use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Shopware\Core\Framework\Routing\Annotation\RouteScope;
 
-#[Route(defaults: ['_routeScope' => ['byjuno']])]
+#[Route(defaults: ['_routeScope' => ['storefront']])]
 class ByjunocancelController extends StorefrontController
 {
 
@@ -86,7 +85,7 @@ class ByjunocancelController extends StorefrontController
         $this->orderService = $orderService;
     }
 
-    #[Route(path: 'cancel', name: 'frontend.checkout.byjunocancel', methods: ['GET'])]
+    #[Route(path: '/byjunocancel', name: 'frontend.checkout.byjunocancel', methods: ['POST', 'GET'])]
     public function cancel(Cart $cart, Request $request, SalesChannelContext $salesChannelContext)
     {
         return $this->recreateCart($cart, $request, $salesChannelContext);

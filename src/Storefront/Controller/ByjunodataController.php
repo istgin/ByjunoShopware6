@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Byjuno\ByjunoPayments\Controller;
+namespace Byjuno\ByjunoPayments\Storefront\Controller;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoRequest;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoResponse;
@@ -39,11 +39,10 @@ use Shopware\Storefront\Controller\StorefrontController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Shopware\Core\Framework\Routing\Annotation\RouteScope;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[Route(defaults: ['_routeScope' => ['byjuno']])]
+#[Route(defaults: ['_routeScope' => ['storefront']])]
 class ByjunodataController extends StorefrontController
 {
     /**
@@ -114,7 +113,7 @@ class ByjunodataController extends StorefrontController
 
     }
 
-    #[Route(path: 'byjunodata', name: 'frontend.checkout.byjunodata', methods: ['GET'])]
+    #[Route(path: '/byjunodata', name: 'frontend.checkout.byjunodata', methods: ['GET'])]
     public function submitData(Request $request, SalesChannelContext $context)
     {
         $_SESSION["_byjuno_key"] = "ok";
@@ -291,7 +290,7 @@ class ByjunodataController extends StorefrontController
         return $this->renderStorefront('@Storefront/storefront/page/checkout/cart/byjunodata.html.twig', ["page" => $params]);
     }
 
-    #[Route(path: 'byjunosubmit', name: 'frontend.checkout.byjunosubmit', methods: ['POST', 'GET'])]
+    #[Route(path: '/byjunosubmit', name: 'frontend.checkout.byjunosubmit', methods: ['POST', 'GET'])]
     public function finalizeTransaction(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
     {
         if (!empty($_SESSION["_byjuno_key"]) && !empty($_SESSION["_byjyno_payment_method"])) {

@@ -27,7 +27,7 @@
             <tag name="kernel.event_subscriber"/>
         </service>
 
-        <service id="Byjuno\ByjunoPayments\Controller\ByjunodataController" public="true">
+        <service id="Byjuno\ByjunoPayments\Storefront\Controller\ByjunodataController" public="true">
             <argument type="service" id="Shopware\Core\Checkout\Cart\SalesChannel\CartService"/>
             <argument type="service" id="Shopware\Core\Checkout\Order\SalesChannel\OrderService"/>
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
@@ -53,7 +53,7 @@
             <argument type="service" id="Byjuno\ByjunoPayments\Service\ByjunoCDPOrderConverterSubscriber"/>
         </service>
 
-        <service id="Byjuno\ByjunoPayments\Controller\ByjunocancelController" public="true">
+        <service id="Byjuno\ByjunoPayments\Storefront\Controller\ByjunocancelController" public="true">
             <argument type="service" id="Shopware\Core\Checkout\Cart\SalesChannel\CartService"/>
             <argument type="service" id="Shopware\Core\Checkout\Cart\LineItemFactoryRegistry"/>
             <argument type="service" id="Shopware\Core\Checkout\Order\SalesChannel\OrderRoute"/>
