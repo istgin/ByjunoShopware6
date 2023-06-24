@@ -3,7 +3,7 @@
 namespace Byjuno\ByjunoPayments\ScheduledTask;
 
 use Byjuno\ByjunoPayments\Service\ByjunoCoreTask;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\MessageQueue\ScheduledTask\ScheduledTaskHandler;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
@@ -15,7 +15,7 @@ class ByjunoTaskHandler extends ScheduledTaskHandler
     private $byjunoCoreTask;
 
     public function __construct(
-        EntityRepositoryInterface $scheduledTaskRepository,
+        EntityRepository $scheduledTaskRepository,
         ByjunoCoreTask $byjunoCoreTask
     )
     {
