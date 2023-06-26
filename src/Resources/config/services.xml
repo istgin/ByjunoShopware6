@@ -42,6 +42,9 @@
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
             </call>
+            <call method="setTwig">
+                <argument type="service" id="twig"/>
+            </call>
         </service>
 
         <service id="Byjuno\ByjunoPayments\Service\ByjunoCoreTask">
@@ -60,6 +63,10 @@
             <argument type="service" id="Shopware\Core\Checkout\Order\SalesChannel\OrderService"/>
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
+            </call>
+
+            <call method="setTwig">
+                <argument type="service" id="twig"/>
             </call>
         </service>
         <service id="Byjuno\ByjunoPayments\Resources\translations\de_DE\SnippetFile_de_DE">
