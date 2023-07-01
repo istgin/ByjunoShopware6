@@ -89,8 +89,7 @@
         <service id="Byjuno\ByjunoPayments\Core\Content\Flow\Dispatching\Action\CreateByjunoAuthAction">
             <argument type="service" id="order.repository" />
             <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
-            <tag name="kernel.event_subscriber"/>
-            <tag name="flow.action" priority="600"/>
+            <tag name="flow.action" priority="600" key="action.create.byjunoauth"/>
         </service>
 
         <service id="Byjuno\ByjunoPayments\ScheduledTask\ByjunoTaskHandler">

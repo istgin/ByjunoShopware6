@@ -5,14 +5,11 @@ namespace Byjuno\ByjunoPayments\Core\Content\Flow\Dispatching\Action;
 use Byjuno\ByjunoPayments\Core\Framework\Event\ByjunoAuthAware;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Content\Flow\Dispatching\Action\FlowAction;
-use Shopware\Core\Content\Flow\Dispatching\DelayableAction;
 use Shopware\Core\Content\Flow\Dispatching\StorableFlow;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
-use Shopware\Core\Framework\Event\FlowEventAware;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-class CreateByjunoAuthAction extends FlowAction implements EventSubscriberInterface
+class CreateByjunoAuthAction extends FlowAction
 {
     private $orderRepository;
     /**
@@ -30,13 +27,6 @@ class CreateByjunoAuthAction extends FlowAction implements EventSubscriberInterf
     {
         // your own action name
         return 'action.create.byjunoauth';
-    }
-
-    public static function getSubscribedEvents(): array
-    {
-        return [
-            self::getName() => 'handle',
-        ];
     }
 
     public function requirements(): array
