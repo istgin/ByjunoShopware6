@@ -28,6 +28,7 @@
     "order_canceled" : "Pagamento fallito. L'ordine è stato annullato.",
     "back_to_shop" : "Torna alla pagina iniziale",
     "t_and_c": "(CGC)",
-    "byjunoauthflow": "ByjunoAuth"
+    "byjunoauthflow": "ByjunoAuth",
+    "checkoutadditional": "Le seguenti informazioni sono necessarie per completare il pagamento con Byjuno:"
   }
 }

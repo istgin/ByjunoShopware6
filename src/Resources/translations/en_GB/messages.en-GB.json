@@ -28,6 +28,7 @@
     "order_canceled" : "Payment unsuccessful. Your order is canceled",
     "back_to_shop" : "Back to the shop",
     "t_and_c": "(T&C)",
-    "byjunoauthflow": "ByjunoAuth"
+    "byjunoauthflow": "ByjunoAuth",
+    "checkoutadditional": "For purchase completion with Byjuno the following information is required:"
   }
 }

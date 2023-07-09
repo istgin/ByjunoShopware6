@@ -28,6 +28,7 @@
     "order_canceled" : "Le paiement a échoué. La commande a été annulée.",
     "back_to_shop" : "Retour à la page d'accueil",
     "t_and_c": "(CGV)",
-    "byjunoauthflow": "ByjunoAuth"
+    "byjunoauthflow": "ByjunoAuth",
+    "checkoutadditional": "Les informations suivantes sont nécessaires pour compléter le paiement avec Byjuno:"
   }
 }

@@ -10,6 +10,9 @@
                             <div class="card-title">
                                 {{ page["payment_method"] }}
                             </div>
+                            <p>
+                                {{ "ByjunoPayment.checkoutadditional" | trans }}
+                            </p>
                             <form action="{{ path('frontend.checkout.byjunosubmit') }}?returnurl={{ page["returnurl"] }}&orderid={{ page["orderid"] }}"
                                   class="register-form" method="post" id="proceed_byjuno_invoice"
                                   name="proceed_byjuno_invoice" data-form-csrf-handler="true">
