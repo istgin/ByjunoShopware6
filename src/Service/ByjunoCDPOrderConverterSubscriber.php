@@ -174,6 +174,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                     $order = $this->getOrder($doc->getOrderId());
                     if ($order != null) {
                         switch ($name) {
+                            case "cancellation_invoice":
                             case "storno":
                                 if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS5", $order->getSalesChannelId()) != 'enabled') {
                                     return;

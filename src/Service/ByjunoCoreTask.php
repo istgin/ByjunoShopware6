@@ -266,7 +266,6 @@ class ByjunoCoreTask
         $docs = $this->documentRepository->search(
             (new Criteria())->addFilter(new EqualsFilter('customFields.byjuno_doc_sent', 0))->addSorting(new FieldSorting('createdAt', FieldSorting::ASCENDING))
             , $context);
-
         foreach ($docs as $doc) {
             /* @var $doc \Shopware\Core\Checkout\Document\DocumentEntity */
             $flds = $doc->getCustomFields();
@@ -277,7 +276,7 @@ class ByjunoCoreTask
             $name = $getDoc->getConfig()["name"];
             $date = $getDoc->getCreatedAt()->format("Y-m-d");
             $order = $getDoc->getOrder();
-            if ($name == "storno") {
+            if ($name == "cancellation_invoice" || $name == "storno") {
                 if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS5", $order->getSalesChannelId()) != 'enabled') {
                     return;
                 }
