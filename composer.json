@@ -22,12 +22,18 @@
     "label": {
       "de-CH": "Byjuno payments",
       "de-DE": "Byjuno payments",
-      "en-GB": "Byjuno payments"
+      "en-GB": "Byjuno payments",
+      "fr-FR": "Byjuno payments",
+      "it-CH": "Byjuno payments",
+      "it-IT": "Byjuno payments"
     },
     "description": {
       "de-CH": "Byjuno payments. Byjuno invoice. Byjuno installment",
       "de-DE": "Byjuno payments. Byjuno invoice. Byjuno installment",
-      "en-GB": "Byjuno payments. Byjuno invoice. Byjuno installment"
+      "en-GB": "Byjuno payments. Byjuno invoice. Byjuno installment",
+      "fr-FR": "Byjuno payments. Byjuno invoice. Byjuno installment",
+      "it-CH": "Byjuno payments. Byjuno invoice. Byjuno installment",
+      "it-IT": "Byjuno payments. Byjuno invoice. Byjuno installment"
     }
   },
   "autoload": {
