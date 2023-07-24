@@ -170,11 +170,12 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             $doc = $this->getInvoiceById($id);
             if ($doc != null) {
                 if (!isset(self::$writeRecursion[$doc->getId()])) {
-                    $name = $doc->getConfig()["name"];
+                    $shopwareDocName = $doc->getConfig()["name"];
                     $order = $this->getOrder($doc->getOrderId());
+
                     if ($order != null) {
-                        switch ($name) {
-                            case "cancellation_invoice":
+                        $docName = $this->Byjuno_MapDocument($shopwareDocName, $order->getSalesChannelId());
+                        switch ($docName) {
                             case "storno":
                                 if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS5", $order->getSalesChannelId()) != 'enabled') {
                                     return;
@@ -190,7 +191,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                                 break;
                             default:
                                 return;
-
                         }
                         $paymentMethods = $order->getTransactions();
                         $paymentMethodId = '';
@@ -1128,6 +1128,23 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         } else {
             return "4";
         }
+    }
+
+    public function Byjuno_MapDocument($name, $salesChannhelId)
+    {
+        $s4Names = explode(",", $this->systemConfigService->get("ByjunoPayments.config.byjunoS4techname", $salesChannhelId));
+        $s5Names = explode(",", $this->systemConfigService->get("ByjunoPayments.config.byjunoS5techname", $salesChannhelId));
+        foreach ($s4Names as $s4name) {
+            if ($s4name == $name) {
+                return "invoice";
+            }
+        }
+        foreach ($s5Names as $s5name) {
+            if ($s5name == $name) {
+                return "storno";
+            }
+        }
+        return "undefined";
     }
 
     public function isStatusOkS2($status, $salesChannhelId)

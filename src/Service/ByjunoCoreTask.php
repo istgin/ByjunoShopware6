@@ -273,10 +273,12 @@ class ByjunoCoreTask
                 continue;
             }
             $getDoc = $this->getInvoiceById($doc->getId());
-            $name = $getDoc->getConfig()["name"];
+            $shopwareDocName = $getDoc->getConfig()["name"];
             $date = $getDoc->getCreatedAt()->format("Y-m-d");
             $order = $getDoc->getOrder();
-            if ($name == "cancellation_invoice" || $name == "storno") {
+
+            $docName = $this->byjuno->Byjuno_MapDocument($shopwareDocName, $order->getSalesChannelId());
+            if ($docName == "storno") {
                 if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS5", $order->getSalesChannelId()) != 'enabled') {
                     return;
                 }
@@ -288,7 +290,7 @@ class ByjunoCoreTask
                     $order->getOrderCustomer()->getId(),
                     $date);
                 $statusLog = "S5 Refund request";
-            } else if ($name == "invoice") {
+            } else if ($docName == "invoice") {
                 if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4", $order->getSalesChannelId()) != 'enabled'
                     || $this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger", $order->getSalesChannelId()) != 'invoice') {
                     return;

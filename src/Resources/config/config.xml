@@ -245,6 +245,14 @@
                 </option>
             </options>
         </input-field>
+
+        <input-field>
+            <name>byjunoS4techname</name>
+            <label>Specify S4 possible document names</label>
+            <label lang="de-DE">Specify S4 possible document names</label>
+            <defaultValue>invoice</defaultValue>
+        </input-field>
+
         <input-field type="single-select">
             <name>byjunoS5</name>
             <label>S5 transactions</label>
@@ -262,6 +270,14 @@
                 </option>
             </options>
         </input-field>
+
+        <input-field>
+            <name>byjunoS5techname</name>
+            <label>Specify S5 possible document names</label>
+            <label lang="de-DE">Specify S5 possible document names</label>
+            <defaultValue>cancellation_invoice,storno</defaultValue>
+        </input-field>
+
         <input-field>
             <name>byjunoprodemail</name>
             <label>Production email of Byjuno</label>
