@@ -7,6 +7,7 @@ use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Content\Flow\Dispatching\Action\FlowAction;
 use Shopware\Core\Content\Flow\Dispatching\StorableFlow;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Core\Framework\Event\OrderAware;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
 class CreateByjunoAuthAction extends FlowAction
@@ -36,12 +37,11 @@ class CreateByjunoAuthAction extends FlowAction
 
     public function handleFlow(StorableFlow $flow): void
     {
-        $event = $flow->getEvent();
-        if (!method_exists($event, 'getOrder')) {
+        if (!$flow->hasData(OrderAware::ORDER)) {
             return;
         }
         /* @var $order OrderEntity */
-        $order = $event->getOrder();
+        $order = $flow->getData(OrderAware::ORDER);
         if (!$order instanceof OrderEntity) {
             return;
         }
@@ -65,7 +65,7 @@ class CreateByjunoAuthAction extends FlowAction
                 'id' => $order->getId(),
                 'customFields' => $customFields,
             ];
-            $this->orderRepository->update([$update], $event->getContext());
+            $this->orderRepository->update([$update], $flow->getContext());
         }
     }
 }
