@@ -211,8 +211,8 @@
             <options>
                 <option>
                     <id>invoice</id>
-                    <name>On invoice created</name>
-                    <name lang="de-DE">On invoice created</name>
+                    <name>On document creation, please specify document type below</name>
+                    <name lang="de-DE">On document creation, please specify document type below</name>
                 </option>
                 <option>
                     <id>orderstatus</id>
