@@ -117,15 +117,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $writeRecursion = Array();
     }
 
-    private function endsWith($haystack, $needle)
-    {
-        $length = strlen($needle);
-        if(!$length) {
-            return true;
-        }
-        return substr($haystack, -$length) === $needle;
-    }
-
     public static function getSubscribedEvents(): array
     {
         return [
@@ -141,7 +132,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     public function onCheckoutConfirmLoaded(CheckoutConfirmPageLoadedEvent $event): void
     {
-        if (!$this->endsWith($event->getRequest()->attributes->get("_controller"), "Shopware\Storefront\Controller\CheckoutController::confirmPage")) {
+        if ($event->getRequest()->attributes->get("_controller") != "Shopware\Storefront\Controller\CheckoutController::confirmPage") {
             return;
         }
         $confirmPage = $event->getPage();
@@ -300,10 +291,9 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     public function onByjunoRender(StorefrontRenderEvent $event): void
     {
-        $eRequest = $event->getRequest();
-        if ($eRequest != null
-            && $eRequest->attributes != null
-            && $this->endsWith($eRequest->attributes->get("_controller"), "Storefront\Controller\CheckoutController::confirmPage")) {
+        if ($event->getRequest() != null
+            && $event->getRequest()->attributes != null
+            && $event->getRequest()->attributes->get("_controller") == 'Shopware\Storefront\Controller\CheckoutController::confirmPage') {
             $byjuno_tmx = array();
             $tmx_enable = false;
             if ($this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable", $event->getSalesChannelContext()->getSalesChannelId()) == 'enabled') {
@@ -565,7 +555,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->setExtraInfo($extraInfo);
 
         $extraInfo["Name"] = 'CONNECTIVTY_MODULE';
-        $extraInfo["Value"] = 'Byjuno ShopWare 6 module 2.0.2';
+        $extraInfo["Value"] = 'Byjuno ShopWare 6 module 2.0.1';
         $request->setExtraInfo($extraInfo);
         return $request;
     }
@@ -1096,7 +1086,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
 
         $extraInfo["Name"] = 'CONNECTIVTY_MODULE';
-        $extraInfo["Value"] = 'Byjuno ShopWare 6 module 2.0.2';
+        $extraInfo["Value"] = 'Byjuno ShopWare 6 module 2.0.1';
         $request->setExtraInfo($extraInfo);
         return $request;
 
