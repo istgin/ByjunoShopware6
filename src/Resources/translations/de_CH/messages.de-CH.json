@@ -28,6 +28,7 @@
     "order_canceled" : "Zahlung fehlgeschlagen. Ihre Bestellung wurde storniert.",
     "back_to_shop" : "Zurück zum Shop",
     "t_and_c": "(AGB)",
-    "byjunoauthflow": "ByjunoAuth"
+    "byjunoauthflow": "ByjunoAuth",
+    "checkoutadditional": "Für den Abschluss der Zahlung mit Byjuno werden folgende Informationen benötigt:",
   }
 }

@@ -2,7 +2,7 @@
 
 {% block base_content %}
     {% block page_checkout %}
-        <div class="account-register">
+        <div class="account-profile">
             <div class="row">
                 <div class="col-lg-12">
                     <div class="card register-card">
@@ -10,20 +10,22 @@
                             <div class="card-title">
                                 {{ page["payment_method"] }}
                             </div>
+                            <p>
+                                {{ "ByjunoPayment.checkoutadditional" | trans }}
+                            </p>
                             <form action="{{ path('frontend.checkout.byjunosubmit') }}?returnurl={{ page["returnurl"] }}&orderid={{ page["orderid"] }}"
                                   class="register-form" method="post" id="proceed_byjuno_invoice"
                                   name="proceed_byjuno_invoice" data-form-csrf-handler="true">
-                                {{ sw_csrf('frontend.checkout.byjunosubmit') }}
                                 <div class="register-personal">
                                     {% if page["custom_gender_enable"] %}
                                         <label class="form-label"
                                                for="customPersonalSalutation">
                                             {{ "account.personalSalutationLabel"|trans|sw_sanitize }}{{ "general.required"|trans|sw_sanitize }}
                                         </label>
-                                        <div class="form-row">
-                                            <div class="form-group col-mdl-2 col-4">
+                                        <div class="row g-1">
+                                            <div class="form-group col-md-3 col-sm-6">
                                                     <select id="customPersonalSalutation"
-                                                        class="custom-select"
+                                                        class="form-select"
                                                         name="customSalutationId"
                                                         required="required">
                                                     {% if not page['current_salutation'] %}
@@ -49,11 +51,11 @@
                                         <label for="personalBirthday">
                                             {{ "account.personalBirthdayLabel"|trans|sw_sanitize }}{{ shopware.config.core.loginRegistration.birthdayFieldRequired ? "general.required"|trans|sw_sanitize }}*
                                         </label>
-                                        <div class="form-row">
+                                        <div class="row g-3">
                                             <div class="form-group col-md-2 col-4">
                                                 <select id="customPersonalBirthdayDay"
                                                         name="customBirthdayDay"
-                                                        class="custom-select"
+                                                        class="form-select"
                                                         required="required">
                                                     {% if not page['current_year'] %}
                                                         <option selected="selected"
@@ -71,7 +73,7 @@
                                             </div>
                                             <div class="form-group col-md-2 col-4">
                                                 <select id="customBirthdayMonth" name="customBirthdayMonth"
-                                                        class="custom-select"
+                                                        class="form-select"
                                                         required="required">
                                                     {% if not page['current_month']  %}
                                                         <option selected="selected"
@@ -92,7 +94,7 @@
                                                 {% set startYear = currentYear - 102 %}
 
                                                 <select id="customBirthdayYear" name="customBirthdayYear"
-                                                        class="custom-select"
+                                                        class="form-select"
                                                         required="required">
                                                     {% if not page['current_day']  %}
                                                         <option selected="selected"
@@ -115,7 +117,7 @@
                                                for="invoicedelivery">
                                             {{ page["send_invoice"] }}
                                         </label>
-                                        <div class="form-row">
+                                        <div class="row g-1">
                                             <div class="form-group col-md-6 col-6">
                                                 <input type="radio" name="invoicedelivery" id="payment_email" value="email" checked="checked" />
                                                 <label for="payment_email">{{ "ByjunoPayment.send_email" | trans }}</label><br />
@@ -128,7 +130,7 @@
                                            for="paymentplan">
                                         {{ "ByjunoPayment.payment_plan" | trans }}
                                     </label>
-                                    <div class="form-row">
+                                    <div class="row g-1">
                                         <div class="form-group col-md-6 col-6">
                                             {% for paymentoption in page["paymentplans"] %}
                                                 <input type="radio" name="paymentplan" id="payment_{{ paymentoption['id'] }}" value="{{ paymentoption['id'] }}" {% if page['selected'] == paymentoption['id']  %} checked="checked" {% endif %} />

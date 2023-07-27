@@ -18,7 +18,8 @@ class ByjunoAuthEventCollectorSubscriber implements EventSubscriberInterface
     public function addAuth(BusinessEventCollectorEvent $event): void
     {
         foreach ($event->getCollection()->getElements() as $definition) {
-            $definition->addAware(ByjunoAuthAware::class);
+            $className = \explode('\\', ByjunoAuthAware::class);
+            $definition->addAware(\lcfirst(\end($className)));
         }
     }
 }

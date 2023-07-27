@@ -7,7 +7,7 @@ use Byjuno\ByjunoPayments\Service\ByjunoInstallmentPayment;
 use Byjuno\ByjunoPayments\Service\ByjunoInvoicePayment;
 use mysql_xdevapi\Exception;
 use Shopware\Core\Framework\Context;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\Plugin;
@@ -40,8 +40,7 @@ class ByjunoPayments extends Plugin
     }
 
     public const CUSTOM_FIELDS = [
-        [
-
+    [
             'id'     => '043946a045664646464649f9fd2ff69f',
             'name'   => 'custom_byjuno',
             'config' => [
@@ -53,7 +52,6 @@ class ByjunoPayments extends Plugin
                     'fr-CH' => 'Byjuno',
                     'it-IT' => 'Byjuno',
                     'it-CH' => 'Byjuno',
-                    '2fbb5fe2e29a4d70aa5854ce7ce3e20b' => 'Byjuno',
                 ],
             ],
             'customFields' => [
@@ -70,7 +68,6 @@ class ByjunoPayments extends Plugin
                             'fr-CH' => 'Byjuno retry count',
                             'it-IT' => 'Byjuno retry count',
                             'it-CH' => 'Byjuno retry count',
-                            '2fbb5fe2e29a4d70aa5854ce7ce3e20b' => 'Byjuno retry count',
                         ],
                     ],
                 ],
@@ -87,7 +84,6 @@ class ByjunoPayments extends Plugin
                             'fr-CH' => 'Byjuno sent',
                             'it-IT' => 'Byjuno sent',
                             'it-CH' => 'Byjuno sent',
-                            '2fbb5fe2e29a4d70aa5854ce7ce3e20b' => 'Byjuno sent',
                         ],
                     ],
                 ],
@@ -104,7 +100,6 @@ class ByjunoPayments extends Plugin
                             'fr-CH' => 'Byjuno time',
                             'it-IT' => 'Byjuno time',
                             'it-CH' => 'Byjuno time',
-                            '2fbb5fe2e29a4d70aa5854ce7ce3e20b' => 'Byjuno time',
                         ],
                     ],
                 ],
@@ -249,7 +244,7 @@ class ByjunoPayments extends Plugin
 
     private function setPaymentMethodIsActive(bool $active, Context $context): void
     {
-        /** @var EntityRepositoryInterface $paymentRepository */
+        /** @var EntityRepository $paymentRepository */
         $paymentRepository = $this->container->get('payment_method.repository');
 
         $paymentMethodIds = $this->getPaymentMethodIds();
@@ -270,7 +265,7 @@ class ByjunoPayments extends Plugin
 
     private function getPaymentMethodIds(): ?array
     {
-        /** @var EntityRepositoryInterface $paymentRepository */
+        /** @var EntityRepository $paymentRepository */
         $paymentRepository = $this->container->get('payment_method.repository');
 
         // Fetch ID for update

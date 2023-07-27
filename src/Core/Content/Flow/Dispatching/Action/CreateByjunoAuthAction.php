@@ -5,8 +5,9 @@ namespace Byjuno\ByjunoPayments\Core\Content\Flow\Dispatching\Action;
 use Byjuno\ByjunoPayments\Core\Framework\Event\ByjunoAuthAware;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Content\Flow\Dispatching\Action\FlowAction;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
-use Shopware\Core\Framework\Event\FlowEvent;
+use Shopware\Core\Content\Flow\Dispatching\StorableFlow;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
+use Shopware\Core\Framework\Event\OrderAware;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 
 class CreateByjunoAuthAction extends FlowAction
@@ -17,7 +18,7 @@ class CreateByjunoAuthAction extends FlowAction
      */
     private $systemConfigService;
 
-    public function __construct(EntityRepositoryInterface $orderRepository, SystemConfigService $systemConfigService)
+    public function __construct(EntityRepository$orderRepository, SystemConfigService $systemConfigService)
     {
         $this->orderRepository = $orderRepository;
         $this->systemConfigService = $systemConfigService;
@@ -29,26 +30,18 @@ class CreateByjunoAuthAction extends FlowAction
         return 'action.create.byjunoauth';
     }
 
-    public static function getSubscribedEvents(): array
-    {
-        return [
-            self::getName() => 'handle',
-        ];
-    }
-
     public function requirements(): array
     {
         return [ByjunoAuthAware::class];
     }
 
-    public function handle(FlowEvent $event): void
+    public function handleFlow(StorableFlow $flow): void
     {
-        $event = $event->getEvent();
-        if (!method_exists($event, 'getOrder')) {
+        if (!$flow->hasData(OrderAware::ORDER)) {
             return;
         }
         /* @var $order OrderEntity */
-        $order = $event->getOrder();
+        $order = $flow->getData(OrderAware::ORDER);
         if (!$order instanceof OrderEntity) {
             return;
         }
@@ -72,7 +65,7 @@ class CreateByjunoAuthAction extends FlowAction
                 'id' => $order->getId(),
                 'customFields' => $customFields,
             ];
-            $this->orderRepository->update([$update], $event->getContext());
+            $this->orderRepository->update([$update], $flow->getContext());
         }
     }
 }

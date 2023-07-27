@@ -22,7 +22,7 @@ use Shopware\Core\Checkout\Payment\PaymentMethodEntity;
 use Shopware\Core\Content\Mail\Service\MailService;
 use Shopware\Core\Content\MailTemplate\MailTemplateEntity;
 use Shopware\Core\Framework\Context;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Event\EntityWrittenEvent;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
@@ -32,7 +32,7 @@ use Shopware\Core\Framework\Validation\Exception\ConstraintViolationException;
 use Shopware\Core\System\Country\CountryEntity;
 use Shopware\Core\System\Currency\CurrencyEntity;
 use Shopware\Core\System\Language\LanguageEntity;
-use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepositoryInterface;
+use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepository;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\Salutation\SalutationCollection;
 use Shopware\Core\System\Salutation\SalutationEntity;
@@ -55,24 +55,24 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
      * @var SystemConfigService
      */
     private $systemConfigService;
-    /** @var EntityRepositoryInterface */
+    /** @var EntityRepository */
     private $paymentMethodRepository;
-    /** @var EntityRepositoryInterface */
+    /** @var EntityRepository */
     private $languageRepository;
-    /** @var EntityRepositoryInterface */
+    /** @var EntityRepository */
     private $orderAddressRepository;
     /**
-     * @var EntityRepositoryInterface
+     * @var EntityRepository
      */
     private $documentRepository;
 
     /**
-     * @var SalesChannelRepositoryInterface
+     * @var SalesChannelRepository
      */
     private $salutationRepository;
 
     /**
-     * @var EntityRepositoryInterface
+     * @var EntityRepository
      */
     private $mailTemplateRepository;
     /**
@@ -91,14 +91,14 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     public function __construct(
         SystemConfigService $systemConfigService,
-        EntityRepositoryInterface $paymentMethodRepository,
-        EntityRepositoryInterface $languageRepository,
-        EntityRepositoryInterface $orderAddressRepository,
-        EntityRepositoryInterface $documentRepository,
+        EntityRepository $paymentMethodRepository,
+        EntityRepository $languageRepository,
+        EntityRepository $orderAddressRepository,
+        EntityRepository $documentRepository,
         ContainerInterface $container,
         TranslatorInterface $translator,
-        SalesChannelRepositoryInterface $salutationRepository,
-        EntityRepositoryInterface $mailTemplateRepository,
+        SalesChannelRepository $salutationRepository,
+        EntityRepository $mailTemplateRepository,
         MailService $mailService,
         OrderTransactionStateHandler $transactionStateHandler
     )
@@ -170,10 +170,12 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             $doc = $this->getInvoiceById($id);
             if ($doc != null) {
                 if (!isset(self::$writeRecursion[$doc->getId()])) {
-                    $name = $doc->getConfig()["name"];
+                    $shopwareDocName = $doc->getConfig()["name"];
                     $order = $this->getOrder($doc->getOrderId());
+
                     if ($order != null) {
-                        switch ($name) {
+                        $docName = $this->Byjuno_MapDocument($shopwareDocName, $order->getSalesChannelId());
+                        switch ($docName) {
                             case "storno":
                                 if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS5", $order->getSalesChannelId()) != 'enabled') {
                                     return;
@@ -189,7 +191,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                                 break;
                             default:
                                 return;
-
                         }
                         $paymentMethods = $order->getTransactions();
                         $paymentMethodId = '';
@@ -555,7 +556,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->setExtraInfo($extraInfo);
 
         $extraInfo["Name"] = 'CONNECTIVTY_MODULE';
-        $extraInfo["Value"] = 'Byjuno ShopWare 6 module 2.0.1';
+        $extraInfo["Value"] = 'Byjuno ShopWare 6 module 3.0.0';
         $request->setExtraInfo($extraInfo);
         return $request;
     }
@@ -595,7 +596,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         return null;
     }
 
-    public function getBillingAddress(String $billingAddressId, $addresses, $deliveries)
+    public function getBillingAddress(?String $billingAddressId, $addresses, $deliveries)
     {
         if ($addresses != null) {
             foreach ($addresses as $addres) {
@@ -622,7 +623,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $criteria = new Criteria([$countryId]);
         $criteria->addAssociation('country');
 
-        /** @var EntityRepositoryInterface $countryRepository */
+        /** @var EntityRepository $countryRepository */
         $countryRepository = $this->container->get('country.repository');
         $country = $countryRepository->search($criteria, $context)->first();
         return $country;
@@ -632,7 +633,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
     {
         $criteria = new Criteria([$salutationId]);
 
-        /** @var EntityRepositoryInterface $salutationRepository */
+        /** @var EntityRepository $salutationRepository */
         $salutationRepository = $this->container->get('salutation.repository');
         $salutation = $salutationRepository->search($criteria, $context)->first();
         return $salutation;
@@ -640,7 +641,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     public function getCustomer(string $customerId, Context $context): ?CustomerEntity
     {
-        /** @var EntityRepositoryInterface $orderRepo */
+        /** @var EntityRepository $orderRepo */
         $customerRepo = $this->container->get('customer.repository');
 
         $criteria = new Criteria();
@@ -650,7 +651,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     public function getCurrency(string $currencyId, Context $context): ?CurrencyEntity
     {
-        /** @var EntityRepositoryInterface $orderRepo */
+        /** @var EntityRepository $orderRepo */
         $customerRepo = $this->container->get('currency.repository');
 
         $criteria = new Criteria();
@@ -734,7 +735,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     private function getOrderByDelivery(string $deliveryId): ?OrderEntity
     {
-        /** @var EntityRepositoryInterface $orderDeliveryRepo */
+        /** @var EntityRepository $orderDeliveryRepo */
         $orderDeliveryRepo = $this->container->get('order_delivery.repository');
 
         $criteria = new Criteria([$deliveryId]);
@@ -770,7 +771,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         ];
 
         $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($entry): void {
-            /** @var EntityRepositoryInterface $logRepository */
+            /** @var EntityRepository $logRepository */
             $logRepository = $this->container->get('byjuno_log_entity.repository');
             $logRepository->upsert([$entry], $context);
         });
@@ -791,7 +792,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         ];
 
         $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($entry): void {
-            /** @var EntityRepositoryInterface $logRepository */
+            /** @var EntityRepository $logRepository */
             $logRepository = $this->container->get('byjuno_log_entity.repository');
             $logRepository->upsert([$entry], $context);
         });
@@ -831,7 +832,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     public function getOrder(string $orderId): ?OrderEntity
     {
-        /** @var EntityRepositoryInterface $orderRepo */
+        /** @var EntityRepository $orderRepo */
         $orderRepo = $this->container->get('order.repository');
 
         $criteria = new Criteria([$orderId]);
@@ -1086,7 +1087,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
 
         $extraInfo["Name"] = 'CONNECTIVTY_MODULE';
-        $extraInfo["Value"] = 'Byjuno ShopWare 6 module 2.0.1';
+        $extraInfo["Value"] = 'Byjuno ShopWare 6 module 3.0.0';
         $request->setExtraInfo($extraInfo);
         return $request;
 
@@ -1127,6 +1128,23 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         } else {
             return "4";
         }
+    }
+
+    public function Byjuno_MapDocument($name, $salesChannhelId)
+    {
+        $s4Names = explode(",", $this->systemConfigService->get("ByjunoPayments.config.byjunoS4techname", $salesChannhelId));
+        $s5Names = explode(",", $this->systemConfigService->get("ByjunoPayments.config.byjunoS5techname", $salesChannhelId));
+        foreach ($s4Names as $s4name) {
+            if ($s4name == $name) {
+                return "invoice";
+            }
+        }
+        foreach ($s5Names as $s5name) {
+            if ($s5name == $name) {
+                return "storno";
+            }
+        }
+        return "undefined";
     }
 
     public function isStatusOkS2($status, $salesChannhelId)

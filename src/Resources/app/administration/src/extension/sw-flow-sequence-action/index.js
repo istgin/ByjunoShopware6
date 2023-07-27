@@ -26,7 +26,7 @@ Component.override('sw-flow-sequence-action', {
             if (actionName === ACTION.BYJUNO_AUTH) {
                 return {
                     value: actionName,
-                    icon: 'default-badge-help',
+                    icon: 'regular-file-text',
                     label: this.$tc('ByjunoPayment.byjunoAuthFlow'),
                     group: GROUP,
                 }

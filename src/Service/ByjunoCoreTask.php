@@ -9,7 +9,7 @@ use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Response;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS5Request;
 use Shopware\Core\Checkout\Document\DocumentEntity;
 use Shopware\Core\Framework\Context;
-use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
@@ -30,16 +30,16 @@ class ByjunoCoreTask
      */
     private $salesChannelReposiotry;
     /**
-     * @var EntityRepositoryInterface
+     * @var EntityRepository
      */
     private $documentRepository;
     /**
-     * @var EntityRepositoryInterface
+     * @var EntityRepository
      */
     private $orderRepository;
 
     /**
-     * @var EntityRepositoryInterface
+     * @var EntityRepository
      */
     private $logEntry;
     /**
@@ -49,10 +49,10 @@ class ByjunoCoreTask
 
     public function __construct(
         SystemConfigService $systemConfigService,
-        EntityRepositoryInterface $salesChannelReposiotry,
-        EntityRepositoryInterface $documentRepository,
-        EntityRepositoryInterface $orderRepository,
-        EntityRepositoryInterface $logEntry,
+        EntityRepository $salesChannelReposiotry,
+        EntityRepository $documentRepository,
+        EntityRepository $orderRepository,
+        EntityRepository $logEntry,
         ByjunoCDPOrderConverterSubscriber $byjuno)
     {
         $this->systemConfigService = $systemConfigService;
@@ -266,7 +266,6 @@ class ByjunoCoreTask
         $docs = $this->documentRepository->search(
             (new Criteria())->addFilter(new EqualsFilter('customFields.byjuno_doc_sent', 0))->addSorting(new FieldSorting('createdAt', FieldSorting::ASCENDING))
             , $context);
-
         foreach ($docs as $doc) {
             /* @var $doc \Shopware\Core\Checkout\Document\DocumentEntity */
             $flds = $doc->getCustomFields();
@@ -274,10 +273,12 @@ class ByjunoCoreTask
                 continue;
             }
             $getDoc = $this->getInvoiceById($doc->getId());
-            $name = $getDoc->getConfig()["name"];
+            $shopwareDocName = $getDoc->getConfig()["name"];
             $date = $getDoc->getCreatedAt()->format("Y-m-d");
             $order = $getDoc->getOrder();
-            if ($name == "storno") {
+
+            $docName = $this->byjuno->Byjuno_MapDocument($shopwareDocName, $order->getSalesChannelId());
+            if ($docName == "storno") {
                 if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS5", $order->getSalesChannelId()) != 'enabled') {
                     return;
                 }
@@ -289,7 +290,7 @@ class ByjunoCoreTask
                     $order->getOrderCustomer()->getId(),
                     $date);
                 $statusLog = "S5 Refund request";
-            } else if ($name == "invoice") {
+            } else if ($docName == "invoice") {
                 if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4", $order->getSalesChannelId()) != 'enabled'
                     || $this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger", $order->getSalesChannelId()) != 'invoice') {
                     return;
