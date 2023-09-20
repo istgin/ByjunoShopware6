@@ -6,6 +6,7 @@ use Byjuno\ByjunoPayments\Service\ByjunoCorePayment;
 use Byjuno\ByjunoPayments\Service\ByjunoInstallmentPayment;
 use Byjuno\ByjunoPayments\Service\ByjunoInvoicePayment;
 use mysql_xdevapi\Exception;
+use Shopware\Core\Defaults;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepositoryInterface;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
