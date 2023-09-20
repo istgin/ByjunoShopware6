@@ -53,7 +53,7 @@ class ByjunoPayments extends Plugin
                     'fr-CH' => 'Byjuno',
                     'it-IT' => 'Byjuno',
                     'it-CH' => 'Byjuno',
-                    '2fbb5fe2e29a4d70aa5854ce7ce3e20b' => 'Byjuno',
+                    Defaults::LANGUAGE_SYSTEM => 'Byjuno',
                 ],
             ],
             'customFields' => [
@@ -70,7 +70,7 @@ class ByjunoPayments extends Plugin
                             'fr-CH' => 'Byjuno retry count',
                             'it-IT' => 'Byjuno retry count',
                             'it-CH' => 'Byjuno retry count',
-                            '2fbb5fe2e29a4d70aa5854ce7ce3e20b' => 'Byjuno retry count',
+                            Defaults::LANGUAGE_SYSTEM => 'Byjuno retry count',
                         ],
                     ],
                 ],
@@ -87,7 +87,7 @@ class ByjunoPayments extends Plugin
                             'fr-CH' => 'Byjuno sent',
                             'it-IT' => 'Byjuno sent',
                             'it-CH' => 'Byjuno sent',
-                            '2fbb5fe2e29a4d70aa5854ce7ce3e20b' => 'Byjuno sent',
+                            Defaults::LANGUAGE_SYSTEM => 'Byjuno sent',
                         ],
                     ],
                 ],
@@ -104,7 +104,7 @@ class ByjunoPayments extends Plugin
                             'fr-CH' => 'Byjuno time',
                             'it-IT' => 'Byjuno time',
                             'it-CH' => 'Byjuno time',
-                            '2fbb5fe2e29a4d70aa5854ce7ce3e20b' => 'Byjuno time',
+                            Defaults::LANGUAGE_SYSTEM => 'Byjuno time',
                         ],
                     ],
                 ],
@@ -191,7 +191,11 @@ class ByjunoPayments extends Plugin
                 'en-GB' => [
                     'name' => 'Byjuno Invoice',
                     'description' => 'Pay with Byjuno invoice',
-                ]
+                ],
+                Defaults::LANGUAGE_SYSTEM => [
+                    'name' => 'Byjuno Rechnung',
+                    'description' => 'Mit Byjuno Rechnung bezahlen',
+                ],
             ],
         ];
         $optionsInstallment = [
@@ -229,7 +233,11 @@ class ByjunoPayments extends Plugin
                 'en-GB' => [
                     'name' => 'Byjuno Installment',
                     'description' => 'Pay with Byjuno installment',
-                ]
+                ],
+                Defaults::LANGUAGE_SYSTEM  => [
+                    'name' => 'Byjuno Ratenzahlung',
+                    'description' => 'Mit Byjuno Ratenzahlung bezahlen',
+                ],
             ],
         ];
         if ($paymentMethodExists) {
