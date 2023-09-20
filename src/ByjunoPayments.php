@@ -6,6 +6,7 @@ use Byjuno\ByjunoPayments\Service\ByjunoCorePayment;
 use Byjuno\ByjunoPayments\Service\ByjunoInstallmentPayment;
 use Byjuno\ByjunoPayments\Service\ByjunoInvoicePayment;
 use mysql_xdevapi\Exception;
+use Shopware\Core\Defaults;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -186,7 +187,8 @@ class ByjunoPayments extends Plugin
                 'en-GB' => [
                     'name' => 'Byjuno Invoice',
                     'description' => 'Pay with Byjuno invoice',
-                ]
+                ],
+                Defaults::LANGUAGE_SYSTEM => 'Byjuno',
             ],
         ];
         $optionsInstallment = [
