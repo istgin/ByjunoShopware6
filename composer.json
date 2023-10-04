@@ -1,12 +1,12 @@
 {
   "name": "byjuno/byjuno-payment",
-  "description": "Byjuno.ch payment integration",
-  "version": "3.0.1",
+  "description": "CembraPay payment integration",
+  "version": "3.1.0",
   "type": "shopware-platform-plugin",
   "license": "MIT",
   "authors": [
     {
-      "name": "Byjuno AG"
+      "name": "CembraPay"
     }
   ],
   "require": {
@@ -18,22 +18,22 @@
   },
   "extra": {
     "shopware-plugin-class": "Byjuno\\ByjunoPayments\\ByjunoPayments",
-    "copyright": "(c) by Byjuno development",
+    "copyright": "(c) by CembraPay development",
     "label": {
-      "de-CH": "Byjuno payments",
-      "de-DE": "Byjuno payments",
-      "en-GB": "Byjuno payments",
-      "fr-FR": "Byjuno payments",
-      "it-CH": "Byjuno payments",
-      "it-IT": "Byjuno payments"
+      "de-CH": "CembraPay payments",
+      "de-DE": "CembraPay payments",
+      "en-GB": "CembraPay payments",
+      "fr-FR": "CembraPay payments",
+      "it-CH": "CembraPay payments",
+      "it-IT": "CembraPay payments"
     },
     "description": {
-      "de-CH": "Byjuno payments. Byjuno invoice. Byjuno installment",
-      "de-DE": "Byjuno payments. Byjuno invoice. Byjuno installment",
-      "en-GB": "Byjuno payments. Byjuno invoice. Byjuno installment",
-      "fr-FR": "Byjuno payments. Byjuno invoice. Byjuno installment",
-      "it-CH": "Byjuno payments. Byjuno invoice. Byjuno installment",
-      "it-IT": "Byjuno payments. Byjuno invoice. Byjuno installment"
+      "de-CH": "CembraPay payments. CembraPay invoice. CembraPay installment",
+      "de-DE": "CembraPay payments. CembraPay invoice. CembraPay installment",
+      "en-GB": "CembraPay payments. CembraPay invoice. CembraPay installment",
+      "fr-FR": "CembraPay payments. CembraPay invoice. CembraPay installment",
+      "it-CH": "CembraPay payments. CembraPay invoice. CembraPay installment",
+      "it-IT": "CembraPay payments. CembraPay invoice. CembraPay installment"
     }
   },
   "autoload": {

@@ -46,13 +46,14 @@ class ByjunoPayments extends Plugin
             'name'   => 'custom_byjuno',
             'config' => [
                 'label' => [
-                    'en-GB' => 'Byjuno',
-                    'de-DE' => 'Byjuno',
-                    'de-CH' => 'Byjuno',
-                    'fr-FR' => 'Byjuno',
-                    'fr-CH' => 'Byjuno',
-                    'it-IT' => 'Byjuno',
-                    'it-CH' => 'Byjuno',
+                    'en-GB' => 'CembraPay',
+                    'de-DE' => 'CembraPay',
+                    'de-CH' => 'CembraPay',
+                    'fr-FR' => 'CembraPay',
+                    'fr-CH' => 'CembraPay',
+                    'it-IT' => 'CembraPay',
+                    'it-CH' => 'CembraPay',
+                    Defaults::LANGUAGE_SYSTEM => 'CembraPay',
                 ],
             ],
             'customFields' => [
@@ -62,13 +63,14 @@ class ByjunoPayments extends Plugin
                     'id'     => '6bb387512a5c0cb5fd654780a1e8998d',
                     'config' => [
                         'label' => [
-                            'en-GB' => 'Byjuno retry count',
-                            'de-DE' => 'Byjuno retry count',
-                            'de-CH' => 'Byjuno retry count',
-                            'fr-FR' => 'Byjuno retry count',
-                            'fr-CH' => 'Byjuno retry count',
-                            'it-IT' => 'Byjuno retry count',
-                            'it-CH' => 'Byjuno retry count',
+                            'en-GB' => 'CembraPay retry count',
+                            'de-DE' => 'CembraPay retry count',
+                            'de-CH' => 'CembraPay retry count',
+                            'fr-FR' => 'CembraPay retry count',
+                            'fr-CH' => 'CembraPay retry count',
+                            'it-IT' => 'CembraPay retry count',
+                            'it-CH' => 'CembraPay retry count',
+                            Defaults::LANGUAGE_SYSTEM => 'CembraPay retry count',
                         ],
                     ],
                 ],
@@ -78,13 +80,14 @@ class ByjunoPayments extends Plugin
                     'id'     => '494624b325aaf606184c15cb6217dc34',
                     'config' => [
                         'label' => [
-                            'en-GB' => 'Byjuno sent',
-                            'de-DE' => 'Byjuno sent',
-                            'de-CH' => 'Byjuno sent',
-                            'fr-FR' => 'Byjuno sent',
-                            'fr-CH' => 'Byjuno sent',
-                            'it-IT' => 'Byjuno sent',
-                            'it-CH' => 'Byjuno sent',
+                            'en-GB' => 'CembraPay sent',
+                            'de-DE' => 'CembraPay sent',
+                            'de-CH' => 'CembraPay sent',
+                            'fr-FR' => 'CembraPay sent',
+                            'fr-CH' => 'CembraPay sent',
+                            'it-IT' => 'CembraPay sent',
+                            'it-CH' => 'CembraPay sent',
+                            Defaults::LANGUAGE_SYSTEM => 'CembraPay sent',
                         ],
                     ],
                 ],
@@ -94,13 +97,14 @@ class ByjunoPayments extends Plugin
                     'id'     => '494624b325aaf606184c22666217dc34',
                     'config' => [
                         'label' => [
-                            'en-GB' => 'Byjuno time',
-                            'de-DE' => 'Byjuno time',
-                            'de-CH' => 'Byjuno time',
-                            'fr-FR' => 'Byjuno time',
-                            'fr-CH' => 'Byjuno time',
-                            'it-IT' => 'Byjuno time',
-                            'it-CH' => 'Byjuno time',
+                            'en-GB' => 'CembraPay time',
+                            'de-DE' => 'CembraPay time',
+                            'de-CH' => 'CembraPay time',
+                            'fr-FR' => 'CembraPay time',
+                            'fr-CH' => 'CembraPay time',
+                            'it-IT' => 'CembraPay time',
+                            'it-CH' => 'CembraPay time',
+                            Defaults::LANGUAGE_SYSTEM => 'CembraPay time',
                         ],
                     ],
                 ],
@@ -161,34 +165,37 @@ class ByjunoPayments extends Plugin
             'pluginId' => $pluginId,
             'translations' => [
                 'de-DE' => [
-                    'name' => 'Byjuno Rechnung',
-                    'description' => 'Mit Byjuno Rechnung bezahlen',
+                    'name' => 'CembraPay Rechnung',
+                    'description' => 'Mit CembraPay Rechnung bezahlen',
                 ],
                 'de-CH' => [
-                    'name' => 'Byjuno Rechnung',
-                    'description' => 'Mit Byjuno Rechnung bezahlen',
+                    'name' => 'CembraPay Rechnung',
+                    'description' => 'Mit CembraPay Rechnung bezahlen',
                 ],
                 'fr-FR' => [
-                    'name' => 'Facture Byjuno',
-                    'description' => 'Payer par facture Byjuno',
+                    'name' => 'Facture CembraPay',
+                    'description' => 'Payer par facture CembraPay',
                 ],
                 'fr-CH' => [
-                    'name' => 'Facture Byjuno',
-                    'description' => 'Payer par facture Byjuno',
+                    'name' => 'Facture CembraPay',
+                    'description' => 'Payer par facture CembraPay',
                 ],
                 'it-IT' => [
-                    'name' => 'Fattura Byjuno',
-                    'description' => 'Pagare la fattura con Byjuno',
+                    'name' => 'Fattura CembraPay',
+                    'description' => 'Pagare la fattura con CembraPay',
                 ],
                 'it-CH' => [
-                    'name' => 'Fattura Byjuno',
-                    'description' => 'Pagare la fattura con Byjuno',
+                    'name' => 'Fattura CembraPay',
+                    'description' => 'Pagare la fattura con CembraPay',
                 ],
                 'en-GB' => [
-                    'name' => 'Byjuno Invoice',
-                    'description' => 'Pay with Byjuno invoice',
+                    'name' => 'CembraPay Invoice',
+                    'description' => 'Pay with CembraPay invoice',
                 ],
-                Defaults::LANGUAGE_SYSTEM => 'Byjuno',
+                Defaults::LANGUAGE_SYSTEM => [
+                    'name' => 'CembraPay Rechnung',
+                    'description' => 'Mit CembraPay Rechnung bezahlen',
+                ],
             ],
         ];
         $optionsInstallment = [
@@ -200,33 +207,37 @@ class ByjunoPayments extends Plugin
             'pluginId' => $pluginId,
             'translations' => [
                 'de-DE' => [
-                    'name' => 'Byjuno Ratenzahlung',
-                    'description' => 'Mit Byjuno Ratenzahlung bezahlen',
+                    'name' => 'CembraPay Ratenzahlung',
+                    'description' => 'Mit CembraPay Ratenzahlung bezahlen',
                 ],
                 'de-CH' => [
-                    'name' => 'Byjuno Ratenzahlung',
-                    'description' => 'Mit Byjuno Ratenzahlung bezahlen',
+                    'name' => 'CembraPay Ratenzahlung',
+                    'description' => 'Mit CembraPay Ratenzahlung bezahlen',
                 ],
                 'fr-FR' => [
-                    'name' => 'Byjuno Paiement échelonné',
-                    'description' => 'Paiement échelonné Byjuno',
+                    'name' => 'CembraPay Paiement échelonné',
+                    'description' => 'Paiement échelonné CembraPay',
                 ],
                 'fr-CH' => [
-                    'name' => 'Byjuno Paiement échelonné',
-                    'description' => 'Paiement échelonné Byjuno',
+                    'name' => 'CembraPay Paiement échelonné',
+                    'description' => 'Paiement échelonné CembraPay',
                 ],
                 'it-IT' => [
-                    'name' => 'Byjuno Pagamento rateale',
-                    'description' => 'Pagare a rate con Byjuno',
+                    'name' => 'CembraPay Pagamento rateale',
+                    'description' => 'Pagare a rate con CembraPay',
                 ],
                 'it-CH' => [
-                    'name' => 'Byjuno Pagamento rateale',
-                    'description' => 'Pagare a rate con Byjuno',
+                    'name' => 'CembraPay Pagamento rateale',
+                    'description' => 'Pagare a rate con CembraPay',
                 ],
                 'en-GB' => [
-                    'name' => 'Byjuno Installment',
-                    'description' => 'Pay with Byjuno installment',
-                ]
+                    'name' => 'CembraPay Installment',
+                    'description' => 'Pay with CembraPay installment',
+                ],
+                Defaults::LANGUAGE_SYSTEM => [
+                    'name' => 'CembraPay Rechnung',
+                    'description' => 'Mit CembraPay CembraPay bezahlen',
+                ],
             ],
         ];
         if ($paymentMethodExists) {

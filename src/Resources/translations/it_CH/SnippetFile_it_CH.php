@@ -25,7 +25,7 @@ class SnippetFile_it_CH implements SnippetFileInterface
 
     public function getAuthor(): string
     {
-        return 'Byjuno AG';
+        return 'CembraPay';
     }
 
     public function isBase(): bool

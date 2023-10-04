@@ -1,11 +1,11 @@
 {
   "ByjunoPayment": {
-    "invoice": "Byjuno fattura singola",
-    "invoice_byjuno": "Byjuno fattura con opzione di pagamento parziale",
+    "invoice": "CembraPay fattura singola",
+    "invoice_byjuno": "CembraPay fattura con opzione di pagamento parziale",
     "invoice_byjuno_toc_url": "https://byjuno.ch/it/rx1b/terms/",
-    "invoice_single": "Byjuno fattura singola",
+    "invoice_single": "CembraPay fattura singola",
     "invoice_single_toc_url": "https://byjuno.ch/it/rx2b/terms/",
-    "installment": "Byjuno installment",
+    "installment": "CembraPay installment",
     "installment_3": "3 rate",
     "installment_3_toc_url": "https://byjuno.ch/it/rx3a/terms/",
     "installment_10": "10 rate",
@@ -29,6 +29,6 @@
     "back_to_shop" : "Torna alla pagina iniziale",
     "t_and_c": "(CGC)",
     "byjunoauthflow": "ByjunoAuth",
-    "checkoutadditional": "Le seguenti informazioni sono necessarie per completare il pagamento con Byjuno:"
+    "checkoutadditional": "Le seguenti informazioni sono necessarie per completare il pagamento con CembraPay:"
   }
 }

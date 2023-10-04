@@ -1,9 +1,9 @@
 {
   "ByjunoPayment": {
-    "invoice": "Byjuno Rechnung",
-    "invoice_byjuno": "Byjuno Rechnung mit Teilzahlungsoption",
+    "invoice": "CembraPay Rechnung",
+    "invoice_byjuno": "CembraPay Rechnung mit Teilzahlungsoption",
     "invoice_byjuno_toc_url": "https://byjuno.ch/de/rx1b/terms/",
-    "invoice_single": "Byjuno Einmalrechnung",
+    "invoice_single": "CembraPay Einmalrechnung",
     "invoice_single_toc_url": "https://byjuno.ch/de/rx2b/terms/",
     "installment": "Byjuno Ratenzahlung",
     "installment_3": "3 Raten",
@@ -29,6 +29,6 @@
     "back_to_shop" : "Zurück zum Shop",
     "t_and_c": "(AGB)",
     "byjunoauthflow": "ByjunoAuth",
-    "checkoutadditional": "Für den Abschluss der Zahlung mit Byjuno werden folgende Informationen benötigt:",
+    "checkoutadditional": "Für den Abschluss der Zahlung mit CembraPay werden folgende Informationen benötigt:",
   }
 }

@@ -37,7 +37,7 @@ class SnippetFile_de_CH implements SnippetFileInterface
      */
     public function getAuthor(): string
     {
-        return 'Byjuno AG';
+        return 'CembraPay';
     }
 
     /**

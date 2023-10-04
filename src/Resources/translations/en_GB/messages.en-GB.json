@@ -1,11 +1,11 @@
 {
   "ByjunoPayment": {
-    "invoice": "Byjuno invoice",
-    "invoice_byjuno": "Byjuno Invoice",
+    "invoice": "CembraPay invoice",
+    "invoice_byjuno": "CembraPay Invoice",
     "invoice_byjuno_toc_url": "https://byjuno.ch/en/rx1b/terms/",
     "invoice_single": "Single Invoice",
     "invoice_single_toc_url": "https://byjuno.ch/en/rx2b/terms/",
-    "installment": "Byjuno installment",
+    "installment": "CembraPay installment",
     "installment_3": "3 Installments",
     "installment_3_toc_url": "https://byjuno.ch/en/rx3a/terms/",
     "installment_10": "10 Installments",
@@ -29,6 +29,6 @@
     "back_to_shop" : "Back to the shop",
     "t_and_c": "(T&C)",
     "byjunoauthflow": "ByjunoAuth",
-    "checkoutadditional": "For purchase completion with Byjuno the following information is required:"
+    "checkoutadditional": "For purchase completion with CembraPay the following information is required:"
   }
 }

@@ -75,7 +75,7 @@
         </input-field>
         <input-field>
             <name>byjunotimeout</name>
-            <label lang="de-DE">Connection timeout to Byjuno CDP server in seconds</label>
+            <label lang="de-DE">Connection timeout to CembraPay CDP server in seconds</label>
             <defaultValue>30</defaultValue>
         </input-field>
         <input-field type="single-select">
@@ -280,20 +280,20 @@
 
         <input-field>
             <name>byjunoprodemail</name>
-            <label>Production email of Byjuno</label>
-            <label lang="de-DE">Production email of Byjuno</label>
+            <label>Production email of CembraPay</label>
+            <label lang="de-DE">Production email of CembraPay</label>
             <defaultValue>invoices@byjuno.ch</defaultValue>
         </input-field>
         <input-field>
             <name>byjunotestemail</name>
-            <label>Test email of Byjuno</label>
-            <label lang="de-DE">Test email of Byjuno</label>
+            <label>Test email of CembraPay</label>
+            <label lang="de-DE">Test email of CembraPay</label>
             <defaultValue>invoices-test@byjuno.ch</defaultValue>
         </input-field>
         <input-field>
             <name>alloweds2</name>
-            <label>Accepted Byjuno Risk for S2</label>
-            <label lang="de-DE">Accepted Byjuno Risk for S2</label>
+            <label>Accepted CembraPay Risk for S2</label>
+            <label lang="de-DE">Accepted CembraPay Risk for S2</label>
             <defaultValue>2</defaultValue>
         </input-field>
         <input-field>
@@ -309,7 +309,7 @@
         </input-field>
         <input-field type="single-select">
             <name>byjunoS3ActionEnable</name>
-            <label>Enable byjuno flow action</label>
+            <label>Enable CembraPay flow action</label>
             <defaultValue>disabled</defaultValue>
             <options>
                 <option>
@@ -326,7 +326,7 @@
         </input-field>
         <input-field type="single-select">
             <name>byjunoS3ActionPaymentMethod</name>
-            <label>Byjuno flow payment method</label>
+            <label>CembraPay flow payment method</label>
             <defaultValue>byjuno_payment_invoice</defaultValue>
             <options>
                 <option>
@@ -343,7 +343,7 @@
         </input-field>
         <input-field type="single-select">
             <name>byjunoS3ActionRepayment</name>
-            <label>Byjuno flow payment plan</label>
+            <label>CembraPay flow payment plan</label>
             <defaultValue>byjuno_invoice</defaultValue>
             <options>
                 <option>
@@ -353,8 +353,8 @@
                 </option>
                 <option>
                     <id>byjuno_invoice</id>
-                    <name>Byjuno invoice</name>
-                    <name lang="de-DE">Byjuno invoice</name>
+                    <name>CembraPay invoice</name>
+                    <name lang="de-DE">CembraPay invoice</name>
                 </option>
                 <option>
                     <id>installment_3</id>
@@ -390,7 +390,7 @@
         </input-field>
         <input-field type="single-select">
             <name>byjunoS3ActionDelivery</name>
-            <label>Byjuno flow invoice delivery method</label>
+            <label>CembraPay flow invoice delivery method</label>
             <defaultValue>email</defaultValue>
             <options>
                 <option>
@@ -408,12 +408,12 @@
 
     </card>
     <card>
-        <title>Allowed payments Byjuno invoice</title>
-        <title lang="de-DE">Allowed payments Byjuno invoice</title>
+        <title>Allowed payments CembraPay invoice</title>
+        <title lang="de-DE">Allowed payments CembraPay invoice</title>
 
         <input-field type="single-select">
             <name>byjunoinvoice</name>
-            <label>Byjuno Invoice (with partial payment option)</label>
+            <label>CembraPay Invoice (with partial payment option)</label>
             <defaultValue>enabled</defaultValue>
             <options>
                 <option>
@@ -430,7 +430,7 @@
         </input-field>
         <input-field type="single-select">
             <name>singleinvoice</name>
-            <label>Byjuno Single Invoice</label>
+            <label>CembraPay Single Invoice</label>
             <defaultValue>disabled</defaultValue>
             <options>
                 <option>
@@ -447,7 +447,7 @@
         </input-field>
         <input-field type="single-select">
             <name>byjunoinvoiceb2b</name>
-            <label>Byjuno Invoice (with partial payment option) (B2B)</label>
+            <label>CembraPay Invoice (with partial payment option) (B2B)</label>
             <defaultValue>disabled</defaultValue>
             <options>
                 <option>
@@ -464,7 +464,7 @@
         </input-field>
         <input-field type="single-select">
             <name>singleinvoiceb2b</name>
-            <label>Byjuno Single Invoice (B2B)</label>
+            <label>CembraPay Single Invoice (B2B)</label>
             <defaultValue>disabled</defaultValue>
             <options>
                 <option>
@@ -481,8 +481,8 @@
         </input-field>
     </card>
     <card>
-        <title>Allowed payments Byjuno installment</title>
-        <title lang="de-DE">Allowed payments Byjuno installment</title>
+        <title>Allowed payments CembraPay installment</title>
+        <title lang="de-DE">Allowed payments CembraPay installment</title>
         <input-field type="single-select">
             <name>installment3</name>
             <label>3 installments</label>

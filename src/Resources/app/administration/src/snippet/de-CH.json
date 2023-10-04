@@ -1,8 +1,8 @@
 {
     "ByjunoPayment": {
-        "byjunoCreateAuth": "Call Byjuno Auth Request",
-        "byjunoCreateAuthText": "This will call byjuno auth request. Base event should contains getOrder function that return order.",
-        "byjunoAuthFlow": "Call Byjuno Auth Request",
+        "byjunoCreateAuth": "Call CembraPay Auth Request",
+        "byjunoCreateAuthText": "This will call CembraPay auth request. Base event should contains getOrder function that return order.",
+        "byjunoAuthFlow": "Call CembraPay Auth Request",
         "byjunoButtonSaveAction": "Save action",
         "byjunoButtonAddAction": "Add action"
     }
