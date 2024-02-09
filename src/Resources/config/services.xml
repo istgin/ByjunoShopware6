@@ -36,7 +36,6 @@
             <argument type="service" id="order_address.repository"/>
             <argument type="service" id="order.repository"/>
             <argument type="service" id="translator"/>
-            <argument type="service" id="Shopware\Core\Content\Mail\Service\MailService"/>
             <argument type="service" id="mail_template.repository"/>
             <argument type="service" id="Byjuno\ByjunoPayments\Service\ByjunoCDPOrderConverterSubscriber"/>
             <call method="setContainer">

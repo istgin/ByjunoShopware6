@@ -19,7 +19,7 @@ use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Checkout\Payment\PaymentMethodEntity;
-use Shopware\Core\Content\Mail\Service\MailService;
+use Shopware\Core\Content\Mail\Service\AbstractMailService;
 use Shopware\Core\Content\MailTemplate\MailTemplateEntity;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
@@ -76,7 +76,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
      */
     private $mailTemplateRepository;
     /**
-     * @var MailService
+     * @var AbstractMailService
      */
     private $mailService;
     /**
@@ -99,7 +99,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         TranslatorInterface $translator,
         SalesChannelRepository $salutationRepository,
         EntityRepository $mailTemplateRepository,
-        MailService $mailService,
+        AbstractMailService $mailService,
         OrderTransactionStateHandler $transactionStateHandler
     )
     {

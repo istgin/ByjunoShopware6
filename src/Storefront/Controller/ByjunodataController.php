@@ -14,12 +14,11 @@ use RuntimeException;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
 use Shopware\Core\Checkout\Customer\CustomerEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderAddress\OrderAddressEntity;
-use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryEntity;
+use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryEntikty;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Checkout\Order\SalesChannel\OrderService;
 use Shopware\Core\Content\MailTemplate\Exception\MailEventConfigurationException;
 use Shopware\Core\Content\MailTemplate\MailTemplateEntity;
-use Shopware\Core\Content\Mail\Service\MailService;;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Exception\InconsistentCriteriaIdsException;
@@ -71,10 +70,6 @@ class ByjunodataController extends StorefrontController
 
     /** @var TranslatorInterface */
     private $translator;
-    /**
-     * @var MailService
-     */
-    private $mailService;
 
     /**
      * @var EntityRepository
@@ -95,7 +90,6 @@ class ByjunodataController extends StorefrontController
         EntityRepository $orderAddressRepository,
         EntityRepository $orderRepository,
         TranslatorInterface $translator,
-        MailService $mailService,
         EntityRepository $mailTemplateRepository,
         ByjunoCDPOrderConverterSubscriber $byjuno)
     {
@@ -107,7 +101,6 @@ class ByjunodataController extends StorefrontController
         $this->orderAddressRepository = $orderAddressRepository;
         $this->orderRepository = $orderRepository;
         $this->translator = $translator;
-        $this->mailService = $mailService;
         $this->mailTemplateRepository = $mailTemplateRepository;
         $this->byjuno = $byjuno;
 
