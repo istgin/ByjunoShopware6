@@ -10,7 +10,7 @@
     }
   ],
   "require": {
-    "shopware/core": "*",
+    "shopware/core": "~6.5.0 || ~6.6.0",
     "shopware/storefront": "*",
     "shopware/administration": "*",
     "ext-simplexml": "*",
@@ -28,12 +28,28 @@
       "it-IT": "CembraPay payments"
     },
     "description": {
-      "de-CH": "CembraPay payments. CembraPay invoice. CembraPay installment",
-      "de-DE": "CembraPay payments. CembraPay invoice. CembraPay installment",
-      "en-GB": "CembraPay payments. CembraPay invoice. CembraPay installment",
-      "fr-FR": "CembraPay payments. CembraPay invoice. CembraPay installment",
-      "it-CH": "CembraPay payments. CembraPay invoice. CembraPay installment",
-      "it-IT": "CembraPay payments. CembraPay invoice. CembraPay installment"
+      "de-CH": "CembraPay payments. Wir bieten Zahlungslösungen an, die es den Verbrauchen:innen ermöglichen, ihre Einkäufe einfach, flexibel und sicher zu bezahlen.",
+      "de-DE": "CembraPay payments. Wir bieten Zahlungslösungen an, die es den Verbrauchen:innen ermöglichen, ihre Einkäufe einfach, flexibel und sicher zu bezahlen.",
+      "en-GB": "CembraPay payments. Wir bieten Zahlungslösungen an, die es den Verbrauchen:innen ermöglichen, ihre Einkäufe einfach, flexibel und sicher zu bezahlen.",
+      "fr-FR": "CembraPay payments. Wir bieten Zahlungslösungen an, die es den Verbrauchen:innen ermöglichen, ihre Einkäufe einfach, flexibel und sicher zu bezahlen.",
+      "it-CH": "CembraPay payments. Wir bieten Zahlungslösungen an, die es den Verbrauchen:innen ermöglichen, ihre Einkäufe einfach, flexibel und sicher zu bezahlen.",
+      "it-IT": "CembraPay payments. Wir bieten Zahlungslösungen an, die es den Verbrauchen:innen ermöglichen, ihre Einkäufe einfach, flexibel und sicher zu bezahlen."
+    },
+    "manufacturerLink": {
+      "de-CH": "https://cembrapay.ch/",
+      "de-DE": "https://cembrapay.ch/",
+      "en-GB": "https://cembrapay.ch/",
+      "fr-FR": "https://cembrapay.ch/",
+      "it-CH": "https://cembrapay.ch/",
+      "it-IT": "https://cembrapay.ch/"
+    },
+    "supportLink": {
+      "de-CH": "https://cembrapay.ch/",
+      "de-DE": "https://cembrapay.ch/",
+      "en-GB": "https://cembrapay.ch/",
+      "fr-FR": "https://cembrapay.ch/",
+      "it-CH": "https://cembrapay.ch/",
+      "it-IT": "https://cembrapay.ch/"
     }
   },
   "autoload": {

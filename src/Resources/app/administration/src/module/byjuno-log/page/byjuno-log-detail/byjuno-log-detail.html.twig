@@ -1,16 +1,17 @@
 {% block byjuno_log_entity_detail %}
     <sw-page class="byjuno-log-detail">
-        <template slot="smart-bar-actions">
+        <template #smart-bar-actions>
             <sw-button :routerLink="{ name: 'byjuno.log.list' }">
                 Return
             </sw-button>
         </template>
 
-        <template slot="content">
+        <template #content>
             <sw-card-view>
                 <sw-card v-if="bundle" :isLoading="isLoading">
                     <sw-textarea-field type="textarea" label="Request" v-model="bundle.xml_request"></sw-textarea-field>
                     <sw-textarea-field type="textarea" label="Response" v-model="bundle.xml_response"></sw-textarea-field>
+                </sw-card>
             </sw-card-view>
         </template>
     </sw-page>

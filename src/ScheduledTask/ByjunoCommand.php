@@ -17,12 +17,12 @@ class ByjunoCommand extends Command
         ByjunoCoreTask $byjunoCoreTask
     )
     {
-        parent::__construct();
+        parent::__construct('byjuno-document:process');
         $this->byjunoCoreTask = $byjunoCoreTask;
     }
 
     protected static $defaultName = 'byjuno-document:process';
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->byjunoCoreTask->TaskRun();
         return 1;
