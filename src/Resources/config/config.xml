@@ -42,24 +42,24 @@
             <label lang="de-DE">Enable B2B check</label>
         </input-field>
         <input-field>
-            <name>byjunouserid</name>
-            <label>User ID</label>
+            <name>cembrapaylogin_live</name>
+            <label>Live ClientId</label>
             <label lang="de-DE">User ID</label>
         </input-field>
         <input-field>
-            <name>byjunoclientid</name>
-            <label>Client ID</label>
-            <label lang="de-DE">Client ID</label>
-        </input-field>
-        <input-field type="password">
-            <name>byjunopassword</name>
-            <label>Password</label>
-            <label lang="de-DE">Password</label>
+            <name>cembrapaypassword_live</name>
+            <label>Live Password</label>
+            <label lang="de-DE">User ID</label>
         </input-field>
         <input-field>
-            <name>byjunotechemail</name>
-            <label>Technical Contact (E-mail)</label>
-            <label lang="de-DE">Technical Contact (E-mail)</label>
+            <name>cembrapaylogin_test</name>
+            <label>Test ClientId</label>
+            <label lang="de-DE">User ID</label>
+        </input-field>
+        <input-field>
+            <name>cembrapaypassword_test</name>
+            <label>Test Password</label>
+            <label lang="de-DE">User ID</label>
         </input-field>
         <input-field>
             <name>byjunominimum</name>
@@ -75,7 +75,7 @@
         </input-field>
         <input-field>
             <name>byjunotimeout</name>
-            <label lang="de-DE">Connection timeout to CembraPay CDP server in seconds</label>
+            <label lang="de-DE">Connection timeout to CembraPay server in seconds</label>
             <defaultValue>30</defaultValue>
         </input-field>
         <input-field type="single-select">
@@ -103,8 +103,8 @@
             <defaultValue>lq866c5i</defaultValue>
         </input-field>
         <input-field type="single-select">
-            <name>byjunoallowpostal</name>
-            <label>Allow postal delivery</label>
+            <name>byjunousecdp</name>
+            <label>Screening before show payment</label>
             <defaultValue>enabled</defaultValue>
             <options>
                 <option>
@@ -120,8 +120,72 @@
             </options>
         </input-field>
         <input-field type="single-select">
-            <name>byjunousecdp</name>
-            <label>Enable credit check</label>
+            <name>byjunoS4</name>
+            <label>Enable Settle Transaction</label>
+            <defaultValue>enabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>byjunoS4trigger</name>
+            <label>Settle trigger place</label>
+            <defaultValue>invoice</defaultValue>
+            <options>
+                <option>
+                    <id>invoice</id>
+                    <name>On document creation, please specify document type below</name>
+                    <name lang="de-DE">On document creation, please specify document type below</name>
+                </option>
+                <option>
+                    <id>orderstatus</id>
+                    <name>On order status change (Specify order status below)</name>
+                    <name lang="de-DE">On order status change (Specify order status below)</name>
+                </option>
+            </options>
+        </input-field>
+
+        <input-field type="single-select">
+            <name>byjunoS4triggername</name>
+            <label>Specify order status to trigger Settle (completed,open,in_progress)</label>
+            <label lang="de-DE">Specify order status to trigger Settle (completed,open,in_progress)</label>
+            <defaultValue>completed</defaultValue>
+            <options>
+                <option>
+                    <id>completed</id>
+                    <name>completed</name>
+                    <name lang="de-DE">completed</name>
+                </option>
+                <option>
+                    <id>open</id>
+                    <name>open</name>
+                    <name lang="de-DE">open</name>
+                </option>
+                <option>
+                    <id>in_progress</id>
+                    <name>in_progress</name>
+                    <name lang="de-DE">in_progress</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field>
+            <name>byjunoS4techname</name>
+            <label>Specify Settle possible document names</label>
+            <label lang="de-DE">Specify Settle possible document names</label>
+            <defaultValue>invoice</defaultValue>
+        </input-field>
+        <input-field type="single-select">
+            <name>byjunoS5</name>
+            <label>Enable Cancel &amp; Creditnote Transaction</label>
             <defaultValue>enabled</defaultValue>
             <options>
                 <option>
@@ -137,9 +201,27 @@
             </options>
         </input-field>
         <input-field>
-            <name>allowedcdp</name>
-            <label>Accepted CDP risks if credit check enabled</label>
-            <defaultValue>2</defaultValue>
+            <name>byjunoS5techname</name>
+            <label>Specify Creditnote possible document names</label>
+            <label lang="de-DE">Specify Creditnote possible document names</label>
+            <defaultValue>cancellation_invoice,storno</defaultValue>
+        </input-field>
+        <input-field type="single-select">
+            <name>byjunoallowpostal</name>
+            <label>Allow postal delivery</label>
+            <defaultValue>enabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
         </input-field>
         <input-field type="single-select">
             <name>byjunogender</name>
@@ -187,97 +269,6 @@
                 </option>
             </options>
         </input-field>
-        <input-field type="single-select">
-            <name>byjunoS4</name>
-            <label>S4 transactions</label>
-            <defaultValue>enabled</defaultValue>
-            <options>
-                <option>
-                    <id>disabled</id>
-                    <name>Disabled</name>
-                    <name lang="de-DE">Disabled</name>
-                </option>
-                <option>
-                    <id>enabled</id>
-                    <name>Enabled</name>
-                    <name lang="de-DE">Enabled</name>
-                </option>
-            </options>
-        </input-field>
-        <input-field type="single-select">
-            <name>byjunoS4trigger</name>
-            <label>S4 trigger place</label>
-            <defaultValue>invoice</defaultValue>
-            <options>
-                <option>
-                    <id>invoice</id>
-                    <name>On document creation, please specify document type below</name>
-                    <name lang="de-DE">On document creation, please specify document type below</name>
-                </option>
-                <option>
-                    <id>orderstatus</id>
-                    <name>On order status change (Specify order status below)</name>
-                    <name lang="de-DE">On order status change (Specify order status below)</name>
-                </option>
-            </options>
-        </input-field>
-
-        <input-field type="single-select">
-            <name>byjunoS4triggername</name>
-            <label>Specify order status to trigger S4 (completed,open,in_progress)</label>
-            <label lang="de-DE">Specify order status to trigger S4 (completed,open,in_progress)</label>
-            <defaultValue>completed</defaultValue>
-            <options>
-                <option>
-                    <id>completed</id>
-                    <name>completed</name>
-                    <name lang="de-DE">completed</name>
-                </option>
-                <option>
-                    <id>open</id>
-                    <name>open</name>
-                    <name lang="de-DE">open</name>
-                </option>
-                <option>
-                    <id>in_progress</id>
-                    <name>in_progress</name>
-                    <name lang="de-DE">in_progress</name>
-                </option>
-            </options>
-        </input-field>
-
-        <input-field>
-            <name>byjunoS4techname</name>
-            <label>Specify S4 possible document names</label>
-            <label lang="de-DE">Specify S4 possible document names</label>
-            <defaultValue>invoice</defaultValue>
-        </input-field>
-
-        <input-field type="single-select">
-            <name>byjunoS5</name>
-            <label>S5 transactions</label>
-            <defaultValue>enabled</defaultValue>
-            <options>
-                <option>
-                    <id>disabled</id>
-                    <name>Disabled</name>
-                    <name lang="de-DE">Disabled</name>
-                </option>
-                <option>
-                    <id>enabled</id>
-                    <name>Enabled</name>
-                    <name lang="de-DE">Enabled</name>
-                </option>
-            </options>
-        </input-field>
-
-        <input-field>
-            <name>byjunoS5techname</name>
-            <label>Specify S5 possible document names</label>
-            <label lang="de-DE">Specify S5 possible document names</label>
-            <defaultValue>cancellation_invoice,storno</defaultValue>
-        </input-field>
-
         <input-field>
             <name>byjunoprodemail</name>
             <label>Production email of CembraPay</label>
@@ -289,23 +280,6 @@
             <label>Test email of CembraPay</label>
             <label lang="de-DE">Test email of CembraPay</label>
             <defaultValue>invoices-test@byjuno.ch</defaultValue>
-        </input-field>
-        <input-field>
-            <name>alloweds2</name>
-            <label>Accepted CembraPay Risk for S2</label>
-            <label lang="de-DE">Accepted CembraPay Risk for S2</label>
-            <defaultValue>2</defaultValue>
-        </input-field>
-        <input-field>
-            <name>alloweds2merchant</name>
-            <label>Accepted Merchant Risk for S2</label>
-            <label lang="de-DE">Accepted Merchant Risk for S2</label>
-        </input-field>
-        <input-field>
-            <name>alloweds3</name>
-            <label>Accepted statuses for S3 response</label>
-            <label lang="de-DE">Accepted statuses for S3 response</label>
-            <defaultValue>2</defaultValue>
         </input-field>
         <input-field type="single-select">
             <name>byjunoS3ActionEnable</name>
@@ -406,6 +380,52 @@
             </options>
         </input-field>
 
+
+
+        <input-field>
+            <name>byjunouserid</name>
+            <label>User ID</label>
+            <label lang="de-DE">User ID</label>
+        </input-field>
+        <input-field>
+            <name>byjunoclientid</name>
+            <label>Client ID</label>
+            <label lang="de-DE">Client ID</label>
+        </input-field>
+        <input-field type="password">
+            <name>byjunopassword</name>
+            <label>Password</label>
+            <label lang="de-DE">Password</label>
+        </input-field>
+        <input-field>
+            <name>byjunotechemail</name>
+            <label>Technical Contact (E-mail)</label>
+            <label lang="de-DE">Technical Contact (E-mail)</label>
+        </input-field>
+        <input-field>
+            <name>allowedcdp</name>
+            <label>Accepted CDP risks if credit check enabled</label>
+            <defaultValue>2</defaultValue>
+        </input-field>
+        <input-field>
+            <name>alloweds2</name>
+            <label>Accepted CembraPay Risk for S2</label>
+            <label lang="de-DE">Accepted CembraPay Risk for S2</label>
+            <defaultValue>2</defaultValue>
+        </input-field>
+        <input-field>
+            <name>alloweds2merchant</name>
+            <label>Accepted Merchant Risk for S2</label>
+            <label lang="de-DE">Accepted Merchant Risk for S2</label>
+        </input-field>
+        <input-field>
+            <name>alloweds3</name>
+            <label>Accepted statuses for S3 response</label>
+            <label lang="de-DE">Accepted statuses for S3 response</label>
+            <defaultValue>2</defaultValue>
+        </input-field>
+
+
     </card>
     <card>
         <title>Allowed payments CembraPay invoice</title>
@@ -501,8 +521,25 @@
             </options>
         </input-field>
         <input-field type="single-select">
-            <name>installment10</name>
-            <label>10 installments</label>
+            <name>installment4</name>
+            <label>4 installments</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>installment6</name>
+            <label>6 installments</label>
             <defaultValue>disabled</defaultValue>
             <options>
                 <option>
@@ -552,8 +589,8 @@
             </options>
         </input-field>
         <input-field type="single-select">
-            <name>installment4x12</name>
-            <label>4 installments in 12 months</label>
+            <name>installment36</name>
+            <label>36 installments</label>
             <defaultValue>disabled</defaultValue>
             <options>
                 <option>
@@ -569,8 +606,8 @@
             </options>
         </input-field>
         <input-field type="single-select">
-            <name>installment36</name>
-            <label>36 installments</label>
+            <name>installment48</name>
+            <label>48 installments</label>
             <defaultValue>disabled</defaultValue>
             <options>
                 <option>
@@ -603,8 +640,25 @@
             </options>
         </input-field>
         <input-field type="single-select">
-            <name>installment10b2b</name>
-            <label>10 installments (B2B)</label>
+            <name>installment4b2b</name>
+            <label>4 installments (B2B)</label>
+            <defaultValue>disabled</defaultValue>
+            <options>
+                <option>
+                    <id>disabled</id>
+                    <name>Disabled</name>
+                    <name lang="de-DE">Disabled</name>
+                </option>
+                <option>
+                    <id>enabled</id>
+                    <name>Enabled</name>
+                    <name lang="de-DE">Enabled</name>
+                </option>
+            </options>
+        </input-field>
+        <input-field type="single-select">
+            <name>installment6b2b</name>
+            <label>6 installments (B2B)</label>
             <defaultValue>disabled</defaultValue>
             <options>
                 <option>
@@ -654,8 +708,8 @@
             </options>
         </input-field>
         <input-field type="single-select">
-            <name>installment4x12b2b</name>
-            <label>4 installments in 12 months (B2B)</label>
+            <name>installment36b2b</name>
+            <label>36 installments (B2B)</label>
             <defaultValue>disabled</defaultValue>
             <options>
                 <option>
@@ -671,8 +725,8 @@
             </options>
         </input-field>
         <input-field type="single-select">
-            <name>installment36b2b</name>
-            <label>36 installments (B2B)</label>
+            <name>installment48b2b</name>
+            <label>48 installments (B2B)</label>
             <defaultValue>disabled</defaultValue>
             <options>
                 <option>
