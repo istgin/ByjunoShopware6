@@ -42,22 +42,22 @@
             <label lang="de-DE">Enable B2B check</label>
         </input-field>
         <input-field>
-            <name>cembrapaylogin_live</name>
+            <name>cembrapayloginlive</name>
             <label>Live ClientId</label>
             <label lang="de-DE">User ID</label>
         </input-field>
         <input-field>
-            <name>cembrapaypassword_live</name>
+            <name>cembrapaypasswordlive</name>
             <label>Live Password</label>
             <label lang="de-DE">User ID</label>
         </input-field>
         <input-field>
-            <name>cembrapaylogin_test</name>
+            <name>cembrapaylogintest</name>
             <label>Test ClientId</label>
             <label lang="de-DE">User ID</label>
         </input-field>
         <input-field>
-            <name>cembrapaypassword_test</name>
+            <name>cembrapaypasswordtest</name>
             <label>Test Password</label>
             <label lang="de-DE">User ID</label>
         </input-field>
