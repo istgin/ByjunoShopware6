@@ -138,8 +138,8 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $accessData->timeout = (int)$this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $context->getSalesChannelId());
         if ($mode == 'test') {
             $accessData->mode = 'test';
-            $accessData->username = $this->systemConfigService->get("ByjunoPayments.config.cembrapayloginlive", $context->getSalesChannelId());
-            $accessData->password = $this->systemConfigService->get("ByjunoPayments.config.cembrapaypasswordlive", $context->getSalesChannelId());
+            $accessData->username = $this->systemConfigService->get("ByjunoPayments.config.cembrapaylogintest", $context->getSalesChannelId());
+            $accessData->password = $this->systemConfigService->get("ByjunoPayments.config.cembrapaypasswordtest", $context->getSalesChannelId());
             $accessData->audience = "59ff4c0b-7ce8-42f0-983b-306706936fa1/.default";
             $accessToken = "";//$this->_scopeConfig->getValue('cembrapaycheckoutsettings/cembrapaycheckout_setup/access_token_test') ?? "";
         } else {
