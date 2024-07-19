@@ -414,8 +414,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             $response = $cembrapayCommunicator->sendScreeningRequest($json, $accessData, function ($object, $token, $accessData) {
                 $object->saveToken($token, $accessData);
             });
-            var_dump($response);
-            exit();
             $screeningStatus = "";
             if ($response) {
                 /* @var $responseRes CembraPayCheckoutScreeningResponse */
@@ -433,7 +431,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                //     $request->custDetails->firstName, $request->custDetails->lastName, $request->requestMsgId,
                //     $request->billingAddr->postalCode, $request->billingAddr->town, $request->billingAddr->country, $request->billingAddr->addrFirstLine, "-", "-");
             }
-            $allowed = true;
+            $allowed = false;
             foreach ($allowedCembraPayPaymentMethods as $st) {
                 if ($st == "XXXXX") {
                     $allowed = true;
