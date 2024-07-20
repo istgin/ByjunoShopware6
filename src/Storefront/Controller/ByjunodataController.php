@@ -139,9 +139,9 @@ class ByjunodataController extends StorefrontController
             $context->getContext(),
             $context->getSalesChannelId(),
             $order,
-            $url = $this->container->get('router')->generate("frontend.checkout.byjunocheckoutok", [], UrlGeneratorInterface::ABSOLUTE_URL),
-            $url = $this->container->get('router')->generate("frontend.checkout.byjunocheckoutcancel", [], UrlGeneratorInterface::ABSOLUTE_URL),
-            $url = $this->container->get('router')->generate("frontend.checkout.byjunocheckouterror", [], UrlGeneratorInterface::ABSOLUTE_URL)
+            $url = $this->container->get('router')->generate("frontend.checkout.byjunocheckoutok", ["orderid" => $order->getId()], UrlGeneratorInterface::ABSOLUTE_URL),
+            $url = $this->container->get('router')->generate("frontend.checkout.byjunocancel", ["orderid" => $order->getId()], UrlGeneratorInterface::ABSOLUTE_URL),
+            $url = $this->container->get('router')->generate("frontend.checkout.byjunocancel", ["orderid" => $order->getId()], UrlGeneratorInterface::ABSOLUTE_URL)
         );
         $CembraPayRequestName = "Checkout request";
         if ($request->custDetails->custType == CembraPayConstants::$CUSTOMER_BUSINESS) {
@@ -360,18 +360,6 @@ class ByjunodataController extends StorefrontController
     public function finalizeTransactionChkOk(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
     {
         exit('finalizeTransactionChkOk');
-    }
-
-    #[Route(path: '/byjunocheckoutcancel', name: 'frontend.checkout.byjunocheckoutcancel', methods: ['POST', 'GET'])]
-    public function finalizeTransactionChkCancel(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
-    {
-        exit('finalizeTransactionChkCancel');
-    }
-
-    #[Route(path: '/byjunocheckouterror', name: 'frontend.checkout.byjunocheckouterror', methods: ['POST', 'GET'])]
-    public function finalizeTransactionChkError(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
-    {
-        exit('finalizeTransactionChkError');
     }
 
     #[Route(path: '/byjunosubmit', name: 'frontend.checkout.byjunosubmit', methods: ['POST', 'GET'])]

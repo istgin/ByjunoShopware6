@@ -1231,9 +1231,9 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->sessionInfo->sessionIp = $this->Byjuno_getClientIp();
 
         $request->cembraPayDetails->cembraPayPaymentMethod = null;
-        $request->merchantDetails->returnUrlError = base64_encode($errorUrl);
-        $request->merchantDetails->returnUrlCancel = base64_encode($cancelUrl);
         $request->merchantDetails->returnUrlSuccess = base64_encode($successUrl);
+        $request->merchantDetails->returnUrlCancel = base64_encode($cancelUrl);
+        $request->merchantDetails->returnUrlError = base64_encode($errorUrl);
 
         $request->merchantDetails->transactionChannel = "WEB";
         $request->merchantDetails->integrationModule = "CembraPay Shopware 6 module 4.0.0";
