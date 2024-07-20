@@ -3,12 +3,18 @@
 declare(strict_types=1);
 
 namespace Byjuno\ByjunoPayments\Storefront\Controller;
+use Byjuno\ByjunoPayments\Api\Api\CembraPayAzure;
+use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutChkResponse;
+use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutScreeningResponse;
+use Byjuno\ByjunoPayments\Api\Api\CembraPayCommunicator;
+use Byjuno\ByjunoPayments\Api\Api\CembraPayConstants;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoRequest;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoResponse;
 use Byjuno\ByjunoPayments\ByjunoPayments;
 use Byjuno\ByjunoPayments\Service\ByjunoCDPOrderConverterSubscriber;
 use Exception;
+use Magento\Sales\Model\Order\Payment\Transaction;
 use phpDocumentor\Reflection\Types\Array_;
 use RuntimeException;
 use Shopware\Core\Checkout\Cart\SalesChannel\CartService;
@@ -81,6 +87,11 @@ class ByjunodataController extends StorefrontController
      */
     private $byjuno;
 
+    /**
+     * @var \Byjuno\ByjunoPayments\Api\Api\CembraPayAzure
+     */
+    public $cembraPayAzure;
+
     public function __construct(
         CartService $cartService,
         OrderService $orderService,
@@ -103,12 +114,74 @@ class ByjunodataController extends StorefrontController
         $this->translator = $translator;
         $this->mailTemplateRepository = $mailTemplateRepository;
         $this->byjuno = $byjuno;
+        $this->cembraPayAzure = new CembraPayAzure();
 
     }
 
     #[Route(path: '/byjunodata', name: 'frontend.checkout.byjunodata', methods: ['GET'])]
     public function submitData(Request $request, SalesChannelContext $context)
     {
+        $order = $this->byjuno->getOrder($request->query->get("orderid"));
+        $paymentMethods = $order->getTransactions()->getPaymentMethodIds();
+        foreach ($paymentMethods as $pm) {
+            $paymentMethodId = $pm;
+            break;
+        }
+        if ($paymentMethodId == ByjunoPayments::BYJUNO_INVOICE) {
+            $paymentMethod = "byjuno_payment_invoice";
+        } else if ($paymentMethodId == ByjunoPayments::BYJUNO_INSTALLMENT) {
+            $paymentMethod = "byjuno_payment_installment";
+        }
+        if ($paymentMethod == '') {
+            exit();
+        }
+        $request = $this->byjuno->Byjuno_CreateShopWareShopCheckoutRequestUserBilling(
+            $context->getContext(),
+            $context->getSalesChannelId(),
+            $order,
+            $url = $this->container->get('router')->generate("frontend.checkout.byjunocheckoutok", [], UrlGeneratorInterface::ABSOLUTE_URL),
+            $url = $this->container->get('router')->generate("frontend.checkout.byjunocheckoutcancel", [], UrlGeneratorInterface::ABSOLUTE_URL),
+            $url = $this->container->get('router')->generate("frontend.checkout.byjunocheckouterror", [], UrlGeneratorInterface::ABSOLUTE_URL)
+        );
+        $CembraPayRequestName = "Checkout request";
+        if ($request->custDetails->custType == CembraPayConstants::$CUSTOMER_BUSINESS) {
+            $CembraPayRequestName = "Checkout request company";
+        }
+        $json = $request->createRequest();
+        $cembrapayCommunicator = new CembraPayCommunicator($this->cembraPayAzure);
+        $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $order->getSalesChannelId());
+        if (isset($mode) && strtolower($mode) == 'live') {
+            $cembrapayCommunicator->setServer('live');
+        } else {
+            $cembrapayCommunicator->setServer('test');
+        }
+        $accessData = $this->byjuno->getAccessData($context, $mode);
+        $response = $cembrapayCommunicator->sendCheckoutRequest($json, $accessData, function ($object, $token, $accessData) {
+            $object->saveToken($token, $accessData);
+        });
+        $status = "";
+        $responseRes = null;
+        if ($response) {
+            /* @var $responseRes CembraPayCheckoutChkResponse */
+            $responseRes = CembraPayConstants::checkoutResponse($response);
+            $status = $responseRes->processingStatus;
+            $this->byjuno->saveCembraLog($context->getContext(), $json, $response, $responseRes->processingStatus, $CembraPayRequestName,
+                $request->custDetails->firstName, $request->custDetails->lastName, $request->requestMsgId,
+                $request->billingAddr->postalCode, $request->billingAddr->town, $request->billingAddr->country, $request->billingAddr->addrFirstLine, $responseRes->transactionId, $order->getOrderNumber());
+
+        } else {
+            $this->byjuno->saveCembraLog($context->getContext(), $json, $response, "Query error", $CembraPayRequestName,
+                $request->custDetails->firstName, $request->custDetails->lastName, $request->requestMsgId,
+                $request->billingAddr->postalCode, $request->billingAddr->town, $request->billingAddr->country, $request->billingAddr->addrFirstLine, "-", "-");
+        }
+        if ($status == CembraPayConstants::$CHK_OK) {
+            $redirectUrl = $responseRes->redirectUrlCheckout;
+            return new RedirectResponse($redirectUrl);
+        } else {
+            $returnUrlFail = $request->query->get("returnurl") . "&status=fail";
+            return new RedirectResponse($returnUrlFail);
+        }
+        exit();
         $_SESSION["_byjuno_key"] = "ok";
         $_SESSION["_byjuno_single_payment"] = '';
         $order = $this->byjuno->getOrder($request->query->get("orderid"));
@@ -281,6 +354,24 @@ class ByjunodataController extends StorefrontController
             return new RedirectResponse($returnUrlFail);
         }
         return $this->renderStorefront('@Storefront/storefront/page/checkout/cart/byjunodata.html.twig', ["page" => $params]);
+    }
+
+    #[Route(path: '/byjunocheckoutok', name: 'frontend.checkout.byjunocheckoutok', methods: ['POST', 'GET'])]
+    public function finalizeTransactionChkOk(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
+    {
+        exit('finalizeTransactionChkOk');
+    }
+
+    #[Route(path: '/byjunocheckoutcancel', name: 'frontend.checkout.byjunocheckoutcancel', methods: ['POST', 'GET'])]
+    public function finalizeTransactionChkCancel(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
+    {
+        exit('finalizeTransactionChkCancel');
+    }
+
+    #[Route(path: '/byjunocheckouterror', name: 'frontend.checkout.byjunocheckouterror', methods: ['POST', 'GET'])]
+    public function finalizeTransactionChkError(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
+    {
+        exit('finalizeTransactionChkError');
     }
 
     #[Route(path: '/byjunosubmit', name: 'frontend.checkout.byjunosubmit', methods: ['POST', 'GET'])]

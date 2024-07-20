@@ -79,4 +79,20 @@ class CembraPayConstants
         }
         return $result;
     }
+
+    static function checkoutResponse($response)
+    {
+        $responseObject = json_decode($response);
+        $result = new CembraPayCheckoutChkResponse();
+        if (empty($responseObject->processingStatus)) {
+            $result->processingStatus = self::$REQUEST_ERROR;
+        } else {
+            $result->processingStatus = $responseObject->processingStatus;
+            if ($responseObject->processingStatus == self::$CHK_OK) {
+                $result->transactionId = $responseObject->transactionId;
+                $result->redirectUrlCheckout = $responseObject->redirectUrlCheckout;
+            }
+        }
+        return $result;
+    }
 }
