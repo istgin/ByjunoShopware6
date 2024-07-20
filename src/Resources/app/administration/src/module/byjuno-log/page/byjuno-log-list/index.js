@@ -56,8 +56,8 @@ Component.register('byjuno-log-list', {
                 label: 'IP',
                 allowResize: true
             }, {
-                property: 'byjuno_status',
-                dataIndex: 'byjuno_status',
+                property: 'cembra_status',
+                dataIndex: 'cembra_status',
                 label: 'Status',
                 allowResize: true
             }, {
@@ -69,7 +69,7 @@ Component.register('byjuno-log-list', {
         }
     },
     created() {
-        this.repository = this.repositoryFactory.create('byjuno_log_entity');
+        this.repository = this.repositoryFactory.create('cembra_log_entity');
 
         const criteria = new Criteria();
         criteria.addSorting(Criteria.sort('createdAt', 'DESC'));

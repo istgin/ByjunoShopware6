@@ -418,24 +418,17 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             if ($response) {
                 /* @var $responseRes CembraPayCheckoutScreeningResponse */
                 $responseRes = CembraPayConstants::screeningResponse($response);
-                $allowedCembraPayPaymentMethods = $responseRes->screeningDetails->allowedCembraPayPaymentMethods;
                 $screeningStatus = $responseRes->processingStatus;
-               // $this->saveLog($event->getContext(), $request, $xml, $response, $statusCDP, $statusLog);
+                $this->saveLog($event->getContext(), $request, $json, $response, $screeningStatus, $statusLog);
                 //$this->saveLog($json, $response, $responseRes->processingStatus, $CembraPayRequestName,
                  //   $request->custDetails->firstName, $request->custDetails->lastName, $request->requestMsgId,
                  //   $request->billingAddr->postalCode, $request->billingAddr->town, $request->billingAddr->country, $request->billingAddr->addrFirstLine, $responseRes->transactionId, "-");
             } else {
-                $allowedCembraPayPaymentMethods = Array();
-               // $this->saveLog($event->getContext(), $request, $xml, "Empty response", $statusCDP, $statusLog);
-               // $this->saveLog($json, $response, "Query error", $CembraPayRequestName,
-               //     $request->custDetails->firstName, $request->custDetails->lastName, $request->requestMsgId,
-               //     $request->billingAddr->postalCode, $request->billingAddr->town, $request->billingAddr->country, $request->billingAddr->addrFirstLine, "-", "-");
+                $this->saveLog($event->getContext(), $request, $json, "Empty response", CembraPayConstants::$REQUEST_ERROR, $statusLog);
             }
             $allowed = false;
-            foreach ($allowedCembraPayPaymentMethods as $st) {
-                if ($st == "XXXXX") {
-                    $allowed = true;
-                }
+            if ($screeningStatus == CembraPayConstants::$SCREENING_OK) {
+                $allowed = true;
             }
             if (!$allowed) {
                 $violation = new ConstraintViolation(
@@ -447,7 +440,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                     ''
                 );
                 $violations = new ConstraintViolationList([$violation]);
-                $exception = new ConstraintViolationException($violations, []);
                 throw new ConstraintViolationException($violations, []);
             }
         }
@@ -521,7 +513,24 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         if (!empty($customDob)) {
             $request->custDetails->dateOfBirth = $customDob;
         }
-        $request->custDetails->salutation = $billingAddressSalutation->getDisplayName();
+        $request->custDetails->salutation = CembraPayConstants::$GENTER_UNKNOWN;
+        $additionalInfo = $billingAddressSalutation->getDisplayName();
+        $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale", $context->getSalesChannelId());
+        $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale", $context->getSalesChannelId());
+        $genderMale = explode(",", $genderMaleStr);
+        $genderFemale = explode(",", $genderFemaleStr);
+        if (!empty($additionalInfo)) {
+            foreach ($genderMale as $ml) {
+                if (strtolower($additionalInfo) == strtolower(trim($ml))) {
+                    $request->custDetails->salutation = CembraPayConstants::$GENTER_MALE;
+                }
+            }
+            foreach ($genderFemale as $feml) {
+                if (strtolower($additionalInfo) == strtolower(trim($feml))) {
+                    $request->custDetails->salutation = CembraPayConstants::$GENTER_FEMALE;
+                }
+            }
+        }
 
         $addressAdd = '';
         if (!empty($billing['additionalAddressLine1'])) {

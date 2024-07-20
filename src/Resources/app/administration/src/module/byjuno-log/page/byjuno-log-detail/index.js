@@ -38,7 +38,7 @@ Component.register('byjuno-log-detail', {
     },
 
     created() {
-        this.repository = this.repositoryFactory.create('byjuno_log_entity');
+        this.repository = this.repositoryFactory.create('cembra_log_entity');
         this.getBundle();
     },
 
