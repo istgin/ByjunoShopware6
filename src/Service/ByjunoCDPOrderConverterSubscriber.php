@@ -9,6 +9,7 @@ use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutScreeningResponse;
 use Byjuno\ByjunoPayments\Api\Api\CembraPayCommunicator;
 use Byjuno\ByjunoPayments\Api\Api\CembraPayConstants;
 use Byjuno\ByjunoPayments\Api\Api\CembraPayLoginDto;
+use Byjuno\ByjunoPayments\Api\Api\CembraPayConfirmRequest;
 use Byjuno\ByjunoPayments\Api\Api\CustDetails;
 use Byjuno\ByjunoPayments\Api\Api\CustomerConsents;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
@@ -1237,6 +1238,16 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
         $request->merchantDetails->transactionChannel = "WEB";
         $request->merchantDetails->integrationModule = "CembraPay Shopware 6 module 4.0.0";
+
+        return $request;
+    }
+
+    public function Byjuno_createShopRequestConfirmTransaction($transactionId)
+    {
+        $request = new CembraPayConfirmRequest();
+        $request->requestMsgId = CembraPayCheckoutChkRequest::GUID();
+        $request->requestMsgDateTime = CembraPayCheckoutChkRequest::Date();
+        $request->transactionId = $transactionId;
 
         return $request;
     }

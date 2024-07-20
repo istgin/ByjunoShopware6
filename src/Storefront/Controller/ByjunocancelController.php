@@ -11,6 +11,7 @@ use Byjuno\ByjunoPayments\Utils\CustomProductsLineItemTypes;
 use Exception;
 use phpDocumentor\Reflection\Types\Array_;
 use RuntimeException;
+use Shopware\Core\Framework\Routing\Exception\MissingRequestParameterException;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Checkout\Cart\Exception\OrderNotFoundException;
 use Shopware\Core\Checkout\Cart\LineItemFactoryRegistry;
@@ -29,7 +30,6 @@ use Shopware\Core\Framework\DataAbstractionLayer\Exception\InconsistentCriteriaI
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
-use Shopware\Core\Framework\Routing\Exception\MissingRequestParameterException;
 use Shopware\Core\Framework\Uuid\Exception\InvalidUuidException;
 use Shopware\Core\Framework\Validation\DataBag\RequestDataBag;
 use Shopware\Core\System\Language\LanguageEntity;
@@ -94,7 +94,6 @@ class ByjunocancelController extends StorefrontController
     private function recreateCart(Cart $cart, Request $request, SalesChannelContext $salesChannelContext)
     {
         $orderId = $request->query->get('orderid');
-
         if (empty($orderId)) {
             throw new MissingRequestParameterException('orderid');
         }

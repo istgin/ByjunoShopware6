@@ -95,4 +95,21 @@ class CembraPayConstants
         }
         return $result;
     }
+    static function confirmTransactionResponse($response)
+    {
+        $responseObject = json_decode($response);
+        $result = new CembraPayConfirmResponse();
+        if (empty($responseObject->transactionStatus->transactionStatus)) {
+            $result->transactionStatus->transactionStatus= self::$REQUEST_ERROR;
+        } else {
+            $result->requestMerchantId = $responseObject->requestMerchantId;
+            $result->requestMsgId = $responseObject->requestMsgId;
+            $result->requestMsgDateTime = $responseObject->requestMsgDateTime;
+            $result->replyMsgId = $responseObject->replyMsgId;
+            $result->replyMsgDateTime = $responseObject->replyMsgDateTime;
+            $result->isTokenDeleted = !empty($responseObject->isTokenDeleted) ? $responseObject->isTokenDeleted : false;
+            $result->transactionStatus->transactionStatus = $responseObject->transactionStatus->transactionStatus;
+        }
+        return $result;
+    }
 }
