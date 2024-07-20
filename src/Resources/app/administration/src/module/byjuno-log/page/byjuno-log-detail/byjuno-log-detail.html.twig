@@ -9,8 +9,8 @@
         <template #content>
             <sw-card-view>
                 <sw-card v-if="bundle" :isLoading="isLoading">
-                    <sw-textarea-field type="textarea" label="Request" v-model="bundle.request"></sw-textarea-field>
-                    <sw-textarea-field type="textarea" label="Response" v-model="bundle.response"></sw-textarea-field>
+                    <mt-textarea type="textarea" label="Request" v-model="bundle.request"></mt-textarea>
+                    <mt-textarea type="textarea" label="Response" v-model="bundle.response"></mt-textarea>
                 </sw-card>
             </sw-card-view>
         </template>

@@ -419,12 +419,15 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                 /* @var $responseRes CembraPayCheckoutScreeningResponse */
                 $responseRes = CembraPayConstants::screeningResponse($response);
                 $screeningStatus = $responseRes->processingStatus;
-                $this->saveLog($event->getContext(), $request, $json, $response, $screeningStatus, $statusLog);
-                //$this->saveLog($json, $response, $responseRes->processingStatus, $CembraPayRequestName,
-                 //   $request->custDetails->firstName, $request->custDetails->lastName, $request->requestMsgId,
-                 //   $request->billingAddr->postalCode, $request->billingAddr->town, $request->billingAddr->country, $request->billingAddr->addrFirstLine, $responseRes->transactionId, "-");
+               // $this->saveLog($event->getContext(), $request, $json, $response, $screeningStatus, $statusLog);
+                $this->saveCembraLog($event->getContext(), $json, $response, $responseRes->processingStatus, $statusLog,
+                    $request->custDetails->firstName, $request->custDetails->lastName, $request->requestMsgId,
+                    $request->billingAddr->postalCode, $request->billingAddr->town, $request->billingAddr->country, $request->billingAddr->addrFirstLine, $responseRes->transactionId, "-");
             } else {
-                $this->saveLog($event->getContext(), $request, $json, "Empty response", CembraPayConstants::$REQUEST_ERROR, $statusLog);
+              //  $this->saveLog($event->getContext(), $request, $json, "Empty response", CembraPayConstants::$REQUEST_ERROR, $statusLog);
+                $this->saveCembraLog($event->getContext(), $json, $response, "Query error", $statusLog,
+                     $request->custDetails->firstName, $request->custDetails->lastName, $request->requestMsgId,
+                     $request->billingAddr->postalCode, $request->billingAddr->town, $request->billingAddr->country, $request->billingAddr->addrFirstLine, "-", "-");
             }
             $allowed = false;
             if ($screeningStatus == CembraPayConstants::$SCREENING_OK) {
@@ -991,6 +994,48 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($entry): void {
             /** @var EntityRepository $logRepository */
             $logRepository = $this->container->get('byjuno_log_entity.repository');
+            $logRepository->upsert([$entry], $context);
+        });
+    }
+
+    public function saveCembraLog(Context $context, $request, $response, $status, $type,
+                                  $firstName, $lastName, $requestId,
+                                  $postcode, $town, $country, $street1, $transactionId, $orderId)
+    {
+
+        $json_string1 = json_decode($request);
+        if ($json_string1 == null) {
+            $json_string11 = $request;
+        } else {
+            $json_string11 = json_encode($json_string1, JSON_PRETTY_PRINT);
+        }
+        $json_string2 = json_decode($response);
+        if ($json_string2 == null) {
+            $json_string22 = $response;
+        } else {
+            $json_string22 = json_encode($json_string2, JSON_PRETTY_PRINT);
+        }
+        $entry = [
+            'id' => Uuid::randomHex(),
+            'request_id' => (string)$requestId,
+            'request_type' => (string)$type,
+            'firstname' => (string)$firstName,
+            'lastname' => (string)$lastName,
+            'town' => (string)$town,
+            'postcode' => (string)$postcode,
+            'street' => (string)$street1,
+            'country' => (string)$country,
+            'ip' => empty($_SERVER['REMOTE_ADDR']) ? "no ip" : $_SERVER['REMOTE_ADDR'],
+            'cembra_status' => (string)$status,
+            'order_id' => (string)$orderId,
+            'transaction_id' => (string)$transactionId,
+            'request' => (string)$json_string11,
+            'response' => (string)$json_string22
+        ];
+
+        $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($entry): void {
+            /** @var EntityRepository $logRepository */
+            $logRepository = $this->container->get('cembra_log_entity.repository');
             $logRepository->upsert([$entry], $context);
         });
     }
