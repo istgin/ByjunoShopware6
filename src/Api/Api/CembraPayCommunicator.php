@@ -67,7 +67,6 @@ class CembraPayCommunicator
     }
 
     private function sendRequest($xmlRequest, $endpoint, CembraPayLoginDto $accessData, $cb) {
-        return $this->directSend($xmlRequest, $endpoint, $accessData, $cb);
         $token = $accessData->accessToken;
         if (!CembraPayAzure::validToken($token)) {
             $token = $this->cembraPayAzure->getToken($accessData);
@@ -96,68 +95,19 @@ class CembraPayCommunicator
         ];
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $url);
-        curl_setopt($curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_0);
+        curl_setopt($curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_2TLS);
         curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, $timeout);
         curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
         curl_setopt($curl, CURLOPT_POST, 1);
         curl_setopt($curl, CURLOPT_POSTFIELDS, $request_data);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+
         $response = @curl_exec($curl);
-        @curl_close($curl);
-        var_dump($accessData->username, $accessData->password);
-        var_dump($response);
-        exit();
-        $response = trim($response);
+        curl_close($curl);
+        $output = trim($response);
         $cb($accessData->helperObject, $token, $accessData);
-        return $response;
-    }
-
-    private function directSend($xmlRequest, $endpoint, CembraPayLoginDto $accessData, $cb) {
-        $token = $accessData->accessToken;
-        if (!CembraPayAzure::validToken($token)) {
-            $token = $this->cembraPayAzure->getToken($accessData);
-        }
-        if (empty($token)) {
-            $cb($accessData->helperObject, $token, $accessData);
-            return "";
-        }
-        $response = "";
-        if (intval($accessData->timeout) < 0) {
-            $timeout = 30;
-        } else {
-            $timeout = $accessData->timeout;
-        }
-        if ($this->server == 'test') {
-            $url = 'https://ext-test.api.cembrapay.ch/'.$endpoint;
-        } else {
-            $url = 'https://api.cembrapay.ch/'.$endpoint;
-        }
-        $request_data = $xmlRequest;
-        $timeout = 30;
-        $request_data = $xmlRequest;
-
-// Construct the cURL command
-        $curlCommand = 'curl -X POST ' . escapeshellarg($url) . ' ' .
-            '-H "Content-type: application/json" ' .
-            '-H "accept: text/plain" ' .
-            '-H "Authorization: Bearer ' . $token . '" ' .
-            '-H "Host: ext-test.api.cembrapay.ch" ' .
-            '--http1.0 ' .
-            '--connect-timeout ' . escapeshellarg($timeout) . ' ' .
-            '--max-time ' . escapeshellarg($timeout) . ' ' .
-            '--data ' . escapeshellarg($request_data) . ' ' .
-            '--insecure';
-
-// Execute the command
-        $output = [];
-        $returnVar = 0;
-        exec($curlCommand, $output, $returnVar);
-
-// Print the output and return status
-        // echo "Output:\n";
-
-        return $output[0];
+        return $output;
     }
 
 }
