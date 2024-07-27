@@ -414,6 +414,14 @@ class ByjunodataController extends StorefrontController
                 }
                 if (!empty($transactionStatus) && in_array($transactionStatus, CembraPayConstants::$CNF_OK_TRANSACTION_STATUSES)) {
                     $this->byjuno->sendMailOrder($salesChannelContext->getContext(), $order, $salesChannelContext->getSalesChannel()->getId());
+                    $fields = $order->getCustomFields();
+                    $customFields = $fields ?? [];
+                    $customFields = array_merge($customFields, ['byjuno_s3_sent' => 1]);
+                    $update = [
+                        'id' => $order->getId(),
+                        'customFields' => $customFields,
+                    ];
+                    $this->orderRepository->update([$update], $salesChannelContext->getContext());
                     return new RedirectResponse($returnUrlSuccess);
                 } else {
                     return new RedirectResponse($returnUrlCancel);

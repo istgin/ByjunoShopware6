@@ -313,11 +313,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                     break;
                 }
                 if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment" && $this->systemConfigService->get("ByjunoPayments.config.byjunoS5", $order->getSalesChannelId()) == 'enabled'
-                    &&
-                    (
-                        (!empty($customFields["byjuno_s3_sent"]) && $customFields["byjuno_s3_sent"] == 1)
-                        || !empty($customFields["chk_transaction_id"]))
-                    ) {
+                    && !empty($customFields["byjuno_s3_sent"]) && $customFields["byjuno_s3_sent"] == 1) {
                     $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $order->getSalesChannelId());
 
                     $txId = null;
@@ -928,7 +924,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     function CreateShopRequestBCDPCancel($amount, $orderCurrency, $orderId, $tx)
     {
-
         $request = new CembraPayCheckoutCancelRequest();
         $request->requestMsgType = CembraPayConstants::$MESSAGE_CAN;
         $request->requestMsgId = CembraPayCheckoutAutRequest::GUID();
