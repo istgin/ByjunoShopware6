@@ -112,4 +112,22 @@ class CembraPayConstants
         }
         return $result;
     }
+
+    static function cancelResponse($response)
+    {
+        $responseObject = json_decode($response);
+        $result = new CembraPayCheckoutCancelResponse();
+        if (empty($responseObject->processingStatus)) {
+            $result->processingStatus = self::$REQUEST_ERROR;
+        } else {
+            if ($responseObject->processingStatus == self::$CANCEL_OK) {
+                // TODO if need
+                $result->processingStatus = $responseObject->processingStatus;
+                $result->transactionId = !empty($responseObject->transactionId) ? $responseObject->transactionId : "";
+            } else {
+                $result->processingStatus = $responseObject->processingStatus;
+            }
+        }
+        return $result;
+    }
 }

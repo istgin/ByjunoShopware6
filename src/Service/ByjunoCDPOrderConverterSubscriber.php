@@ -4,6 +4,8 @@ namespace Byjuno\ByjunoPayments\Service;
 
 use Byjuno\ByjunoPayments\Api\Api\CembraPayAzure;
 use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutAutRequest;
+use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutCancelRequest;
+use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutCancelResponse;
 use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutChkRequest;
 use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutScreeningResponse;
 use Byjuno\ByjunoPayments\Api\Api\CembraPayCommunicator;
@@ -20,6 +22,8 @@ use Byjuno\ByjunoPayments\Api\Classes\ByjunoS5Request;
 use Byjuno\ByjunoPayments\Api\DataHelper;
 use Byjuno\ByjunoPayments\ByjunoPayments;
 use Exception;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Store\Model\ScopeInterface;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
 use Shopware\Core\Checkout\Cart\Order\CartConvertedEvent;
@@ -134,20 +138,20 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $this->cembraPayAzure = new CembraPayAzure();
     }
 
-    public function getAccessData($context, $mode) {
+    public function getAccessData($salesChannelId, $mode) {
         $accessData = new CembraPayLoginDto();
         $accessData->helperObject = $this;
-        $accessData->timeout = (int)$this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $context->getSalesChannelId());
+        $accessData->timeout = (int)$this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $salesChannelId);
         if ($mode == 'test') {
             $accessData->mode = 'test';
-            $accessData->username = $this->systemConfigService->get("ByjunoPayments.config.cembrapaylogintest", $context->getSalesChannelId());
-            $accessData->password = $this->systemConfigService->get("ByjunoPayments.config.cembrapaypasswordtest", $context->getSalesChannelId());
+            $accessData->username = $this->systemConfigService->get("ByjunoPayments.config.cembrapaylogintest", $salesChannelId);
+            $accessData->password = $this->systemConfigService->get("ByjunoPayments.config.cembrapaypasswordtest", $salesChannelId);
             $accessData->audience = "59ff4c0b-7ce8-42f0-983b-306706936fa1/.default";
             $accessToken = "";//$this->_scopeConfig->getValue('cembrapaycheckoutsettings/cembrapaycheckout_setup/access_token_test') ?? "";
         } else {
             $accessData->mode = 'live';
-            $accessData->username = $this->systemConfigService->get("ByjunoPayments.config.cembrapayloginlive", $context->getSalesChannelId());
-            $accessData->password = $this->systemConfigService->get("ByjunoPayments.config.cembrapaypasswordlive", $context->getSalesChannelId());
+            $accessData->username = $this->systemConfigService->get("ByjunoPayments.config.cembrapayloginlive", $salesChannelId);
+            $accessData->password = $this->systemConfigService->get("ByjunoPayments.config.cembrapaypasswordlive", $salesChannelId);
             $accessData->audience = "80d0ac9d-9d5c-499c-876e-71dd57e436f2/.default";
             $accessToken = "";//$this->_scopeConfig->getValue('cembrapaycheckoutsettings/cembrapaycheckout_setup/access_token_live') ?? "";
         }
@@ -272,7 +276,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     public function onByjunoStateMachine(StateMachineTransitionEvent $event)
     {
-
         $order = $this->getOrder($event->getEntityId());
         if ($order != null) {
             if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger", $order->getSalesChannelId()) == 'orderstatus') {
@@ -310,32 +313,45 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                     break;
                 }
                 if ($paymentMethodId == "Byjuno\ByjunoPayments\Service\ByjunoCorePayment" && $this->systemConfigService->get("ByjunoPayments.config.byjunoS5", $order->getSalesChannelId()) == 'enabled'
-                    && !empty($customFields["byjuno_s3_sent"])
-                    && $customFields["byjuno_s3_sent"] == 1) {
+                    &&
+                    (
+                        (!empty($customFields["byjuno_s3_sent"]) && $customFields["byjuno_s3_sent"] == 1)
+                        || !empty($customFields["chk_transaction_id"]))
+                    ) {
                     $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $order->getSalesChannelId());
-                    $request = $this->CreateShopRequestS5Cancel($order->getAmountTotal(),
-                        $order->getCurrency()->getIsoCode(),
-                        $order->getOrderNumber(),
-                        $order->getOrderCustomer()->getId(),
-                        date("Y-m-d"),
-                        $order->getSalesChannelId());
-                    $statusLog = "S5 Cancel request";
-                    $xml = $request->createRequest();
-                    $byjunoCommunicator = new ByjunoCommunicator();
-                    if (isset($mode) && strtolower($mode) == 'live') {
-                        $byjunoCommunicator->setServer('live');
-                    } else {
-                        $byjunoCommunicator->setServer('test');
+
+                    $txId = null;
+                    if (!empty($customFields["chk_transaction_id"])) {
+                        $txId = $customFields["chk_transaction_id"];
                     }
-                    $response = $byjunoCommunicator->sendS4Request($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $order->getSalesChannelId()));
-                    if (isset($response)) {
-                        $byjunoResponse = new ByjunoS4Response();
-                        $byjunoResponse->setRawResponse($response);
-                        $byjunoResponse->processResponse();
-                        $statusCDP = $byjunoResponse->getProcessingInfoClassification();
-                        $this->saveS5Log($event->getContext(), $request, $xml, $response, $statusCDP, $statusLog, "-", "-");
+
+                    $request = $this->CreateShopRequestBCDPCancel($order->getAmountTotal(),
+                        $order->getCurrency()->getIsoCode(),
+                        $order->getOrderNumber(), $txId);
+
+
+                    $CembraPayRequestName = "S5 Cancel request";
+                    $json = $request->createRequest();
+                    $cembrapayCommunicator = new CembraPayCommunicator($this->cembraPayAzure);
+                    if (isset($mode) && strtolower($mode) == 'live') {
+                        $cembrapayCommunicator->setServer('live');
                     } else {
-                        $this->saveS5Log($event->getContext(), $request, $xml, "Empty response", 0, $statusLog, "-", "-");
+                        $cembrapayCommunicator->setServer('test');
+                    }
+
+                    $accessData = $this->getAccessData($order->getSalesChannelId(), $mode);
+                    $response = $cembrapayCommunicator->sendCancelRequest($json, $accessData, function ($object, $token, $accessData) {
+                        $object->saveToken($token, $accessData);
+                    });
+                    if ($response) { /* @var $responseRes CembraPayCheckoutCancelResponse */
+                        $responseRes = CembraPayConstants::cancelResponse($response);
+                        $this->saveCembraLog($event->getContext(), $json, $response, $responseRes->processingStatus, $CembraPayRequestName,
+                            "-","-", $request->requestMsgId,
+                            "-", "-", "-","-", $responseRes->transactionId, $order->getOrderNumber());
+                    } else {
+                            $this->saveCembraLog($event->getContext(), $json, $response, "Query error", $CembraPayRequestName,
+                                "-","-", $request->requestMsgId,
+                                "-", "-", "-","-", "-", "-");
                     }
                 }
             }
@@ -412,7 +428,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             } else {
                 $cembrapayCommunicator->setServer('test');
             }
-            $accessData = $this->getAccessData($event->getSalesChannelContext(), $mode);
+            $accessData = $this->getAccessData($event->getSalesChannelContext()->getSalesChannelId(), $mode);
             $response = $cembrapayCommunicator->sendScreeningRequest($json, $accessData, function ($object, $token, $accessData) {
                 $object->saveToken($token, $accessData);
             });
@@ -910,25 +926,17 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
     }
 
-    function CreateShopRequestS5Cancel($amount, $orderCurrency, $orderId, $customerId, $date, $salesChannelId)
+    function CreateShopRequestBCDPCancel($amount, $orderCurrency, $orderId, $tx)
     {
 
-        $request = new ByjunoS5Request();
-        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid", $salesChannelId));
-        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid", $salesChannelId));
-        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword", $salesChannelId));
-        $request->setVersion("1.00");
-        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail", $salesChannelId));
-
-        $request->setRequestId(uniqid((String)$orderId . "_"));
-        $request->setOrderId($orderId);
-        $request->setClientRef($customerId);
-        $request->setTransactionDate($date);
-        $request->setTransactionAmount(number_format($amount, 2, '.', ''));
-        $request->setTransactionCurrency($orderCurrency);
-        $request->setAdditional2('');
-        $request->setTransactionType("EXPIRED");
-        $request->setOpenBalance("0");
+        $request = new CembraPayCheckoutCancelRequest();
+        $request->requestMsgType = CembraPayConstants::$MESSAGE_CAN;
+        $request->requestMsgId = CembraPayCheckoutAutRequest::GUID();
+        $request->requestMsgDateTime = CembraPayCheckoutAutRequest::Date();
+        $request->transactionId = $tx;
+        $request->merchantOrderRef = $orderId;
+        $request->amount = number_format($amount, 2, '.', '') * 100;
+        $request->currency = $orderCurrency;
         return $request;
     }
 
@@ -1248,7 +1256,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->requestMsgId = CembraPayCheckoutChkRequest::GUID();
         $request->requestMsgDateTime = CembraPayCheckoutChkRequest::Date();
         $request->transactionId = $transactionId;
-
         return $request;
     }
 

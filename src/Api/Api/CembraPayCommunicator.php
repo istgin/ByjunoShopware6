@@ -91,6 +91,7 @@ class CembraPayCommunicator
         $headers = [
             "Content-type: application/json",
             "accept: text/plain",
+            "Connection: close",
             "Authorization: Bearer ".$token
         ];
         $curl = curl_init();

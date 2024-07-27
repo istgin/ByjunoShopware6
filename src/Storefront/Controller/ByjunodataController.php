@@ -157,7 +157,7 @@ class ByjunodataController extends StorefrontController
         } else {
             $cembrapayCommunicator->setServer('test');
         }
-        $accessData = $this->byjuno->getAccessData($context, $mode);
+        $accessData = $this->byjuno->getAccessData($context->getSalesChannelId(), $mode);
         $response = $cembrapayCommunicator->sendCheckoutRequest($json, $accessData, function ($object, $token, $accessData) {
             $object->saveToken($token, $accessData);
         });
@@ -381,7 +381,7 @@ class ByjunodataController extends StorefrontController
             $order = $this->byjuno->getOrder($request->query->get("orderid"));
             $customFields = $order->getCustomFields();
             if (!empty($customFields["chk_transaction_id"])) {
-                $request = $this->byjuno->BYjuno_createShopRequestConfirmTransaction(
+                $request = $this->byjuno->Byjuno_createShopRequestConfirmTransaction(
                     $customFields["chk_transaction_id"]);
 
                 $CembraPayRequestName = "CNF";
@@ -394,7 +394,7 @@ class ByjunodataController extends StorefrontController
                     $cembrapayCommunicator->setServer('test');
                 }
 
-                $accessData = $this->byjuno->getAccessData($salesChannelContext, $mode);
+                $accessData = $this->byjuno->getAccessData($salesChannelContext->getSalesChannelId(), $mode);
                 $response = $cembrapayCommunicator->sendConfirmTransactionRequest($json, $accessData,
                     function ($object, $token, $accessData) {
                         $object->saveToken($token, $accessData);
