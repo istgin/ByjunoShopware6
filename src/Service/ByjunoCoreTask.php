@@ -2,6 +2,10 @@
 
 namespace Byjuno\ByjunoPayments\Service;
 
+use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutSettleRequest;
+use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutSettleResponse;
+use Byjuno\ByjunoPayments\Api\Api\CembraPayCommunicator;
+use Byjuno\ByjunoPayments\Api\Api\CembraPayConstants;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoResponse;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Request;
@@ -108,9 +112,9 @@ class ByjunoCoreTask
                     "",
                     "",
                     "NO");
-                $statusLog = "Order request backend (S1)";
+                $CembraPayRequestName = "Order request backend (S1)";
                 if ($request->getCompanyName1() != '' && $b2b == 'enabled') {
-                    $statusLog = "Order request for company backend (S1)";
+                    $CembraPayRequestName = "Order request for company backend (S1)";
                     $xml = $request->createRequestCompany();
                 } else {
                     $xml = $request->createRequest();
@@ -130,13 +134,13 @@ class ByjunoCoreTask
                     $intrumResponse->setRawResponse($response);
                     $intrumResponse->processResponse();
                     $statusS1 = (int)$intrumResponse->getCustomerRequestStatus();
-                    $this->byjuno->saveLog($context, $request, $xml, $response, $statusS1, $statusLog);
+                    $this->byjuno->saveLog($context, $request, $xml, $response, $statusS1, $CembraPayRequestName);
                     $transactionNumber = $intrumResponse->getTransactionNumber();
                     if (intval($statusS1) > 15) {
                         $statusS1 = 0;
                     }
                 } else {
-                    $this->byjuno->saveLog($context, $request, $xml, "Empty response backend", $statusS1, $statusLog);
+                    $this->byjuno->saveLog($context, $request, $xml, "Empty response backend", $statusS1, $CembraPayRequestName);
                     continue;
                 }
                 if ($this->byjuno->isStatusOkS2($statusS1, $fullOrder->getSalesChannelId())) {
@@ -154,9 +158,9 @@ class ByjunoCoreTask
                         "",
                         $transactionNumber,
                         "YES");
-                    $statusLog = "Order complete backend (S3)";
+                    $CembraPayRequestName = "Order complete backend (S3)";
                     if ($requestS3->getCompanyName1() != '' && $b2b == 'enabled') {
-                        $statusLog = "Order complete for company backend (S3)";
+                        $CembraPayRequestName = "Order complete for company backend (S3)";
                         $xml = $requestS3->createRequestCompany();
                     } else {
                         $xml = $requestS3->createRequest();
@@ -173,12 +177,12 @@ class ByjunoCoreTask
                         $byjunoResponse->setRawResponse($response);
                         $byjunoResponse->processResponse();
                         $statusS3 = (int)$byjunoResponse->getCustomerRequestStatus();
-                        $this->byjuno->saveLog($context, $request, $xml, $response, $statusS3, $statusLog);
+                        $this->byjuno->saveLog($context, $request, $xml, $response, $statusS3, $CembraPayRequestName);
                         if (intval($statusS3) > 15) {
                             $statusS3 = 0;
                         }
                     } else {
-                        $this->byjuno->saveLog($context, $request, $xml, "Empty response backend", $statusS3, $statusLog);
+                        $this->byjuno->saveLog($context, $request, $xml, "Empty response backend", $statusS3, $CembraPayRequestName);
                         continue;
                     }
                     if ($this->byjuno->isStatusOkS2($statusS1, $fullOrder->getSalesChannelId()) && $this->byjuno->isStatusOkS3($statusS3, $fullOrder->getSalesChannelId())) {
@@ -210,35 +214,42 @@ class ByjunoCoreTask
                 , $context);
             foreach ($orders as $simpleOrder) {
                 $order = $this->byjuno->getOrder($simpleOrder->getId());
-                $date = $order->getCreatedAt()->format("Y-m-d");
-                $request = $this->CreateShopRequestS4($order->getSalesChannelId(),
+                $customFieldsO= $order->getCustomFields();
+                $customFieldsOrder = $customFieldsO ?? [];
+                $request = $this->CreateShopRequestSettle(
                     $order->getOrderNumber(),
-                    $order->getAmountTotal(),
                     $order->getAmountTotal(),
                     $order->getCurrency()->getIsoCode(),
                     $order->getOrderNumber(),
-                    $order->getOrderCustomer()->getId(),
-                    $date);
-                $statusLog = "S4 Request (order status)";
+                    (!empty($customFieldsOrder["chk_transaction_id"])) ? $customFieldsOrder["chk_transaction_id"] : ""
+                );
+                $CembraPayRequestName = "Settle Request (order status)";
 
                 $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $order->getSalesChannelId());
-                $xml = $request->createRequest();
-                $byjunoCommunicator = new ByjunoCommunicator();
+                $json = $request->createRequest();
+                $cembrapayCommunicator = new CembraPayCommunicator($this->byjuno->cembraPayAzure);
                 if (isset($mode) && strtolower($mode) == 'live') {
-                    $byjunoCommunicator->setServer('live');
+                    $cembrapayCommunicator->setServer('live');
                 } else {
-                    $byjunoCommunicator->setServer('test');
+                    $cembrapayCommunicator->setServer('test');
                 }
-                $response = $byjunoCommunicator->sendS4Request($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $order->getSalesChannelId()));
+                $accessData = $this->byjuno->getAccessData($order->getSalesChannelId(), $mode);
+                $response = $cembrapayCommunicator->sendSettleRequest($json,
+                    $accessData,
+                    function ($object, $token, $accessData) {
+                        $object->saveToken($token, $accessData);
+                    });
+
                 $fields = $order->getCustomFields();
                 $customFields = $fields ?? [];
-                if (isset($response)) {
-                    $byjunoResponse = new ByjunoS4Response();
-                    $byjunoResponse->setRawResponse($response);
-                    $byjunoResponse->processResponse();
-                    $statusCDP = $byjunoResponse->getProcessingInfoClassification();
-                    $this->saveS4Log($context, $request, $xml, $response, $statusCDP, $statusLog, "-", "-");
-                    if ($statusCDP != "ERR") {
+                if (!empty($response)) {
+                    /* @var $responseRes CembraPayCheckoutSettleResponse */
+                    $responseRes = CembraPayConstants::settleResponse($response);
+                    $status = $responseRes->processingStatus;
+                    $this->byjuno->saveCembraLog($context, $json, $response, $responseRes->processingStatus, $CembraPayRequestName,
+                        "-","-", $request->requestMsgId,
+                        "-", "-", "-","-", $responseRes->transactionId, $order->getOrderNumber());
+                    if (!empty($status) && in_array($status, CembraPayConstants::$SETTLE_STATUSES)) {
                         $customFields = array_merge($customFields, ['byjuno_s4_retry' => 0, 'byjuno_s4_sent' => 1, 'byjuno_time' => time()]);
                     } else {
                         if ($fields["byjuno_s4_retry"] < self::$MAX_RETRY_COUNT) {
@@ -252,7 +263,9 @@ class ByjunoCoreTask
                         $customFields = array_merge($customFields, ['byjuno_s4_retry' => ++$fields["byjuno_s4_retry"], 'byjuno_s4_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
                     } else {
                         $customFields = array_merge($customFields, ['byjuno_s4_retry' => ++$fields["byjuno_s4_retry"], 'byjuno_s4_sent' => 1, 'byjuno_time' => time()]);
-                        $this->saveS4Log($context, $request, $xml, "no response (network timeout)", 0, $statusLog, "-", "-");
+                        $this->byjuno->saveCembraLog($context, $json, $response, "Query error", $CembraPayRequestName,
+                            "-","-", $request->requestMsgId,
+                            "-", "-", "-","-", "-", "-");
                     }
                 }
                 $update = [
@@ -289,46 +302,71 @@ class ByjunoCoreTask
                     $order->getOrderNumber(),
                     $order->getOrderCustomer()->getId(),
                     $date);
-                $statusLog = "S5 Refund request";
+                $CembraPayRequestName = "Refund request";
             } else if ($docName == "invoice") {
                 if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4", $order->getSalesChannelId()) != 'enabled'
                     || $this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger", $order->getSalesChannelId()) != 'invoice') {
                     return;
                 }
                 $order = $getDoc->getOrder();
-                $request = $this->CreateShopRequestS4($order->getSalesChannelId(),
+                $customFieldsO= $order->getCustomFields();
+                $customFieldsOrder = $customFieldsO ?? [];
+                $request = $this->CreateShopRequestSettle(
                     $getDoc->getConfig()["documentNumber"],
-                    $order->getAmountTotal(),
                     $order->getAmountTotal(),
                     $order->getCurrency()->getIsoCode(),
                     $order->getOrderNumber(),
-                    $order->getOrderCustomer()->getId(),
-                    $date);
-                $statusLog = "S4 Request";
+                    (!empty($customFieldsOrder["chk_transaction_id"])) ? $customFieldsOrder["chk_transaction_id"] : ""
+                );
+                $CembraPayRequestName = "Settle Request";
+
             }
-            if ($statusLog != '') {
+            if ($CembraPayRequestName != '') {
                 $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $order->getSalesChannelId());
-                $xml = $request->createRequest();
-                $byjunoCommunicator = new ByjunoCommunicator();
+                $json = $request->createRequest();
+                $cembrapayCommunicator = new CembraPayCommunicator($this->byjuno->cembraPayAzure);
                 if (isset($mode) && strtolower($mode) == 'live') {
-                    $byjunoCommunicator->setServer('live');
+                    $cembrapayCommunicator->setServer('live');
                 } else {
-                    $byjunoCommunicator->setServer('test');
+                    $cembrapayCommunicator->setServer('test');
                 }
-                $response = $byjunoCommunicator->sendS4Request($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $order->getSalesChannelId()));
+
+                $accessData = $this->byjuno->getAccessData($order->getSalesChannelId(), $mode);
+                if ($CembraPayRequestName == "Settle Request") {
+                    $response = $cembrapayCommunicator->sendSettleRequest($json,
+                        $accessData,
+                        function ($object, $token, $accessData) {
+                            $object->saveToken($token, $accessData);
+                        });
+                } else if ($CembraPayRequestName == "Refund request") {
+                    $response = $cembrapayCommunicator->sendRefundRequest($json,
+                        $accessData,
+                        function ($object, $token, $accessData) {
+                            $object->saveToken($token, $accessData);
+                        });
+                }
+
                 $fields = $getDoc->getCustomFields();
                 $customFields = $fields ?? [];
                 if (isset($response)) {
-                    $byjunoResponse = new ByjunoS4Response();
-                    $byjunoResponse->setRawResponse($response);
-                    $byjunoResponse->processResponse();
-                    $statusCDP = $byjunoResponse->getProcessingInfoClassification();
-                    if ($statusLog == "S4 Request") {
-                        $this->saveS4Log($context, $request, $xml, $response, $statusCDP, $statusLog, "-", "-");
-                    } else if ($statusLog == "S5 Refund request") {
-                        $this->saveS5Log($context, $request, $xml, $response, $statusCDP, $statusLog, "-", "-");
+                    $ok = false;
+                    if ($CembraPayRequestName == "Settle Request") {
+                        /* @var $responseRes CembraPayCheckoutSettleResponse */
+                        $responseRes = CembraPayConstants::settleResponse($response);
+                        $status = $responseRes->processingStatus;
+                        if (!empty($status) && in_array($status, CembraPayConstants::$SETTLE_STATUSES)) {
+                            $ok = true;
+                        }
+                    } else if ($CembraPayRequestName == "Refund request") {
+
                     }
-                    if ($statusCDP != "ERR") {
+
+
+                    $this->byjuno->saveCembraLog($context, $json, $response, $responseRes->processingStatus, $CembraPayRequestName,
+                            "-","-", $request->requestMsgId,
+                            "-", "-", "-","-", $responseRes->transactionId, $order->getOrderNumber());
+
+                    if ($ok) {
                         $customFields = array_merge($customFields, ['byjuno_doc_retry' => 0, 'byjuno_doc_sent' => 1, 'byjuno_time' => time()]);
                     } else {
                         if ($fields["byjuno_doc_retry"] < self::$MAX_RETRY_COUNT) {
@@ -342,11 +380,10 @@ class ByjunoCoreTask
                         $customFields = array_merge($customFields, ['byjuno_doc_retry' => ++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
                     } else {
                         $customFields = array_merge($customFields, ['byjuno_doc_retry' => ++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 1, 'byjuno_time' => time()]);
-                        if ($statusLog == "S4 Request") {
-                            $this->saveS4Log($context, $request, $xml, "no response (network timeout)", 0, $statusLog, "-", "-");
-                        } else if ($statusLog == "S5 Refund request") {
-                            $this->saveS5Log($context, $request, $xml, "no response (network timeout)", 0, $statusLog, "-", "-");
-                        }
+                        $this->byjuno->saveCembraLog($context, $json, $response, "Query error", $CembraPayRequestName,
+                            "-","-", $request->requestMsgId,
+                            "-", "-", "-","-", "-", "-");
+
                     }
                 }
                 $update = [
@@ -385,6 +422,22 @@ class ByjunoCoreTask
         $request->setAdditional2($doucmentId);
         $request->setOpenBalance(number_format($orderAmount, 2, '.', ''));
 
+        return $request;
+
+    }
+
+    function CreateShopRequestSettle($doucmentId, $amount, $orderCurrency, $orderId, $tx)
+    {
+
+        $request = new CembraPayCheckoutSettleRequest();
+        $request->requestMsgType = CembraPayConstants::$MESSAGE_SET;
+        $request->requestMsgId = CembraPayCheckoutSettleRequest::GUID();
+        $request->requestMsgDateTime = CembraPayCheckoutSettleRequest::Date();
+        $request->transactionId = $tx;
+        $request->merchantOrderRef = $orderId;
+        $request->amount = number_format($amount, 2, '.', '') * 100;
+        $request->currency = $orderCurrency;
+        $request->settlementDetails->merchantInvoiceRef = $doucmentId;
         return $request;
 
     }

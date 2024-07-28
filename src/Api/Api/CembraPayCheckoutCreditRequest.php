@@ -2,10 +2,6 @@
 
 namespace Byjuno\ByjunoPayments\Api\Api;
 
-use Byjuno\ByjunoPayments\Helper\Api\CembraPayCheckoutAutRequest;
-use Byjuno\ByjunoPayments\Helper\Api\DeliveryDetails;
-use Byjuno\ByjunoPayments\Helper\Api\SettlementDetails;
-
 class CembraPayCheckoutCreditRequest extends CembraPayCheckoutAutRequest
 {
     public $requestMsgType; //String
