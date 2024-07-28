@@ -2,6 +2,8 @@
 
 namespace Byjuno\ByjunoPayments\Service;
 
+use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutCreditRequest;
+use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutCreditResponse;
 use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutSettleRequest;
 use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutSettleResponse;
 use Byjuno\ByjunoPayments\Api\Api\CembraPayCommunicator;
@@ -295,20 +297,25 @@ class ByjunoCoreTask
                 if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS5", $order->getSalesChannelId()) != 'enabled') {
                     return;
                 }
-                $request = $this->createShopRequestS5Refund($order->getSalesChannelId(),
-                    $getDoc->getConfig()["custom"]["invoiceNumber"],
+                $refDoc = $getDoc->getReferencedDocument();
+                $customFieldsR = $refDoc->getCustomFields();
+                $customFieldsRef = $customFieldsR ?? [];
+                $customFieldsO = $order->getCustomFields();
+                $customFieldsOrder = $customFieldsO ?? [];
+                $request = $this->CreateShopRequestCreditRefund(
+                    $getDoc->getConfig()["documentNumber"],
                     $order->getAmountTotal(),
                     $order->getCurrency()->getIsoCode(),
                     $order->getOrderNumber(),
-                    $order->getOrderCustomer()->getId(),
-                    $date);
+                    (!empty($customFieldsOrder["chk_transaction_id"])) ? $customFieldsOrder["chk_transaction_id"] : "",
+                    (!empty($customFieldsRef["inv_transaction_id"])) ? $customFieldsOrder["inv_transaction_id"] : ""
+                );
                 $CembraPayRequestName = "Refund request";
             } else if ($docName == "invoice") {
                 if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS4", $order->getSalesChannelId()) != 'enabled'
                     || $this->systemConfigService->get("ByjunoPayments.config.byjunoS4trigger", $order->getSalesChannelId()) != 'invoice') {
                     return;
                 }
-                $order = $getDoc->getOrder();
                 $customFieldsO= $order->getCustomFields();
                 $customFieldsOrder = $customFieldsO ?? [];
                 $request = $this->CreateShopRequestSettle(
@@ -339,7 +346,7 @@ class ByjunoCoreTask
                             $object->saveToken($token, $accessData);
                         });
                 } else if ($CembraPayRequestName == "Refund request") {
-                    $response = $cembrapayCommunicator->sendRefundRequest($json,
+                    $response = $cembrapayCommunicator->sendCreditRequest($json,
                         $accessData,
                         function ($object, $token, $accessData) {
                             $object->saveToken($token, $accessData);
@@ -358,16 +365,24 @@ class ByjunoCoreTask
                             $ok = true;
                         }
                     } else if ($CembraPayRequestName == "Refund request") {
-
+                        /* @var $responseRes CembraPayCheckoutCreditResponse */
+                        $responseRes = CembraPayConstants::creditResponse($response);
+                        $status = $responseRes->processingStatus;
+                        if (!empty($status) && $status != CembraPayConstants::$CREDIT_OK) {
+                            $ok = true;
+                        }
                     }
-
 
                     $this->byjuno->saveCembraLog($context, $json, $response, $responseRes->processingStatus, $CembraPayRequestName,
                             "-","-", $request->requestMsgId,
                             "-", "-", "-","-", $responseRes->transactionId, $order->getOrderNumber());
 
                     if ($ok) {
-                        $customFields = array_merge($customFields, ['byjuno_doc_retry' => 0, 'byjuno_doc_sent' => 1, 'byjuno_time' => time()]);
+                        $customFields = array_merge($customFields,
+                            ['byjuno_doc_retry' => 0,
+                             'byjuno_doc_sent' => 1,
+                             'byjuno_time' => time(),
+                             'inv_transaction_id' => $responseRes->transactionId]);
                     } else {
                         if ($fields["byjuno_doc_retry"] < self::$MAX_RETRY_COUNT) {
                             $customFields = array_merge($customFields, ['byjuno_doc_retry' => ++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
@@ -440,6 +455,22 @@ class ByjunoCoreTask
         $request->settlementDetails->merchantInvoiceRef = $doucmentId;
         return $request;
 
+    }
+
+
+    function CreateShopRequestCreditRefund($doucmentId, $amount, $orderCurrency, $orderId, $tx, $settlementId)
+    {
+        $request = new CembraPayCheckoutCreditRequest();
+        $request->requestMsgType = CembraPayConstants::$MESSAGE_CNL;
+        $request->requestMsgId = CembraPayCheckoutCreditRequest::GUID();
+        $request->requestMsgDateTime = CembraPayCheckoutCreditRequest::Date();
+        $request->transactionId = $tx;
+        $request->merchantOrderRef = $orderId;
+        $request->amount = number_format($amount, 2, '.', '') * 100;
+        $request->currency = $orderCurrency;
+        $request->settlementDetails->merchantInvoiceRef = $doucmentId;
+        $request->settlementDetails->settlementId = $settlementId;
+        return $request;
     }
 
     function CreateShopRequestS5Refund($salesChannelId, $doucmentId, $amount, $orderCurrency, $orderId, $customerId, $date)

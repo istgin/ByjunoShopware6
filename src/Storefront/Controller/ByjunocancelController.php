@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Byjuno\ByjunoPayments\Storefront\Controller;
 
-use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
-use Byjuno\ByjunoPayments\Api\Classes\ByjunoRequest;
-use Byjuno\ByjunoPayments\Api\Classes\ByjunoResponse;
 use Byjuno\ByjunoPayments\Utils\CustomProductsLineItemTypes;
 use Exception;
 use phpDocumentor\Reflection\Types\Array_;

@@ -141,9 +141,9 @@ class ByjunodataController extends StorefrontController
             $context->getContext(),
             $context->getSalesChannelId(),
             $order,
-            $url = $this->container->get('router')->generate("frontend.checkout.byjunocheckoutok", ["orderid" => $order->getId(), "returnurl" => $request->query->get("returnurl")], UrlGeneratorInterface::ABSOLUTE_URL),
-            $url = $this->container->get('router')->generate("frontend.checkout.byjunocheckoutcancel", ["orderid" => $order->getId(), "returnurl" => $request->query->get("returnurl")], UrlGeneratorInterface::ABSOLUTE_URL),
-            $url = $this->container->get('router')->generate("frontend.checkout.byjunocheckoutcancel", ["orderid" => $order->getId(), "returnurl" => $request->query->get("returnurl")], UrlGeneratorInterface::ABSOLUTE_URL)
+            $this->container->get('router')->generate("frontend.checkout.byjunocheckoutok", ["orderid" => $order->getId(), "returnurl" => $request->query->get("returnurl")], UrlGeneratorInterface::ABSOLUTE_URL),
+            $this->container->get('router')->generate("frontend.checkout.byjunocheckoutcancel", ["orderid" => $order->getId(), "returnurl" => $request->query->get("returnurl")], UrlGeneratorInterface::ABSOLUTE_URL),
+            $this->container->get('router')->generate("frontend.checkout.byjunocheckoutcancel", ["orderid" => $order->getId(), "returnurl" => $request->query->get("returnurl")], UrlGeneratorInterface::ABSOLUTE_URL)
         );
         $CembraPayRequestName = "Checkout request";
         if ($request->custDetails->custType == CembraPayConstants::$CUSTOMER_BUSINESS) {
