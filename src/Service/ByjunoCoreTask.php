@@ -297,9 +297,12 @@ class ByjunoCoreTask
                 if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS5", $order->getSalesChannelId()) != 'enabled') {
                     return;
                 }
-                $refDoc = $getDoc->getReferencedDocument();
-                $customFieldsR = $refDoc->getCustomFields();
-                $customFieldsRef = $customFieldsR ?? [];
+               // $refDoc = $getDoc->getReferencedDocument();
+                $getDocInvoice = $this->getInvoiceById($getDoc->getReferencedDocumentId());
+                if (!empty($getDocInvoice)) {
+                    $customFieldsR = $getDocInvoice->getCustomFields();
+                    $customFieldsRef = $customFieldsR ?? [];
+                }
                 $customFieldsO = $order->getCustomFields();
                 $customFieldsOrder = $customFieldsO ?? [];
                 $request = $this->CreateShopRequestCreditRefund(
@@ -308,7 +311,7 @@ class ByjunoCoreTask
                     $order->getCurrency()->getIsoCode(),
                     $order->getOrderNumber(),
                     (!empty($customFieldsOrder["chk_transaction_id"])) ? $customFieldsOrder["chk_transaction_id"] : "",
-                    (!empty($customFieldsRef["inv_transaction_id"])) ? $customFieldsOrder["inv_transaction_id"] : ""
+                    (!empty($customFieldsRef["inv_transaction_id"])) ? $customFieldsRef["inv_transaction_id"] : ""
                 );
                 $CembraPayRequestName = "Refund request";
             } else if ($docName == "invoice") {
@@ -378,11 +381,18 @@ class ByjunoCoreTask
                             "-", "-", "-","-", $responseRes->transactionId, $order->getOrderNumber());
 
                     if ($ok) {
-                        $customFields = array_merge($customFields,
-                            ['byjuno_doc_retry' => 0,
-                             'byjuno_doc_sent' => 1,
-                             'byjuno_time' => time(),
-                             'inv_transaction_id' => $responseRes->transactionId]);
+                        if ($CembraPayRequestName == "Settle Request") {
+                            $customFields = array_merge($customFields,
+                                ['byjuno_doc_retry' => 0,
+                                    'byjuno_doc_sent' => 1,
+                                    'byjuno_time' => time(),
+                                    'inv_transaction_id' => $responseRes->settlementId]);
+                        } else {
+                            $customFields = array_merge($customFields,
+                                ['byjuno_doc_retry' => 0,
+                                    'byjuno_doc_sent' => 1,
+                                    'byjuno_time' => time()]);
+                        }
                     } else {
                         if ($fields["byjuno_doc_retry"] < self::$MAX_RETRY_COUNT) {
                             $customFields = array_merge($customFields, ['byjuno_doc_retry' => ++$fields["byjuno_doc_retry"], 'byjuno_doc_sent' => 0, 'byjuno_time' => time() + 60 * 30]);
@@ -411,6 +421,13 @@ class ByjunoCoreTask
     }
 
     private function getInvoiceById(string $documentId): ?DocumentEntity
+    {
+        $criteria = (new Criteria([$documentId]));
+        $criteria->addAssociation('order');
+        $criteria->addAssociation('order.currency');
+        return $this->documentRepository->search($criteria, Context::createDefaultContext())->first();
+    }
+    private function getDocumentByNumber(string $documentId): ?DocumentEntity
     {
         $criteria = (new Criteria([$documentId]));
         $criteria->addAssociation('order');
