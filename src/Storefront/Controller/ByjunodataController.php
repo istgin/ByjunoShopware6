@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Byjuno\ByjunoPayments\Storefront\Controller;
 use Byjuno\ByjunoPayments\Api\Api\CembraPayAzure;
+use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutAuthorizationResponse;
 use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutChkResponse;
 use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutScreeningResponse;
 use Byjuno\ByjunoPayments\Api\Api\CembraPayCommunicator;
@@ -123,6 +124,17 @@ class ByjunodataController extends StorefrontController
     #[Route(path: '/byjunodata', name: 'frontend.checkout.byjunodata', methods: ['GET'])]
     public function submitData(Request $request, SalesChannelContext $context)
     {
+        $paymentMode = $this->systemConfigService->get("ByjunoPayments.config.paymentmode", $context->getSalesChannelId());
+        if ($paymentMode == "api") {
+            return $this->submitDataApi($request, $context);
+        } else {
+            return $this->submitDataCheckout($request, $context);
+        }
+
+    }
+
+    private function submitDataCheckout(Request $request, SalesChannelContext $context)
+    {
         $order = $this->byjuno->getOrder($request->query->get("orderid"));
         $paymentMethods = $order->getTransactions()->getPaymentMethodIds();
         foreach ($paymentMethods as $pm) {
@@ -137,7 +149,7 @@ class ByjunodataController extends StorefrontController
         if ($paymentMethod == '') {
             exit();
         }
-        $request = $this->byjuno->Byjuno_CreateShopWareShopCheckoutRequestUserBilling(
+        $requestChk = $this->byjuno->Byjuno_CreateShopWareShopCheckoutRequestUserBilling(
             $context->getContext(),
             $context->getSalesChannelId(),
             $order,
@@ -146,10 +158,10 @@ class ByjunodataController extends StorefrontController
             $this->container->get('router')->generate("frontend.checkout.byjunocheckoutcancel", ["orderid" => $order->getId(), "returnurl" => $request->query->get("returnurl")], UrlGeneratorInterface::ABSOLUTE_URL)
         );
         $CembraPayRequestName = "Checkout request";
-        if ($request->custDetails->custType == CembraPayConstants::$CUSTOMER_BUSINESS) {
+        if ($requestChk->custDetails->custType == CembraPayConstants::$CUSTOMER_BUSINESS) {
             $CembraPayRequestName = "Checkout request company";
         }
-        $json = $request->createRequest();
+        $json = $requestChk->createRequest();
         $cembrapayCommunicator = new CembraPayCommunicator($this->cembraPayAzure);
         $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $order->getSalesChannelId());
         if (isset($mode) && strtolower($mode) == 'live') {
@@ -168,13 +180,13 @@ class ByjunodataController extends StorefrontController
             $responseRes = CembraPayConstants::checkoutResponse($response);
             $status = $responseRes->processingStatus;
             $this->byjuno->saveCembraLog($context->getContext(), $json, $response, $responseRes->processingStatus, $CembraPayRequestName,
-                $request->custDetails->firstName, $request->custDetails->lastName, $request->requestMsgId,
-                $request->billingAddr->postalCode, $request->billingAddr->town, $request->billingAddr->country, $request->billingAddr->addrFirstLine, $responseRes->transactionId, $order->getOrderNumber());
+                $requestChk->custDetails->firstName, $requestChk->custDetails->lastName, $requestChk->requestMsgId,
+                $requestChk->billingAddr->postalCode, $requestChk->billingAddr->town, $requestChk->billingAddr->country, $requestChk->billingAddr->addrFirstLine, $responseRes->transactionId, $order->getOrderNumber());
 
         } else {
             $this->byjuno->saveCembraLog($context->getContext(), $json, $response, "Query error", $CembraPayRequestName,
-                $request->custDetails->firstName, $request->custDetails->lastName, $request->requestMsgId,
-                $request->billingAddr->postalCode, $request->billingAddr->town, $request->billingAddr->country, $request->billingAddr->addrFirstLine, "-", "-");
+                $requestChk->custDetails->firstName, $requestChk->custDetails->lastName, $requestChk->requestMsgId,
+                $requestChk->billingAddr->postalCode, $requestChk->billingAddr->town, $requestChk->billingAddr->country, $requestChk->billingAddr->addrFirstLine, "-", "-");
         }
         if ($status == CembraPayConstants::$CHK_OK) {
             $redirectUrl = $responseRes->redirectUrlCheckout;
@@ -192,7 +204,9 @@ class ByjunodataController extends StorefrontController
             $returnUrlFail = $request->query->get("returnurl") . "&status=fail";
             return new RedirectResponse($returnUrlFail);
         }
-        exit();
+    }
+    private function submitDataApi(Request $request, SalesChannelContext $context)
+    {
         $_SESSION["_byjuno_key"] = "ok";
         $_SESSION["_byjuno_single_payment"] = '';
         $order = $this->byjuno->getOrder($request->query->get("orderid"));
@@ -259,6 +273,12 @@ class ByjunodataController extends StorefrontController
                     $selected = "installment_3";
                 }
             }
+            if ($this->systemConfigService->get("ByjunoPayments.config.installment4" . $prefix_b2b, $context->getSalesChannelId()) == 'enabled') {
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_4'), "id" => "installment_4", "toc" => $this->translator->trans('ByjunoPayment.installment_4_toc_url'));
+                if ($selected == "") {
+                    $selected = "installment_4";
+                }
+            }
             if ($this->systemConfigService->get("ByjunoPayments.config.installment10" . $prefix_b2b, $context->getSalesChannelId()) == 'enabled') {
                 $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_10'), "id" => "installment_10", "toc" => $this->translator->trans('ByjunoPayment.installment_10_toc_url'));
                 if ($selected == "") {
@@ -277,16 +297,16 @@ class ByjunodataController extends StorefrontController
                     $selected = "installment_24";
                 }
             }
-            if ($this->systemConfigService->get("ByjunoPayments.config.installment4x12" . $prefix_b2b, $context->getSalesChannelId()) == 'enabled') {
-                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_4x12'), "id" => "installment_4x12", "toc" => $this->translator->trans('ByjunoPayment.installment_4x12_toc_url'));
-                if ($selected == "") {
-                    $selected = "installment_4x12";
-                }
-            }
             if ($this->systemConfigService->get("ByjunoPayments.config.installment36" . $prefix_b2b, $context->getSalesChannelId()) == 'enabled') {
                 $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_36'), "id" => "installment_36", "toc" => $this->translator->trans('ByjunoPayment.installment_36_toc_url'));
                 if ($selected == "") {
                     $selected = "installment_36";
+                }
+            }
+            if ($this->systemConfigService->get("ByjunoPayments.config.installment48" . $prefix_b2b, $context->getSalesChannelId()) == 'enabled') {
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_48'), "id" => "installment_48", "toc" => $this->translator->trans('ByjunoPayment.installment_48_toc_url'));
+                if ($selected == "") {
+                    $selected = "installment_48";
                 }
             }
         }
@@ -383,7 +403,6 @@ class ByjunodataController extends StorefrontController
             if (!empty($customFields["chk_transaction_id"])) {
                 $request = $this->byjuno->Byjuno_createShopRequestConfirmTransaction(
                     $customFields["chk_transaction_id"]);
-
                 $CembraPayRequestName = "CNF";
                 $json = $request->createRequest();
                 $cembrapayCommunicator = new CembraPayCommunicator($this->cembraPayAzure);
@@ -437,7 +456,7 @@ class ByjunodataController extends StorefrontController
     }
 
 
-    #[Route(path: '/byjunosubmit', name: 'frontend.checkout.byjunocheckoutcancel', methods: ['POST', 'GET'])]
+    #[Route(path: '/byjunocheckoutcancel', name: 'frontend.checkout.byjunocheckoutcancel', methods: ['POST', 'GET'])]
     public function finalizeTransactionChkCancel(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
     {
         $returnUrlFail = $request->query->get("returnurl") . "&status=fail";
@@ -445,7 +464,7 @@ class ByjunodataController extends StorefrontController
     }
 
     #[Route(path: '/byjunosubmit', name: 'frontend.checkout.byjunosubmit', methods: ['POST', 'GET'])]
-    public function finalizeTransaction(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
+    public function finalizeTransactionApi(Request $request, SalesChannelContext $salesChannelContext): RedirectResponse
     {
         if (!empty($_SESSION["_byjuno_key"]) && !empty($_SESSION["_byjyno_payment_method"])) {
             //$_SESSION["_byjuno_key"] = '';
@@ -470,7 +489,7 @@ class ByjunodataController extends StorefrontController
                 $customBirthdayDay = $request->get("customBirthdayDay");
                 $customBirthdayMonth = $request->get("customBirthdayMonth");
                 $customBirthdayYear = $request->get("customBirthdayYear");
-                $customBirthday = $customBirthdayYear . "-" . $customBirthdayMonth . "-" . $customBirthdayDay;
+                $customBirthday = sprintf('%02d', $customBirthdayYear) . "-" . sprintf('%02d', $customBirthdayMonth) . "-" . sprintf('%02d', $customBirthdayDay);
             }
             $paymentplan = '';
             if (!empty($_SESSION["_byjuno_single_payment"])) {
@@ -480,107 +499,68 @@ class ByjunodataController extends StorefrontController
             }
             $order = $this->byjuno->getOrder($orderid);
             $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b", $order->getSalesChannelId());
-            $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $order->getSalesChannelId());
-            $request = $this->byjuno->Byjuno_CreateShopWareShopRequestUserBilling(
+
+            $requestAUT = $this->byjuno->Byjuno_CreateShopWareShopRequestAuthorization(
                 $salesChannelContext->getContext(),
                 $salesChannelContext->getSalesChannelId(),
                 $order,
                 $order->getOrderNumber(),
                 $_SESSION["_byjyno_payment_method"],
                 $paymentplan,
-                "",
-                "",
+                $b2b,
+                $invoiceDelivery,
                 $customSalutation,
-                $customBirthday,
-                "",
-                "NO");
-            $statusLog = "Order request (S1)";
-            if ($request->getCompanyName1() != '' && $b2b == 'enabled') {
-                $statusLog = "Order request for company (S1)";
-                $xml = $request->createRequestCompany();
-            } else {
-                $xml = $request->createRequest();
-            }
-            $communicator = new ByjunoCommunicator();
-            if (isset($mode) && strtolower($mode) == 'live') {
-                $communicator->setServer('live');
-            } else {
-                $communicator->setServer('test');
-            }
-            $response = $communicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $salesChannelContext->getSalesChannelId()));
-            $statusS1 = 0;
-            $statusS3 = 0;
-            $transactionNumber = "";
-            if ($response) {
-                $intrumResponse = new ByjunoResponse();
-                $intrumResponse->setRawResponse($response);
-                $intrumResponse->processResponse();
-                $statusS1 = (int)$intrumResponse->getCustomerRequestStatus();
-                $this->byjuno->saveLog($salesChannelContext->getContext(), $request, $xml, $response, $statusS1, $statusLog);
-                $transactionNumber = $intrumResponse->getTransactionNumber();
-                if (intval($statusS1) > 15) {
-                    $statusS1 = 0;
-                }
-            } else {
-                $this->byjuno->saveLog($salesChannelContext->getContext(), $request, $xml, "Empty response", $statusS1, $statusLog);
-            }
-            if ($this->byjuno->isStatusOkS2($statusS1, $salesChannelContext->getSalesChannelId())) {
-                $risk = $this->byjuno->getStatusRisk($statusS1, $salesChannelContext->getSalesChannelId());
-                $requestS3 = $this->byjuno->Byjuno_CreateShopWareShopRequestUserBilling(
-                    $salesChannelContext->getContext(),
-                    $salesChannelContext->getSalesChannelId(),
-                    $order,
-                    $order->getOrderNumber(),
-                    $_SESSION["_byjyno_payment_method"],
-                    $paymentplan,
-                    $risk,
-                    $invoiceDelivery,
-                    $customSalutation,
-                    $customBirthday,
-                    $transactionNumber,
-                    "YES");
-                $statusLog = "Order complete (S3)";
-                if ($requestS3->getCompanyName1() != '' && $b2b == 'enabled') {
-                    $statusLog = "Order complete for company (S3)";
-                    $xml = $requestS3->createRequestCompany();
-                } else {
-                    $xml = $requestS3->createRequest();
-                }
-                $byjunoCommunicator = new ByjunoCommunicator();
-                if (isset($mode) && strtolower($mode) == 'live') {
-                    $byjunoCommunicator->setServer('live');
-                } else {
-                    $byjunoCommunicator->setServer('test');
-                }
-                $response = $byjunoCommunicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $salesChannelContext->getSalesChannelId()));
-                if (isset($response)) {
-                    $byjunoResponse = new ByjunoResponse();
-                    $byjunoResponse->setRawResponse($response);
-                    $byjunoResponse->processResponse();
-                    $statusS3 = (int)$byjunoResponse->getCustomerRequestStatus();
-                    $this->byjuno->saveLog($salesChannelContext->getContext(), $request, $xml, $response, $statusS3, $statusLog);
-                    if (intval($statusS3) > 15) {
-                        $statusS3 = 0;
-                    }
-                } else {
-                    $this->byjuno->saveLog($salesChannelContext->getContext(), $request, $xml, "Empty response", $statusS3, $statusLog);
-                }
+                $customBirthday);
 
+            $CembraPayRequestName = "Checkout request";
+            if ($requestAUT->custDetails->custType == CembraPayConstants::$CUSTOMER_BUSINESS) {
+                $CembraPayRequestName = "Checkout request company";
+            }
+
+            $json = $requestAUT->createRequest();
+            $cembrapayCommunicator = new CembraPayCommunicator($this->cembraPayAzure);
+            $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $order->getSalesChannelId());
+            if (isset($mode) && strtolower($mode) == 'live') {
+                $cembrapayCommunicator->setServer('live');
+            } else {
+                $cembrapayCommunicator->setServer('test');
+            }
+            $accessData = $this->byjuno->getAccessData($salesChannelContext->getSalesChannelId(), $mode);
+            $response = $cembrapayCommunicator->sendAuthRequest($json, $accessData, function ($object, $token, $accessData) {
+                $object->saveToken($token, $accessData);
+            });
+            $status = "";
+            $responseRes = null;
+            if ($response) {
+                /* @var $responseRes CembraPayCheckoutAuthorizationResponse */
+                $responseRes = CembraPayConstants::authorizationResponse($response);
+                $status = $responseRes->processingStatus;
+                $this->byjuno->saveCembraLog($salesChannelContext->getContext(), $json, $response, $responseRes->processingStatus, $CembraPayRequestName,
+                    $requestAUT->custDetails->firstName, $requestAUT->custDetails->lastName, $requestAUT->requestMsgId,
+                    $requestAUT->billingAddr->postalCode, $requestAUT->billingAddr->town, $requestAUT->billingAddr->country, $requestAUT->billingAddr->addrFirstLine, $responseRes->transactionId, $order->getOrderNumber());
+
+            } else {
+                $this->byjuno->saveCembraLog($salesChannelContext->getContext(), $json, $response, "Query error", $CembraPayRequestName,
+                    $requestAUT->custDetails->firstName, $requestAUT->custDetails->lastName, $requestAUT->requestMsgId,
+                    $requestAUT->billingAddr->postalCode, $requestAUT->billingAddr->town, $requestAUT->billingAddr->country, $requestAUT->billingAddr->addrFirstLine, "-", "-");
+            }
+            if ($status == CembraPayConstants::$AUTH_OK) {
+                $cembrapayTrx = $responseRes->transactionId;
                 $fields = $order->getCustomFields();
                 $customFields = $fields ?? [];
-                $customFields = array_merge($customFields, ['byjuno_s3_sent' => 1]);
+                $customFields = array_merge($customFields, ['chk_transaction_id' => $cembrapayTrx, 'byjuno_s3_sent' => 1]);
                 $update = [
                     'id' => $order->getId(),
                     'customFields' => $customFields,
                 ];
                 $this->orderRepository->update([$update], $salesChannelContext->getContext());
-            } else {
-                return new RedirectResponse($returnUrlFail);
-            }
-            $_SESSION["byjuno_tmx"] = '';
-            if ($this->byjuno->isStatusOkS2($statusS1, $salesChannelContext->getSalesChannelId()) && $this->byjuno->isStatusOkS3($statusS3, $salesChannelContext->getSalesChannelId())) {
-                $this->byjuno->sendMailOrder($salesChannelContext->getContext(), $order, $salesChannelContext->getSalesChannel()->getId());
-                return new RedirectResponse($returnUrlSuccess);
+
+                $_SESSION["byjuno_tmx"] = '';
+                if ($this->byjuno->sendMailOrder($salesChannelContext->getContext(), $order, $salesChannelContext->getSalesChannel()->getId())) {
+                    return new RedirectResponse($returnUrlSuccess);
+                } else {
+                    return new RedirectResponse($returnUrlFail);
+                }
             } else {
                 return new RedirectResponse($returnUrlFail);
             }

@@ -492,7 +492,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->requestMsgId = CembraPayCheckoutAutRequest::GUID();
         $request->requestMsgDateTime = CembraPayCheckoutAutRequest::Date();
         $request->merchantOrderRef = null;
-        $request->amount = number_format($convertedCart["price"]->getTotalPrice(), 2, '.', '') * 100;
+        $request->amount = round(number_format($convertedCart["price"]->getTotalPrice(), 2, '.', '') * 100);
         $request->currency = $currency->getIsoCode();
 
         $reference = $convertedCart["orderCustomer"]["customerId"];
@@ -519,9 +519,9 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $dob_month = null;
         $dob_day = null;
         if ($dob != null) {
-            $dob_year = intval($dob->format("Y"));
-            $dob_month = intval($dob->format("m"));
-            $dob_day = intval($dob->format("d"));
+            $dob_year = sprintf('%02d', intval($dob->format("Y")));
+            $dob_month = sprintf('%02d', intval($dob->format("m")));
+            $dob_day = sprintf('%02d', intval($dob->format("d")));
         }
 
         if (!empty($dob_year) && !empty($dob_month) && !empty($dob_day)) {
@@ -1042,7 +1042,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         });
     }
 
-    public function sendMailOrder(Context $context, OrderEntity $order, String $salesChanhhelId): void
+    public function sendMailOrder(Context $context, OrderEntity $order, String $salesChanhhelId): bool
     {
 
         $mailTemplate = $this->getMailTemplate($context, "order_confirmation_mail", $order);
@@ -1071,7 +1071,9 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                 $context,
                 $templateData
             );
+            return true;
         }
+        return false;
     }
 
     public function getOrder(string $orderId): ?OrderEntity
@@ -1154,9 +1156,9 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $dob_month = null;
         $dob_day = null;
         if ($dob != null) {
-            $dob_year = intval($dob->format("Y"));
-            $dob_month = intval($dob->format("m"));
-            $dob_day = intval($dob->format("d"));
+            $dob_year = sprintf('%02d', intval($dob->format("Y")));
+            $dob_month = sprintf('%02d', intval($dob->format("m")));
+            $dob_day = sprintf('%02d', intval($dob->format("d")));
         }
 
         if (!empty($dob_year) && !empty($dob_month) && !empty($dob_day)) {
@@ -1470,8 +1472,187 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $extraInfo["Value"] = 'Byjuno ShopWare 6 module 3.1.1';
         $request->setExtraInfo($extraInfo);
         return $request;
-
     }
+
+    public function Byjuno_CreateShopWareShopRequestAuthorization(Context $context, $salesChannelId, OrderEntity $order, $orderId, $paymentmethod, $repayment, $b2b, $invoiceDelivery, $customGender = "", $customDob = "")
+    {
+        $shippingAddress = $this->getOrderShippingAddressOrder($order);
+        $billingAddress = $this->getBillingAddressOrder($order, $context);
+
+        $request = new CembraPayCheckoutAutRequest();
+        $request->requestMsgType = CembraPayConstants::$MESSAGE_AUTH;
+        $request->requestMsgId = CembraPayCheckoutAutRequest::GUID();
+        $request->requestMsgDateTime = CembraPayCheckoutAutRequest::Date();
+        $request->merchantOrderRef = $orderId;
+        $request->amount = number_format($order->getAmountTotal(), 2, '.', '') * 100;
+        $request->currency = $order->getCurrency()->getIsoCode();
+
+
+        $reference = $order->getOrderCustomer()->getCustomerId();
+        if (empty($reference)) {
+            $request->custDetails->merchantCustRef = "guest_" . $order->getId();
+            $request->custDetails->loggedIn = false;
+        } else {
+            $request->custDetails->merchantCustRef = (string)$reference;
+            $request->custDetails->loggedIn = true;
+        }
+
+        $isB2B = $b2b;
+        if ($billingAddress->getCompany() && $b2b == 'enabled') {
+            $request->custDetails->custType = CembraPayConstants::$CUSTOMER_BUSINESS;
+            $request->custDetails->companyName = $billingAddress->getCompany();
+            $request->custDetails->companyRegNum = $billingAddress->getVatId();
+            $isB2B = true;
+        } else {
+            $request->custDetails->custType = CembraPayConstants::$CUSTOMER_PRIVATE;
+        }
+        $request->custDetails->firstName = (string)$billingAddress->getFirstName();
+        $request->custDetails->lastName = (string)$billingAddress->getLastName();
+        $request->custDetails->language = (string)$this->getCustomerLanguage($context, $order->getLanguageId());
+
+
+        $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale", $salesChannelId);
+        $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale", $salesChannelId);
+        $genderMale = explode(",", $genderMaleStr);
+        $genderFemale = explode(",", $genderFemaleStr);
+        $customer = $this->getCustomer($order->getOrderCustomer()->getCustomerId(), $context);
+
+        $dob = $customer->getBirthday();
+        $dob_year = null;
+        $dob_month = null;
+        $dob_day = null;
+        if ($dob != null) {
+            $dob_year = sprintf('%02d', intval($dob->format("Y")));
+            $dob_month = sprintf('%02d', intval($dob->format("m")));
+            $dob_day = sprintf('%02d', intval($dob->format("d")));
+        }
+
+        if (!empty($dob_year) && !empty($dob_month) && !empty($dob_day)) {
+            $request->custDetails->dateOfBirth =  $dob_year . "-" . $dob_month . "-" . $dob_day;
+        }
+        if (!empty($customDob)) {
+            $request->custDetails->dateOfBirth = $customDob;
+        }
+
+        $sal = $customer->getSalutation();
+        if ($sal != null) {
+            $salName = $sal->getDisplayName();
+            if (!empty($salName)) {
+                foreach ($genderMale as $ml) {
+                    if (strtolower($salName) == strtolower(trim($ml))) {
+                        $request->custDetails->salutation = CembraPayConstants::$GENTER_MALE;
+                    }
+                }
+                foreach ($genderFemale as $feml) {
+                    if (strtolower($salName) == strtolower(trim($feml))) {
+                        $request->custDetails->salutation = CembraPayConstants::$GENTER_FEMALE;
+                    }
+                }
+            }
+        }
+        if (!empty($additionalInfoSalutation)) {
+            $name = $additionalInfoSalutation->getSalutationKey();
+            if (!empty($name)) {
+                foreach ($genderMale as $ml) {
+                    if (strtolower($name) == strtolower(trim($ml))) {
+                        $request->custDetails->salutation = CembraPayConstants::$GENTER_MALE;
+                    }
+                }
+                foreach ($genderFemale as $feml) {
+                    if (strtolower($name) == strtolower(trim($feml))) {
+                        $request->custDetails->salutation = CembraPayConstants::$GENTER_FEMALE;
+                    }
+                }
+            }
+        }
+        if (!empty($customGender)) {
+            foreach ($genderMale as $ml) {
+                if (strtolower($customGender) == strtolower(trim($ml))) {
+                    $request->custDetails->salutation = CembraPayConstants::$GENTER_MALE;
+                }
+            }
+            foreach ($genderFemale as $feml) {
+                if (strtolower($customGender) == strtolower(trim($feml))) {
+                    $request->custDetails->salutation = CembraPayConstants::$GENTER_FEMALE;
+                }
+            }
+        }
+
+        $addressAdd = '';
+        if (!empty($billingAddress->getAdditionalAddressLine1())) {
+            $addressAdd = ' ' . trim($billingAddress->getAdditionalAddressLine1());
+        }
+        if (!empty($billingAddress->getAdditionalAddressLine2())) {
+            $addressAdd = $addressAdd . ' ' . trim($billingAddress->getAdditionalAddressLine2());
+        }
+        $request->billingAddr->addrFirstLine = trim($billingAddress->getStreet() . ' ' . $addressAdd);
+        $request->billingAddr->country = $billingAddress->getCountry()->getIso();
+        $request->billingAddr->postalCode = $billingAddress->getZipcode();
+        $request->billingAddr->town = $billingAddress->getCity();
+
+        $request->custContacts->phoneMobile = (string)$billingAddress->getPhoneNumber();
+        $request->custContacts->phonePrivate = (string)$billingAddress->getPhoneNumber();
+        $request->custContacts->phoneBusiness = (string)$billingAddress->getPhoneNumber();
+        $request->custContacts->email = (string)$order->getOrderCustomer()->getEmail();
+
+
+        $request->deliveryDetails->deliveryFirstName = (String)($shippingAddress->getFirstname() ?? "");
+        $request->deliveryDetails->deliverySecondName = (String)($shippingAddress->getLastname() ?? "");
+        if (!empty($shippingAddress->getCompany()) && $b2b == 'enabled') {
+            $request->deliveryDetails->deliveryCompanyName = (String)($shippingAddress->getCompany() ?? "");
+        }
+        $request->deliveryDetails->deliverySalutation = null;
+
+        $addressShippingAdd = '';
+        if (!empty($shippingAddress->getAdditionalAddressLine1())) {
+            $addressShippingAdd = ' ' . trim($shippingAddress->getAdditionalAddressLine1() ?? "");
+        }
+        if (!empty($shippingAddress->getAdditionalAddressLine2())) {
+            $addressShippingAdd = $addressShippingAdd . ' ' . trim($shippingAddress->getAdditionalAddressLine2() ?? "");
+        }
+
+        $request->deliveryDetails->deliveryAddrFirstLine = trim($shippingAddress->getStreet() ?? "" . ' ' . $addressShippingAdd);
+        $request->deliveryDetails->deliveryAddrPostalCode = $shippingAddress->getZipcode() ?? "";
+        $request->deliveryDetails->deliveryAddrTown = $shippingAddress->getCity() ?? "";
+        $request->deliveryDetails->deliveryAddrCountry = strtoupper($shippingAddress->getCountry()->getIso() ?? "");
+
+        $request->order->basketItemsGoogleTaxonomies = array();
+        $request->order->basketItemsPrices = array();
+
+        $tmx_enable = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable", $salesChannelId);
+        $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix", $salesChannelId);
+        if (isset($tmx_enable) && $tmx_enable == 'enabled' && isset($tmxorgid) && $tmxorgid != '' && !empty($_SESSION["byjuno_tmx"])) {
+            $request->sessionInfo->fingerPrint = $_SESSION["byjuno_tmx"];
+        }
+        $request->sessionInfo->sessionIp = $this->Byjuno_getClientIp();
+
+
+        $request->cembraPayDetails->cembraPayPaymentMethod =  $this->Byjuno_mapRepayment($repayment);
+        if ($invoiceDelivery == 'postal') {
+            $request->cembraPayDetails->invoiceDeliveryType = "POSTAL";
+        } else {
+            $request->cembraPayDetails->invoiceDeliveryType = "EMAIL";
+        }
+
+        $customerConsents = new CustomerConsents();
+        $customerConsents->consentType = "CEMBRAPAY-TC";
+        $customerConsents->consentProvidedAt = "MERCHANT";
+        $customerConsents->consentDate = CembraPayCheckoutAutRequest::Date();
+        $link = $this->Byjuno_mapToc($repayment);
+        $exLink = explode("/", $link);
+        $consentReference = end($exLink);
+        if (empty($consentReference) && isset($exLink[count($exLink) - 1])) {
+            $consentReference = $exLink[count($exLink) - 2];
+        }
+        $customerConsents->consentReference = base64_encode($consentReference);
+        $request->customerConsents = array($customerConsents);
+
+        $request->merchantDetails->transactionChannel = "WEB";
+        $request->merchantDetails->integrationModule = "CembraPay Magento 2 module 3.0.0";
+
+        return $request;
+    }
+
 
     public function getBillingAddressOrder(OrderEntity $order, Context $context): OrderAddressEntity
     {
@@ -1492,21 +1673,46 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
     public function Byjuno_mapRepayment($type)
     {
         if ($type == 'installment_3') {
-            return "10";
-        } else if ($type == 'installment_10') {
-            return "5";
+            return CembraPayConstants::$INSTALLMENT_3;
+        } else if ($type == 'installment_4') {
+            return CembraPayConstants::$INSTALLMENT_4;
+        } else if ($type == 'installment_6') {
+            return CembraPayConstants::$INSTALLMENT_6;
         } else if ($type == 'installment_12') {
-            return "8";
+            return CembraPayConstants::$INSTALLMENT_12;
         } else if ($type == 'installment_24') {
-            return "9";
-        } else if ($type == 'installment_4x12') {
-            return "1";
+            return CembraPayConstants::$INSTALLMENT_24;
         } else if ($type == 'installment_36') {
-            return "11";
+            return CembraPayConstants::$INSTALLMENT_36;
+        } else if ($type == 'installment_48') {
+            return CembraPayConstants::$INSTALLMENT_48;
         } else if ($type == 'single_invoice') {
-            return "3";
+            return CembraPayConstants::$SINGLEINVOICE;
         } else {
-            return "4";
+            return CembraPayConstants::$CEMBRAPAYINVOICE;
+        }
+    }
+
+    public function Byjuno_mapToc($type)
+    {
+        if ($type == 'installment_3') {
+            return $this->translator->trans('ByjunoPayment.installment_3_toc_url');
+        } else if ($type == 'installment_4') {
+            return $this->translator->trans('ByjunoPayment.installment_4_toc_url');
+        } else if ($type == 'installment_6') {
+            return $this->translator->trans('ByjunoPayment.installment_6_toc_url');
+        } else if ($type == 'installment_12') {
+            return $this->translator->trans('ByjunoPayment.installment_12_toc_url');
+        } else if ($type == 'installment_24') {
+            return $this->translator->trans('ByjunoPayment.installment_24_toc_url');
+        } else if ($type == 'installment_36') {
+            return $this->translator->trans('ByjunoPayment.installment_36_toc_url');
+        } else if ($type == 'installment_48') {
+            return $this->translator->trans('ByjunoPayment.installment_48_toc_url');
+        } else if ($type == 'single_invoice') {
+            return $this->translator->trans('ByjunoPayment.invoice_single_toc_url');
+        } else {
+            return $this->translator->trans('ByjunoPayment.invoice_byjuno_toc_url');
         }
     }
 

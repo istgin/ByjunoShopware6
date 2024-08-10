@@ -24,6 +24,24 @@
             <label lang="de-DE">Plugin mode</label>
         </input-field>
         <input-field type="single-select">
+            <name>paymentmode</name>
+            <options>
+                <option>
+                    <id>checkout</id>
+                    <name>Checkout with redirect</name>
+                    <name lang="de-DE">Checkout with redirect</name>
+                </option>
+                <option>
+                    <id>api</id>
+                    <name>Api with no redirect</name>
+                    <name lang="de-DE">Api with no redirect</name>
+                </option>
+            </options>
+            <defaultValue>checkout</defaultValue>
+            <label>Enable B2B check</label>
+            <label lang="de-DE">Enable B2B check</label>
+        </input-field>
+        <input-field type="single-select">
             <name>byjunob2b</name>
             <options>
                 <option>
@@ -336,9 +354,9 @@
                     <name lang="de-DE">3 Installments</name>
                 </option>
                 <option>
-                    <id>installment_10</id>
-                    <name>10 Installments</name>
-                    <name lang="de-DE">10 Installments</name>
+                    <id>installment_4</id>
+                    <name>4 Installments</name>
+                    <name lang="de-DE">3 Installments</name>
                 </option>
                 <option>
                     <id>installment_12</id>
@@ -351,14 +369,14 @@
                     <name lang="de-DE">24 Installments</name>
                 </option>
                 <option>
-                    <id>installment_4x12</id>
-                    <name>4 Installments in 12 months</name>
-                    <name lang="de-DE">4 Installments in 12 months</name>
-                </option>
-                <option>
                     <id>installment_36</id>
                     <name>36 Installments</name>
                     <name lang="de-DE">36 Installments</name>
+                </option>
+                <option>
+                    <id>installment_48</id>
+                    <name>36 Installments</name>
+                    <name lang="de-DE">48 Installments</name>
                 </option>
             </options>
         </input-field>

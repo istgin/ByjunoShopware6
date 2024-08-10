@@ -95,6 +95,22 @@ class CembraPayConstants
         }
         return $result;
     }
+
+    static function authorizationResponse($response)
+    {
+        $responseObject = json_decode($response);
+        $result = new CembraPayCheckoutAuthorizationResponse();
+        if (empty($responseObject->processingStatus)) {
+            $result->processingStatus = self::$REQUEST_ERROR;
+        } else {
+            $result->processingStatus = $responseObject->processingStatus;
+            if ($responseObject->processingStatus == self::$AUTH_OK) {
+                $result->transactionId = $responseObject->transactionId;
+            }
+        }
+        return $result;
+    }
+
     static function confirmTransactionResponse($response)
     {
         $responseObject = json_decode($response);
