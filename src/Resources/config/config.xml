@@ -33,13 +33,13 @@
                 </option>
                 <option>
                     <id>api</id>
-                    <name>Api with no redirect</name>
+                    <name>API with no redirect</name>
                     <name lang="de-DE">Api with no redirect</name>
                 </option>
             </options>
             <defaultValue>checkout</defaultValue>
-            <label>Enable B2B check</label>
-            <label lang="de-DE">Enable B2B check</label>
+            <label>Payment mode</label>
+            <label lang="de-DE">Payment mode</label>
         </input-field>
         <input-field type="single-select">
             <name>byjunob2b</name>
@@ -399,8 +399,8 @@
         </input-field>
     </card>
     <card>
-        <title>Allowed payments CembraPay invoice</title>
-        <title lang="de-DE">Allowed payments CembraPay invoice</title>
+        <title>Allowed payments CembraPay invoice (Only when use "API with no redirect")</title>
+        <title lang="de-DE">Allowed payments CembraPay invoice (Only when use "API with no redirect")</title>
 
         <input-field type="single-select">
             <name>byjunoinvoice</name>
@@ -472,8 +472,8 @@
         </input-field>
     </card>
     <card>
-        <title>Allowed payments CembraPay installment</title>
-        <title lang="de-DE">Allowed payments CembraPay installment</title>
+        <title>Allowed payments CembraPay installment (Only when use "API with no redirect")</title>
+        <title lang="de-DE">Allowed payments CembraPay installment (Only when use "API with no redirect")</title>
         <input-field type="single-select">
             <name>installment3</name>
             <label>3 installments</label>
