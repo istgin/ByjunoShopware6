@@ -511,9 +511,9 @@ class ByjunodataController extends StorefrontController
                 $customSalutation,
                 $customBirthday);
 
-            $CembraPayRequestName = "Checkout request";
+            $CembraPayRequestName = "Authorization request";
             if ($requestAUT->custDetails->custType == CembraPayConstants::$CUSTOMER_BUSINESS) {
-                $CembraPayRequestName = "Checkout request company";
+                $CembraPayRequestName = "Authorization request company";
             }
 
             $json = $requestAUT->createRequest();

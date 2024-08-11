@@ -111,9 +111,9 @@ class ByjunoCoreTask
                 );
 
 
-                $CembraPayRequestName = "Checkout request";
+                $CembraPayRequestName = "Authorization request backend";
                 if ($requestAUT->custDetails->custType == CembraPayConstants::$CUSTOMER_BUSINESS) {
-                    $CembraPayRequestName = "Checkout request company";
+                    $CembraPayRequestName = "Authorization request backend company";
                 }
                 $json = $requestAUT->createRequest();
                 $cembrapayCommunicator = new CembraPayCommunicator($this->byjuno->cembraPayAzure);
@@ -381,6 +381,7 @@ class ByjunoCoreTask
         $criteria->addAssociation('order.currency');
         return $this->documentRepository->search($criteria, Context::createDefaultContext())->first();
     }
+
     private function getDocumentByNumber(string $documentId): ?DocumentEntity
     {
         $criteria = (new Criteria([$documentId]));
@@ -389,28 +390,7 @@ class ByjunoCoreTask
         return $this->documentRepository->search($criteria, Context::createDefaultContext())->first();
     }
 
-    function CreateShopRequestS4($salesChannelId, $doucmentId, $amount, $orderAmount, $orderCurrency, $orderId, $customerId, $date)
-    {
-        $request = new ByjunoS4Request();
-        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid", $salesChannelId));
-        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid", $salesChannelId));
-        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword", $salesChannelId));
-        $request->setVersion("1.00");
-        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail", $salesChannelId));
 
-        $request->setRequestId(uniqid((String)$orderId . "_"));
-        $request->setOrderId($orderId);
-        $request->setClientRef($customerId);
-        $request->setTransactionDate($date);
-        $request->setTransactionAmount(number_format($amount, 2, '.', ''));
-        $request->setTransactionCurrency($orderCurrency);
-        $request->setAdditional1("INVOICE");
-        $request->setAdditional2($doucmentId);
-        $request->setOpenBalance(number_format($orderAmount, 2, '.', ''));
-
-        return $request;
-
-    }
 
     function CreateShopRequestSettle($doucmentId, $amount, $orderCurrency, $orderId, $tx)
     {

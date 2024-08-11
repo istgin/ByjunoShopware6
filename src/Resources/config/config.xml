@@ -397,53 +397,6 @@
                 </option>
             </options>
         </input-field>
-
-
-
-        <input-field>
-            <name>byjunouserid</name>
-            <label>User ID</label>
-            <label lang="de-DE">User ID</label>
-        </input-field>
-        <input-field>
-            <name>byjunoclientid</name>
-            <label>Client ID</label>
-            <label lang="de-DE">Client ID</label>
-        </input-field>
-        <input-field type="password">
-            <name>byjunopassword</name>
-            <label>Password</label>
-            <label lang="de-DE">Password</label>
-        </input-field>
-        <input-field>
-            <name>byjunotechemail</name>
-            <label>Technical Contact (E-mail)</label>
-            <label lang="de-DE">Technical Contact (E-mail)</label>
-        </input-field>
-        <input-field>
-            <name>allowedcdp</name>
-            <label>Accepted CDP risks if credit check enabled</label>
-            <defaultValue>2</defaultValue>
-        </input-field>
-        <input-field>
-            <name>alloweds2</name>
-            <label>Accepted CembraPay Risk for S2</label>
-            <label lang="de-DE">Accepted CembraPay Risk for S2</label>
-            <defaultValue>2</defaultValue>
-        </input-field>
-        <input-field>
-            <name>alloweds2merchant</name>
-            <label>Accepted Merchant Risk for S2</label>
-            <label lang="de-DE">Accepted Merchant Risk for S2</label>
-        </input-field>
-        <input-field>
-            <name>alloweds3</name>
-            <label>Accepted statuses for S3 response</label>
-            <label lang="de-DE">Accepted statuses for S3 response</label>
-            <defaultValue>2</defaultValue>
-        </input-field>
-
-
     </card>
     <card>
         <title>Allowed payments CembraPay invoice</title>
