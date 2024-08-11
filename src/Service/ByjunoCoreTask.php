@@ -2,17 +2,13 @@
 
 namespace Byjuno\ByjunoPayments\Service;
 
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutCreditRequest;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutCreditResponse;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutSettleRequest;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutSettleResponse;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCommunicator;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayConstants;
-use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
-use Byjuno\ByjunoPayments\Api\Classes\ByjunoResponse;
-use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Request;
-use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Response;
-use Byjuno\ByjunoPayments\Api\Classes\ByjunoS5Request;
+use Byjuno\ByjunoPayments\Api\CembraPayCheckoutAuthorizationResponse;
+use Byjuno\ByjunoPayments\Api\CembraPayCheckoutCreditRequest;
+use Byjuno\ByjunoPayments\Api\CembraPayCheckoutCreditResponse;
+use Byjuno\ByjunoPayments\Api\CembraPayCheckoutSettleRequest;
+use Byjuno\ByjunoPayments\Api\CembraPayCheckoutSettleResponse;
+use Byjuno\ByjunoPayments\Api\CembraPayCommunicator;
+use Byjuno\ByjunoPayments\Api\CembraPayConstants;
 use Shopware\Core\Checkout\Document\DocumentEntity;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
@@ -23,6 +19,7 @@ use Shopware\Core\Framework\Uuid\Uuid;
 use Shopware\Core\System\SalesChannel\Entity\SalesChannelRepository;
 use Shopware\Core\System\SalesChannel\SalesChannelEntity;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 class ByjunoCoreTask
 {
@@ -101,108 +98,65 @@ class ByjunoCoreTask
                 $b2b = $this->systemConfigService->get("ByjunoPayments.config.byjunob2b", $fullOrder->getSalesChannelId());
                 $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $fullOrder->getSalesChannelId());
                 $lastTransaction = $fullOrder->getTransactions()->last();
-                $request = $this->byjuno->Byjuno_CreateShopWareShopRequestUserBilling(
+                $requestAUT = $this->byjuno->Byjuno_CreateShopWareShopRequestAuthorization(
                     $context,
                     $fullOrder->getSalesChannelId(),
                     $fullOrder,
                     $fullOrder->getOrderNumber(),
-                    $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionPaymentMethod", $fullOrder->getSalesChannelId()),
                     $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionRepayment", $fullOrder->getSalesChannelId()),
-                    "",
+                    $b2b,
                     $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionDelivery", $fullOrder->getSalesChannelId()),
                     "",
-                    "",
-                    "",
-                    "NO");
-                $CembraPayRequestName = "Order request backend (S1)";
-                if ($request->getCompanyName1() != '' && $b2b == 'enabled') {
-                    $CembraPayRequestName = "Order request for company backend (S1)";
-                    $xml = $request->createRequestCompany();
-                } else {
-                    $xml = $request->createRequest();
+                    ""
+                );
+
+
+                $CembraPayRequestName = "Checkout request";
+                if ($requestAUT->custDetails->custType == CembraPayConstants::$CUSTOMER_BUSINESS) {
+                    $CembraPayRequestName = "Checkout request company";
                 }
-                $communicator = new ByjunoCommunicator();
+                $json = $requestAUT->createRequest();
+                $cembrapayCommunicator = new CembraPayCommunicator($this->byjuno->cembraPayAzure);
+                $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $fullOrder->getSalesChannelId());
                 if (isset($mode) && strtolower($mode) == 'live') {
-                    $communicator->setServer('live');
+                    $cembrapayCommunicator->setServer('live');
                 } else {
-                    $communicator->setServer('test');
+                    $cembrapayCommunicator->setServer('test');
                 }
-                $response = $communicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $fullOrder->getSalesChannelId()));
-                $statusS1 = 0;
-                $statusS3 = 0;
-                $transactionNumber = "";
+                $accessData = $this->byjuno->getAccessData($fullOrder->getSalesChannelId(), $mode);
+                $response = $cembrapayCommunicator->sendAuthRequest($json, $accessData, function ($object, $token, $accessData) {
+                    $object->saveToken($token, $accessData);
+                });
+                $status = "";
+                $responseRes = null;
                 if ($response) {
-                    $intrumResponse = new ByjunoResponse();
-                    $intrumResponse->setRawResponse($response);
-                    $intrumResponse->processResponse();
-                    $statusS1 = (int)$intrumResponse->getCustomerRequestStatus();
-                    $this->byjuno->saveLog($context, $request, $xml, $response, $statusS1, $CembraPayRequestName);
-                    $transactionNumber = $intrumResponse->getTransactionNumber();
-                    if (intval($statusS1) > 15) {
-                        $statusS1 = 0;
-                    }
+                    /* @var $responseRes CembraPayCheckoutAuthorizationResponse */
+                    $responseRes = CembraPayConstants::authorizationResponse($response);
+                    $status = $responseRes->processingStatus;
+                    $this->byjuno->saveCembraLog($context, $json, $response, $responseRes->processingStatus, $CembraPayRequestName,
+                        $requestAUT->custDetails->firstName, $requestAUT->custDetails->lastName, $requestAUT->requestMsgId,
+                        $requestAUT->billingAddr->postalCode, $requestAUT->billingAddr->town, $requestAUT->billingAddr->country, $requestAUT->billingAddr->addrFirstLine, $responseRes->transactionId, $fullOrder->getOrderNumber());
+
                 } else {
-                    $this->byjuno->saveLog($context, $request, $xml, "Empty response backend", $statusS1, $CembraPayRequestName);
+                    $this->byjuno->saveCembraLog($context, $json, $response, "Query error", $CembraPayRequestName,
+                        $requestAUT->custDetails->firstName, $requestAUT->custDetails->lastName, $requestAUT->requestMsgId,
+                        $requestAUT->billingAddr->postalCode, $requestAUT->billingAddr->town, $requestAUT->billingAddr->country, $requestAUT->billingAddr->addrFirstLine, "-", "-");
                     continue;
                 }
-                if ($this->byjuno->isStatusOkS2($statusS1, $fullOrder->getSalesChannelId())) {
-                    $risk = $this->byjuno->getStatusRisk($statusS1, $fullOrder->getSalesChannelId());
-                    $requestS3 = $this->byjuno->Byjuno_CreateShopWareShopRequestUserBilling(
-                        $context,
-                        $fullOrder->getSalesChannelId(),
-                        $fullOrder,
-                        $fullOrder->getOrderNumber(),
-                        $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionPaymentMethod", $fullOrder->getSalesChannelId()),
-                        $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionRepayment", $fullOrder->getSalesChannelId()),
-                        $risk,
-                        $this->systemConfigService->get("ByjunoPayments.config.byjunoS3ActionDelivery", $fullOrder->getSalesChannelId()),
-                        "",
-                        "",
-                        $transactionNumber,
-                        "YES");
-                    $CembraPayRequestName = "Order complete backend (S3)";
-                    if ($requestS3->getCompanyName1() != '' && $b2b == 'enabled') {
-                        $CembraPayRequestName = "Order complete for company backend (S3)";
-                        $xml = $requestS3->createRequestCompany();
-                    } else {
-                        $xml = $requestS3->createRequest();
-                    }
-                    $byjunoCommunicator = new ByjunoCommunicator();
-                    if (isset($mode) && strtolower($mode) == 'live') {
-                        $byjunoCommunicator->setServer('live');
-                    } else {
-                        $byjunoCommunicator->setServer('test');
-                    }
-                    $response = $byjunoCommunicator->sendRequest($xml, $this->systemConfigService->get("ByjunoPayments.config.byjunotimeout", $fullOrder->getSalesChannelId()));
-                    if (isset($response)) {
-                        $byjunoResponse = new ByjunoResponse();
-                        $byjunoResponse->setRawResponse($response);
-                        $byjunoResponse->processResponse();
-                        $statusS3 = (int)$byjunoResponse->getCustomerRequestStatus();
-                        $this->byjuno->saveLog($context, $request, $xml, $response, $statusS3, $CembraPayRequestName);
-                        if (intval($statusS3) > 15) {
-                            $statusS3 = 0;
-                        }
-                    } else {
-                        $this->byjuno->saveLog($context, $request, $xml, "Empty response backend", $statusS3, $CembraPayRequestName);
-                        continue;
-                    }
-                    if ($this->byjuno->isStatusOkS2($statusS1, $fullOrder->getSalesChannelId()) && $this->byjuno->isStatusOkS3($statusS3, $fullOrder->getSalesChannelId())) {
-                        $this->byjuno->transactionStateHandler->paid($lastTransaction->getId(), $context);
-                    } else {
-                        $this->byjuno->transactionStateHandler->cancel($lastTransaction->getId(), $context);
-                    }
+                if ($status == CembraPayConstants::$AUTH_OK) {
+                    $cembrapayTrx = $responseRes->transactionId;
+                    $fields = $fullOrder->getCustomFields();
+                    $customFields = $fields ?? [];
+                    $customFields = array_merge($customFields, ['chk_transaction_id' => $cembrapayTrx, 'byjuno_s3_sent' => 1]);
+                    $update = [
+                        'id' => $fullOrder->getId(),
+                        'customFields' => $customFields,
+                    ];
+                    $this->orderRepository->update([$update], $context);
+
                 } else {
-                    $this->byjuno->transactionStateHandler->cancel($lastTransaction->getId(), $context);
+                    continue;
                 }
-                $fields = $fullOrder->getCustomFields();
-                $customFields = $fields ?? [];
-                $customFields = array_merge($customFields, ['byjuno_s3_sent' => 1]);
-                $update = [
-                    'id' => $fullOrder->getId(),
-                    'customFields' => $customFields,
-                ];
-                $this->orderRepository->update([$update], $context);
             }
         }
 
@@ -488,63 +442,6 @@ class ByjunoCoreTask
         $request->settlementDetails->merchantInvoiceRef = $doucmentId;
         $request->settlementDetails->settlementId = $settlementId;
         return $request;
-    }
-
-    function CreateShopRequestS5Refund($salesChannelId, $doucmentId, $amount, $orderCurrency, $orderId, $customerId, $date)
-    {
-        $request = new ByjunoS5Request();
-        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid", $salesChannelId));
-        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid", $salesChannelId));
-        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword", $salesChannelId));
-        $request->setVersion("1.00");
-        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail", $salesChannelId));
-
-        $request->setRequestId(uniqid((String)$orderId . "_"));
-        $request->setOrderId($orderId);
-        $request->setClientRef($customerId);
-        $request->setTransactionDate($date);
-        $request->setTransactionAmount(number_format($amount, 2, '.', ''));
-        $request->setTransactionCurrency($orderCurrency);
-        $request->setTransactionType("REFUND");
-        $request->setAdditional2($doucmentId);
-        return $request;
-    }
-
-    private function saveS4Log(Context $context, ByjunoS4Request $request, $xml_request, $xml_response, $status, $type, $firstName, $lastName)
-    {
-        $entry = [
-            'id' => Uuid::randomHex(),
-            'request_id' => $request->getRequestId(),
-            'request_type' => $type,
-            'firstname' => $firstName,
-            'lastname' => $lastName,
-            'ip' => (isset($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : "127.0.0.1",
-            'byjuno_status' => (($status != "") ? $status . '' : 'Error'),
-            'xml_request' => $xml_request,
-            'xml_response' => $xml_response
-        ];
-        $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($entry): void {
-            $this->logEntry->upsert([$entry], $context);
-        });
-    }
-
-    private function saveS5Log(Context $context, ByjunoS5Request $request, $xml_request, $xml_response, $status, $type, $firstName, $lastName)
-    {
-        $entry = [
-            'id' => Uuid::randomHex(),
-            'request_id' => $request->getRequestId(),
-            'request_type' => $type,
-            'firstname' => $firstName,
-            'lastname' => $lastName,
-            'ip' => (isset($_SERVER['REMOTE_ADDR'])) ? $_SERVER['REMOTE_ADDR'] : "127.0.0.1",
-            'byjuno_status' => (($status != "") ? $status . '' : 'Error'),
-            'xml_request' => $xml_request,
-            'xml_response' => $xml_response
-        ];
-
-        $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($entry): void {
-            $this->logEntry->upsert([$entry], $context);
-        });
     }
 
 }

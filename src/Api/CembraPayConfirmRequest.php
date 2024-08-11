@@ -1,6 +1,6 @@
 <?php
 
-namespace Byjuno\ByjunoPayments\Api\Api;
+namespace Byjuno\ByjunoPayments\Api;
 
 /*
 "requestMsgId": "ed58eb92-8424-487e-bb7c-fcb43066dcac",

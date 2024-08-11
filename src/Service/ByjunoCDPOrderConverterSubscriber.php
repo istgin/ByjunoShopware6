@@ -2,28 +2,20 @@
 
 namespace Byjuno\ByjunoPayments\Service;
 
-use Byjuno\ByjunoPayments\Api\Api\CembraPayAzure;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutAutRequest;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutCancelRequest;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutCancelResponse;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutChkRequest;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutScreeningResponse;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCommunicator;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayConstants;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayLoginDto;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayConfirmRequest;
-use Byjuno\ByjunoPayments\Api\Api\CustDetails;
-use Byjuno\ByjunoPayments\Api\Api\CustomerConsents;
-use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
-use Byjuno\ByjunoPayments\Api\Classes\ByjunoRequest;
-use Byjuno\ByjunoPayments\Api\Classes\ByjunoResponse;
-use Byjuno\ByjunoPayments\Api\Classes\ByjunoS4Response;
-use Byjuno\ByjunoPayments\Api\Classes\ByjunoS5Request;
-use Byjuno\ByjunoPayments\Api\DataHelper;
+use Byjuno\ByjunoPayments\Api\CembraPayAzure;
+use Byjuno\ByjunoPayments\Api\CembraPayCheckoutAutRequest;
+use Byjuno\ByjunoPayments\Api\CembraPayCheckoutCancelRequest;
+use Byjuno\ByjunoPayments\Api\CembraPayCheckoutCancelResponse;
+use Byjuno\ByjunoPayments\Api\CembraPayCheckoutChkRequest;
+use Byjuno\ByjunoPayments\Api\CembraPayCheckoutScreeningResponse;
+use Byjuno\ByjunoPayments\Api\CembraPayCommunicator;
+use Byjuno\ByjunoPayments\Api\CembraPayConstants;
+use Byjuno\ByjunoPayments\Api\CembraPayLoginDto;
+use Byjuno\ByjunoPayments\Api\CembraPayConfirmRequest;
+use Byjuno\ByjunoPayments\Api\CustDetails;
+use Byjuno\ByjunoPayments\Api\CustomerConsents;
 use Byjuno\ByjunoPayments\ByjunoPayments;
 use Exception;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Store\Model\ScopeInterface;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
 use Shopware\Core\Checkout\Cart\Order\CartConvertedEvent;
@@ -104,7 +96,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
     private static $writeRecursion;
 
     /**
-     * @var \Byjuno\ByjunoPayments\Api\Api\CembraPayAzure
+     * @var \Byjuno\ByjunoPayments\Api\CembraPayAzure
      */
     public $cembraPayAzure;
 
@@ -433,12 +425,10 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                 /* @var $responseRes CembraPayCheckoutScreeningResponse */
                 $responseRes = CembraPayConstants::screeningResponse($response);
                 $screeningStatus = $responseRes->processingStatus;
-               // $this->saveLog($event->getContext(), $request, $json, $response, $screeningStatus, $statusLog);
                 $this->saveCembraLog($event->getContext(), $json, $response, $responseRes->processingStatus, $statusLog,
                     $request->custDetails->firstName, $request->custDetails->lastName, $request->requestMsgId,
                     $request->billingAddr->postalCode, $request->billingAddr->town, $request->billingAddr->country, $request->billingAddr->addrFirstLine, $responseRes->transactionId, "-");
             } else {
-              //  $this->saveLog($event->getContext(), $request, $json, "Empty response", CembraPayConstants::$REQUEST_ERROR, $statusLog);
                 $this->saveCembraLog($event->getContext(), $json, $response, "Query error", $statusLog,
                      $request->custDetails->firstName, $request->custDetails->lastName, $request->requestMsgId,
                      $request->billingAddr->postalCode, $request->billingAddr->town, $request->billingAddr->country, $request->billingAddr->addrFirstLine, "-", "-");
@@ -603,175 +593,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
     }
 
 
-    public function Byjuno_CreateShopWareShopRequestCDP(SalesChannelContext $context, Array $convertedCart, $paymentmethod)
-    {
-        $request = new ByjunoRequest();
-        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid", $context->getSalesChannelId()));
-        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid",$context->getSalesChannelId()));
-        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword", $context->getSalesChannelId()));
-        $request->setVersion("1.00");
-        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail", $context->getSalesChannelId()));
-        $request->setLanguage($this->getCustomerLanguage($context->getContext(), $convertedCart["languageId"]));
-
-        $request->setRequestId(uniqid($convertedCart["billingAddressId"] . "_"));
-        $reference = $convertedCart["orderCustomer"]["customerId"];
-        if (empty($reference)) {
-            $request->setCustomerReference(uniqid("guest_"));
-        } else {
-            $request->setCustomerReference($reference);
-        }
-        $addresses = null;
-        if (!empty($convertedCart["addresses"])) {
-            $addresses = $convertedCart["addresses"];
-        }
-        $deliveries = null;
-        if (!empty($convertedCart["deliveries"])) {
-            $deliveries = $convertedCart["deliveries"];
-        }
-        $billingAddress = $this->getBillingAddress($convertedCart["billingAddressId"], $addresses, $deliveries);
-        $billingAddressCountry = $this->getCountry($billingAddress["countryId"], $context->getContext());
-        $shippingAddress = $this->getOrderShippingAddress($convertedCart["deliveries"]);
-        $shippingAddressCountry = $this->getCountry($shippingAddress["countryId"], $context->getContext());
-        $billingAddressSalutation = $this->getSalutation($billingAddress["salutationId"], $context->getContext());
-        $currency = $this->getCurrency($convertedCart["currencyId"], $context->getContext());
-        $request->setFirstName($billingAddress["firstName"]);
-        $request->setLastName($billingAddress["lastName"]);
-        $addressAdd = '';
-        if (!empty($billing['additionalAddressLine1'])) {
-            $addressAdd = ' ' . trim($billingAddress["additionalAddressLine1"]);
-        }
-        if (!empty($billing['additionalAddressLine2'])) {
-            $addressAdd = $addressAdd . ' ' . trim($billingAddress["additionalAddressLine2"]);
-        }
-        $request->setFirstLine(trim($billingAddress["street"] . ' ' . $addressAdd));
-        $request->setCountryCode($billingAddressCountry->getIso());
-        $request->setPostCode($billingAddress["zipcode"]);
-        $request->setTown($billingAddress["city"]);
-
-        if (!empty($billingAddress["company"])) {
-            $request->setCompanyName1($billingAddress["company"]);
-        }
-        if (!empty($billingAddress["vatId"]) && !empty($billingAddress["company"])) {
-            $request->setCompanyVatId($billingAddress["vatId"]);
-        }
-        if (!empty($shippingAddress["company"])) {
-            $request->setDeliveryCompanyName1($shippingAddress["company"]);
-        }
-        $request->setGender(0);
-        $additionalInfo = $billingAddressSalutation->getDisplayName();
-        $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale", $context->getSalesChannelId());
-        $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale", $context->getSalesChannelId());
-        $genderMale = explode(",", $genderMaleStr);
-        $genderFemale = explode(",", $genderFemaleStr);
-        if (!empty($additionalInfo)) {
-            foreach ($genderMale as $ml) {
-                if (strtolower($additionalInfo) == strtolower(trim($ml))) {
-                    $request->setGender(1);
-                }
-            }
-            foreach ($genderFemale as $feml) {
-                if (strtolower($additionalInfo) == strtolower(trim($feml))) {
-                    $request->setGender(2);
-                }
-            }
-        }
-        $customer = $this->getCustomer($convertedCart["orderCustomer"]["customerId"], $context->getContext());
-        $dob = $customer->getBirthday();
-        $dob_year = null;
-        $dob_month = null;
-        $dob_day = null;
-        if ($dob != null) {
-            $dob_year = intval($dob->format("Y"));
-            $dob_month = intval($dob->format("m"));
-            $dob_day = intval($dob->format("d"));
-        }
-
-        if (!empty($dob_year) && !empty($dob_month) && !empty($dob_day)) {
-            $request->setDateOfBirth($dob_year . "-" . $dob_month . "-" . $dob_day);
-        }
-        if (!empty($customDob)) {
-            $request->setDateOfBirth($customDob);
-        }
-
-        if (!empty($billingAddress["phoneNumber"])) {
-            $request->setTelephonePrivate($billingAddress["phoneNumber"]);
-        }
-        $request->setEmail($convertedCart["orderCustomer"]["email"]);
-
-        $extraInfo["Name"] = 'ORDERCLOSED';
-        $extraInfo["Value"] = "NO";
-        $request->setExtraInfo($extraInfo);
-        $extraInfo["Name"] = 'ORDERAMOUNT';
-        $extraInfo["Value"] = $convertedCart["price"]->getTotalPrice();
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'ORDERCURRENCY';
-        $extraInfo["Value"] = $currency->getIsoCode();
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'IP';
-        $extraInfo["Value"] = $this->Byjuno_getClientIp();
-        $request->setExtraInfo($extraInfo);
-
-
-        $tmx_enable = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable", $context->getSalesChannelId());
-        $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix", $context->getSalesChannelId());
-        if (isset($tmx_enable) && $tmx_enable == 'enabled' && isset($tmxorgid) && $tmxorgid != '' && !empty($_SESSION["byjuno_tmx"])) {
-            $extraInfo["Name"] = 'DEVICE_FINGERPRINT_ID';
-            $extraInfo["Value"] = $_SESSION["byjuno_tmx"];
-            $request->setExtraInfo($extraInfo);
-        }
-        // shipping information
-        $extraInfo["Name"] = 'DELIVERY_FIRSTNAME';
-        $extraInfo["Value"] = $shippingAddress["firstName"];
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'DELIVERY_LASTNAME';
-        $extraInfo["Value"] = $shippingAddress["lastName"];
-        $request->setExtraInfo($extraInfo);
-
-        $addressShippingAdd = '';
-        if (!empty($shippingAddress['additionalAddressLine1'])) {
-            $addressShippingAdd = ' ' . trim($shippingAddress['additionalAddressLine1']);
-        }
-        if (!empty($shippingAddress['additionalAddressLine2'])) {
-            $addressShippingAdd = $addressShippingAdd . ' ' . trim($shippingAddress['additionalAddressLine2']);
-        }
-
-        $extraInfo["Name"] = 'DELIVERY_FIRSTLINE';
-        $extraInfo["Value"] = trim($shippingAddress["street"] . ' ' . $addressShippingAdd);
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'DELIVERY_HOUSENUMBER';
-        $extraInfo["Value"] = '';
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'DELIVERY_COUNTRYCODE';
-        $extraInfo["Value"] = $shippingAddressCountry->getIso();
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'DELIVERY_POSTCODE';
-        $extraInfo["Value"] = $shippingAddress["zipcode"];
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'DELIVERY_TOWN';
-        $extraInfo["Value"] = $shippingAddress["city"];
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'PAYMENTMETHOD';
-        $extraInfo["Value"] = $this->Byjuno_mapMethod($paymentmethod);
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'MESSAGETYPESPEC';
-        $extraInfo["Value"] = 'CREDITCHECK';
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'CONNECTIVTY_MODULE';
-        $extraInfo["Value"] = 'Byjuno ShopWare 6 module 3.1.1';
-        $request->setExtraInfo($extraInfo);
-        return $request;
-    }
-
     public function getPaymentMethod(string $id, Context $context): ?PaymentMethodEntity
     {
         $criteria = new Criteria([$id]);
@@ -892,7 +713,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         return trim(end($ipd));
     }
 
-    function Byjuno_mapMethod($method)
+    public function Byjuno_mapMethod($method)
     {
         if ($method == 'byjuno_payment_installment') {
             return "INSTALLMENT";
@@ -901,26 +722,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
     }
 
-    protected function isStatusOkCDP($status, SalesChannelContext $context)
-    {
-        try {
-            $accepted_CDP = $this->systemConfigService->get("ByjunoPayments.config.allowedcdp", $context->getSalesChannelId());
-            $ijStatus = Array();
-            if (!empty(trim((String)$accepted_CDP))) {
-                $ijStatus = explode(",", trim((String)$accepted_CDP));
-                foreach ($ijStatus as $key => $val) {
-                    $ijStatus[$key] = intval($val);
-                }
-            }
-            if (!empty($accepted_CDP) && count($ijStatus) > 0 && in_array($status, $ijStatus)) {
-                return true;
-            }
-            return false;
-
-        } catch (Exception $e) {
-            return false;
-        }
-    }
 
     function CreateShopRequestBCDPCancel($amount, $orderCurrency, $orderId, $tx)
     {
@@ -956,48 +757,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $criteria->addAssociation('order');
         $criteria->addAssociation('order.currency');
         return $this->documentRepository->search($criteria, Context::createDefaultContext())->first();
-    }
-
-    private function saveS5Log(Context $context, ByjunoS5Request $request, $xml_request, $xml_response, $status, $type, $firstName, $lastName)
-    {
-        $entry = [
-            'id' => Uuid::randomHex(),
-            'request_id' => $request->getRequestId(),
-            'request_type' => $type,
-            'firstname' => $firstName,
-            'lastname' => $lastName,
-            'ip' => $_SERVER['REMOTE_ADDR'],
-            'byjuno_status' => (($status != "") ? $status . '' : 'Error'),
-            'xml_request' => $xml_request,
-            'xml_response' => $xml_response
-        ];
-
-        $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($entry): void {
-            /** @var EntityRepository $logRepository */
-            $logRepository = $this->container->get('byjuno_log_entity.repository');
-            $logRepository->upsert([$entry], $context);
-        });
-    }
-
-    public function saveLog(Context $context, ByjunoRequest $request, $xml_request, $xml_response, $status, $type)
-    {
-        $entry = [
-            'id' => Uuid::randomHex(),
-            'request_id' => $request->getRequestId(),
-            'request_type' => $type,
-            'firstname' => $request->getFirstName(),
-            'lastname' => $request->getLastName(),
-            'ip' => empty($_SERVER['REMOTE_ADDR']) ? "no ip" : $_SERVER['REMOTE_ADDR'],
-            'byjuno_status' => (($status != "") ? $status . '' : 'Error'),
-            'xml_request' => $xml_request,
-            'xml_response' => $xml_response
-        ];
-
-        $context->scope(Context::SYSTEM_SCOPE, function (Context $context) use ($entry): void {
-            /** @var EntityRepository $logRepository */
-            $logRepository = $this->container->get('byjuno_log_entity.repository');
-            $logRepository->upsert([$entry], $context);
-        });
     }
 
     public function saveCembraLog(Context $context, $request, $response, $status, $type,
@@ -1256,225 +1015,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         return $request;
     }
 
-    public function Byjuno_CreateShopWareShopRequestUserBilling(Context $context, $salesChannelId, OrderEntity $order, $orderId, $paymentmethod, $repayment, $riskOwner, $invoiceDelivery, $customGender = "", $customDob = "", $transactionNumber = "", $orderClosed = "NO")
-    {
-        $request = new ByjunoRequest();
-        $request->setClientId($this->systemConfigService->get("ByjunoPayments.config.byjunoclientid", $salesChannelId));
-        $request->setUserID($this->systemConfigService->get("ByjunoPayments.config.byjunouserid", $salesChannelId));
-        $request->setPassword($this->systemConfigService->get("ByjunoPayments.config.byjunopassword", $salesChannelId));
-        $request->setVersion("1.00");
-        $request->setRequestEmail($this->systemConfigService->get("ByjunoPayments.config.byjunotechemail", $salesChannelId));
-        $request->setLanguage($this->getCustomerLanguage($context, $order->getLanguageId()));
-
-        $request->setRequestId(uniqid($order->getBillingAddressId() . "_"));
-        $reference = $order->getOrderCustomer()->getCustomerId();
-        if (empty($reference)) {
-            $request->setCustomerReference(uniqid("guest_"));
-        } else {
-            $request->setCustomerReference($reference);
-        }
-        $shippingAddress = $this->getOrderShippingAddressOrder($order);
-        $billingAddress = $this->getBillingAddressOrder($order, $context);
-
-        $request->setFirstName($billingAddress->getFirstName());
-        $request->setLastName($billingAddress->getLastName());
-        $addressAdd = '';
-        if (!empty($billingAddress->getAdditionalAddressLine1())) {
-            $addressAdd = ' ' . trim($billingAddress->getAdditionalAddressLine1());
-        }
-        if (!empty($billingAddress->getAdditionalAddressLine2())) {
-            $addressAdd = $addressAdd . ' ' . trim($billingAddress->getAdditionalAddressLine2());
-        }
-        $request->setFirstLine(trim($billingAddress->getStreet() . ' ' . $addressAdd));
-        $request->setCountryCode($billingAddress->getCountry()->getIso());
-        $request->setPostCode($billingAddress->getZipcode());
-        $request->setTown($billingAddress->getCity());
-
-        if (!empty($billingAddress->getCompany())) {
-            $request->setCompanyName1($billingAddress->getCompany());
-        }
-        if (!empty($billingAddress->getVatId()) && !empty($billingAddress->getCompany())) {
-            $request->setCompanyVatId($billingAddress->getVatId());
-        }
-        if (!empty($shippingAddress->getCompany())) {
-            $request->setDeliveryCompanyName1($shippingAddress->getCompany());
-        }
-
-        $request->setGender(0);
-
-        /* @var $additionalInfoSalutation \Shopware\Core\System\Salutation\SalutationEntity */
-        $additionalInfoSalutation = $billingAddress->getSalutation();
-
-        $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale", $salesChannelId);
-        $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale", $salesChannelId);
-        $genderMale = explode(",", $genderMaleStr);
-        $genderFemale = explode(",", $genderFemaleStr);
-        $customer = $this->getCustomer($order->getOrderCustomer()->getCustomerId(), $context);
-        $sal = $customer->getSalutation();
-        if ($sal != null) {
-            $salName = $sal->getDisplayName();
-            if (!empty($salName)) {
-                foreach ($genderMale as $ml) {
-                    if (strtolower($salName) == strtolower(trim($ml))) {
-                        $request->setGender(1);
-                    }
-                }
-                foreach ($genderFemale as $feml) {
-                    if (strtolower($salName) == strtolower(trim($feml))) {
-                        $request->setGender(2);
-                    }
-                }
-            }
-        }
-        if (!empty($additionalInfoSalutation)) {
-            $name = $additionalInfoSalutation->getSalutationKey();
-            if (!empty($name)) {
-                foreach ($genderMale as $ml) {
-                    if (strtolower($name) == strtolower(trim($ml))) {
-                        $request->setGender(1);
-                    }
-                }
-                foreach ($genderFemale as $feml) {
-                    if (strtolower($name) == strtolower(trim($feml))) {
-                        $request->setGender(2);
-                    }
-                }
-            }
-        }
-        if (!empty($customGender)) {
-            foreach ($genderMale as $ml) {
-                if (strtolower($customGender) == strtolower(trim($ml))) {
-                    $request->setGender(1);
-                }
-            }
-            foreach ($genderFemale as $feml) {
-                if (strtolower($customGender) == strtolower(trim($feml))) {
-                    $request->setGender(2);
-                }
-            }
-        }
-
-        $dob = $customer->getBirthday();
-        $dob_year = null;
-        $dob_month = null;
-        $dob_day = null;
-        if ($dob != null) {
-            $dob_year = intval($dob->format("Y"));
-            $dob_month = intval($dob->format("m"));
-            $dob_day = intval($dob->format("d"));
-        }
-
-        if (!empty($dob_year) && !empty($dob_month) && !empty($dob_day)) {
-            $request->setDateOfBirth($dob_year . "-" . $dob_month . "-" . $dob_day);
-        }
-        if (!empty($customDob)) {
-            $request->setDateOfBirth($customDob);
-        }
-
-        $request->setTelephonePrivate($billingAddress->getPhoneNumber());
-        $request->setEmail($order->getOrderCustomer()->getEmail());
-
-        if ($transactionNumber != "") {
-            $extraInfo["Name"] = 'TRANSACTIONNUMBER';
-            $extraInfo["Value"] = $transactionNumber;
-            $request->setExtraInfo($extraInfo);
-        }
-
-        $extraInfo["Name"] = 'ORDERCLOSED';
-        $extraInfo["Value"] = $orderClosed;
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'ORDERAMOUNT';
-        $extraInfo["Value"] = $order->getAmountTotal();
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'ORDERCURRENCY';
-        $extraInfo["Value"] = $order->getCurrency()->getIsoCode();
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'IP';
-        $extraInfo["Value"] = $this->Byjuno_getClientIp();
-        $request->setExtraInfo($extraInfo);
-
-        $tmx_enable = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable", $salesChannelId);
-        $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix", $salesChannelId);
-        if (isset($tmx_enable) && $tmx_enable == 'enabled' && isset($tmxorgid) && $tmxorgid != '' && !empty($_SESSION["byjuno_tmx"])) {
-            $extraInfo["Name"] = 'DEVICE_FINGERPRINT_ID';
-            $extraInfo["Value"] = $_SESSION["byjuno_tmx"];
-            $request->setExtraInfo($extraInfo);
-        }
-
-        if ($invoiceDelivery == 'postal') {
-            $extraInfo["Name"] = 'PAPER_INVOICE';
-            $extraInfo["Value"] = 'YES';
-            $request->setExtraInfo($extraInfo);
-        }
-
-        // shipping information
-        $extraInfo["Name"] = 'DELIVERY_FIRSTNAME';
-        $extraInfo["Value"] = $shippingAddress->getFirstName();
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'DELIVERY_LASTNAME';
-        $extraInfo["Value"] = $shippingAddress->getLastName();
-        $request->setExtraInfo($extraInfo);
-
-        $addressShippingAdd = '';
-        if (!empty($shippingAddress->getAdditionalAddressLine1())) {
-            $addressShippingAdd = ' ' . trim($shippingAddress->getAdditionalAddressLine1());
-        }
-        if (!empty($shippingAddress->getAdditionalAddressLine2())) {
-            $addressShippingAdd = $addressShippingAdd . ' ' . trim($shippingAddress->getAdditionalAddressLine2());
-        }
-
-        $extraInfo["Name"] = 'DELIVERY_FIRSTLINE';
-        $extraInfo["Value"] = trim($shippingAddress->getStreet() . ' ' . $addressShippingAdd);
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'DELIVERY_HOUSENUMBER';
-        $extraInfo["Value"] = '';
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'DELIVERY_COUNTRYCODE';
-        $extraInfo["Value"] = $shippingAddress->getCountry()->getIso();
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'DELIVERY_POSTCODE';
-        $extraInfo["Value"] = $shippingAddress->getZipcode();
-        $request->setExtraInfo($extraInfo);
-
-        $extraInfo["Name"] = 'DELIVERY_TOWN';
-        $extraInfo["Value"] = $shippingAddress->getCity();
-        $request->setExtraInfo($extraInfo);
-
-        if (!empty($orderId)) {
-            $extraInfo["Name"] = 'ORDERID';
-            $extraInfo["Value"] = $orderId;
-            $request->setExtraInfo($extraInfo);
-        }
-        $extraInfo["Name"] = 'PAYMENTMETHOD';
-        $extraInfo["Value"] = $this->Byjuno_mapMethod($paymentmethod);
-        $request->setExtraInfo($extraInfo);
-
-        if ($repayment != "") {
-            $extraInfo["Name"] = 'REPAYMENTTYPE';
-            $extraInfo["Value"] = $this->Byjuno_mapRepayment($repayment);
-            $request->setExtraInfo($extraInfo);
-        }
-
-        if ($riskOwner != "") {
-            $extraInfo["Name"] = 'RISKOWNER';
-            $extraInfo["Value"] = $riskOwner;
-            $request->setExtraInfo($extraInfo);
-        }
-
-        $extraInfo["Name"] = 'CONNECTIVTY_MODULE';
-        $extraInfo["Value"] = 'Byjuno ShopWare 6 module 3.1.1';
-        $request->setExtraInfo($extraInfo);
-        return $request;
-    }
-
-    public function Byjuno_CreateShopWareShopRequestAuthorization(Context $context, $salesChannelId, OrderEntity $order, $orderId, $paymentmethod, $repayment, $b2b, $invoiceDelivery, $customGender = "", $customDob = "")
+    public function Byjuno_CreateShopWareShopRequestAuthorization(Context $context, $salesChannelId, OrderEntity $order, $orderId, $repayment, $b2b, $invoiceDelivery, $customGender = "", $customDob = "")
     {
         $shippingAddress = $this->getOrderShippingAddressOrder($order);
         $billingAddress = $this->getBillingAddressOrder($order, $context);
@@ -1733,90 +1274,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         return "undefined";
     }
 
-    public function isStatusOkS2($status, $salesChannhelId)
-    {
-        try {
-            $accepted_S2_ij = $this->systemConfigService->get("ByjunoPayments.config.alloweds2", $salesChannhelId);
-            $accepted_S2_merhcant = $this->systemConfigService->get("ByjunoPayments.config.alloweds2merchant", $salesChannhelId);
-
-            $ijStatus = Array();
-            if (!empty(trim((String)$accepted_S2_ij))) {
-                $ijStatus = explode(",", trim((String)$accepted_S2_ij));
-                foreach ($ijStatus as $key => $val) {
-                    $ijStatus[$key] = intval($val);
-                }
-            }
-            $merchantStatus = Array();
-            if (!empty(trim((String)$accepted_S2_merhcant))) {
-                $merchantStatus = explode(",", trim((String)$accepted_S2_merhcant));
-                foreach ($merchantStatus as $key => $val) {
-                    $merchantStatus[$key] = intval($val);
-                }
-            }
-            if (!empty($accepted_S2_ij) && count($ijStatus) > 0 && in_array($status, $ijStatus)) {
-                return true;
-            } else if (!empty($accepted_S2_merhcant) && count($merchantStatus) > 0 && in_array($status, $merchantStatus)) {
-                return true;
-            }
-            return false;
-
-        } catch (Exception $e) {
-            return false;
-        }
-    }
-
-    public function isStatusOkS3($status, $salesChannhelId)
-    {
-        try {
-            $accepted_S3 = $this->systemConfigService->get("ByjunoPayments.config.alloweds3", $salesChannhelId);
-            $ijStatus = Array();
-            if (!empty(trim((String)$accepted_S3))) {
-                $ijStatus = explode(",", trim((String)$accepted_S3));
-                foreach ($ijStatus as $key => $val) {
-                    $ijStatus[$key] = intval($val);
-                }
-            }
-            if (!empty($accepted_S3) && count($ijStatus) > 0 && in_array($status, $ijStatus)) {
-                return true;
-            }
-            return false;
-
-        } catch (Exception $e) {
-            return false;
-        }
-    }
-
-    public function getStatusRisk($status, $salesChannhelId)
-    {
-        try {
-            $accepted_S2_ij = $this->systemConfigService->get("ByjunoPayments.config.alloweds2", $salesChannhelId);
-            $accepted_S2_merhcant = $this->systemConfigService->get("ByjunoPayments.config.alloweds2merchant", $salesChannhelId);
-            $ijStatus = Array();
-            if (!empty(trim((String)$accepted_S2_ij))) {
-                $ijStatus = explode(",", trim((String)$accepted_S2_ij));
-                foreach ($ijStatus as $key => $val) {
-                    $ijStatus[$key] = intval($val);
-                }
-            }
-            $merchantStatus = Array();
-            if (!empty(trim((String)$accepted_S2_merhcant))) {
-                $merchantStatus = explode(",", trim((String)$accepted_S2_merhcant));
-                foreach ($merchantStatus as $key => $val) {
-                    $merchantStatus[$key] = intval($val);
-                }
-            }
-            if (!empty($accepted_S2_ij) && count($ijStatus) > 0 && in_array($status, $ijStatus)) {
-                return "IJ";
-            } else if (!empty($accepted_S2_merhcant) && count($merchantStatus) > 0 && in_array($status, $merchantStatus)) {
-                return "CLIENT";
-            }
-            return "No owner";
-
-        } catch (Exception $e) {
-            return "INTERNAL ERROR";
-        }
-    }
-
     public function getMailTemplate(Context $context, string $technicalName, OrderEntity $order): ?MailTemplateEntity
     {
         $criteria = new Criteria();
@@ -1829,7 +1286,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
     private function getOrderShippingAddressOrder(OrderEntity $orderEntity): ?OrderAddressEntity
     {
-        //var_dump($orderEntity->getShippingAddress());
         /** @var OrderDeliveryEntity[] $deliveries */
         $deliveries = $orderEntity->getDeliveries();
         // TODO: Only one shipping address is supported currently, this could change in the future

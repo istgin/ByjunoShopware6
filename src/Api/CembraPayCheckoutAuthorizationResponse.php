@@ -2,7 +2,7 @@
 /**
  * Created by CembraPay.
  */
-namespace Byjuno\ByjunoPayments\Api\Api;
+namespace Byjuno\ByjunoPayments\Api;
 
 /*
  * {
@@ -25,13 +25,13 @@ namespace Byjuno\ByjunoPayments\Api\Api;
     }
 }
  */
-class Checkout {
+class Authorization {
     public $authorizationValidTill; //Date
     public $authorizedRemainingAmount; //int
     public $authorizationCurrency; //String
 
 }
-class CembraPayCheckoutChkResponse {
+class CembraPayCheckoutAuthorizationResponse {
     public $requestMsgType; //String
     public $requestMsgId; //String
     public $requestMsgDateTime; //Date
@@ -44,5 +44,4 @@ class CembraPayCheckoutChkResponse {
     public $merchantOrderRef; //String
     public $processingStatus; //String
     public $authorization; //Authorization
-    public $redirectUrlCheckout;
 }

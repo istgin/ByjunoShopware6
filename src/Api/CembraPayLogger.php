@@ -5,7 +5,7 @@
  * Date: 14.2.9
  * Time: 10:28
  */
-namespace Byjuno\ByjunoPayments\Api\Api;
+namespace Byjuno\ByjunoPayments\Api;
 
 use Byjuno\ByjunoPayments\Helper\DataHelper;
 use Magento\Framework\Exception\LocalizedException;

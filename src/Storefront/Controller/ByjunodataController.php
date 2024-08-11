@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 namespace Byjuno\ByjunoPayments\Storefront\Controller;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayAzure;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutAuthorizationResponse;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutChkResponse;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCheckoutScreeningResponse;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayCommunicator;
-use Byjuno\ByjunoPayments\Api\Api\CembraPayConstants;
+use Byjuno\ByjunoPayments\Api\CembraPayAzure;
+use Byjuno\ByjunoPayments\Api\CembraPayCheckoutAuthorizationResponse;
+use Byjuno\ByjunoPayments\Api\CembraPayCheckoutChkResponse;
+use Byjuno\ByjunoPayments\Api\CembraPayCheckoutScreeningResponse;
+use Byjuno\ByjunoPayments\Api\CembraPayCommunicator;
+use Byjuno\ByjunoPayments\Api\CembraPayConstants;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoCommunicator;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoRequest;
 use Byjuno\ByjunoPayments\Api\Classes\ByjunoResponse;
@@ -91,7 +91,7 @@ class ByjunodataController extends StorefrontController
     private $byjuno;
 
     /**
-     * @var \Byjuno\ByjunoPayments\Api\Api\CembraPayAzure
+     * @var \Byjuno\ByjunoPayments\Api\CembraPayAzure
      */
     public $cembraPayAzure;
 
@@ -505,7 +505,6 @@ class ByjunodataController extends StorefrontController
                 $salesChannelContext->getSalesChannelId(),
                 $order,
                 $order->getOrderNumber(),
-                $_SESSION["_byjyno_payment_method"],
                 $paymentplan,
                 $b2b,
                 $invoiceDelivery,

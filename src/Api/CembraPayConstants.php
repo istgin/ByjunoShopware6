@@ -1,5 +1,5 @@
 <?php
-namespace Byjuno\ByjunoPayments\Api\Api;
+namespace Byjuno\ByjunoPayments\Api;
 
 class CembraPayConstants
 {
