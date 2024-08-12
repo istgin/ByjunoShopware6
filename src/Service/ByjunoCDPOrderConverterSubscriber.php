@@ -139,13 +139,13 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             $accessData->username = $this->systemConfigService->get("ByjunoPayments.config.cembrapaylogintest", $salesChannelId);
             $accessData->password = $this->systemConfigService->get("ByjunoPayments.config.cembrapaypasswordtest", $salesChannelId);
             $accessData->audience = "59ff4c0b-7ce8-42f0-983b-306706936fa1/.default";
-            $accessToken = "";//$this->_scopeConfig->getValue('cembrapaycheckoutsettings/cembrapaycheckout_setup/access_token_test') ?? "";
+            $accessToken = $this->systemConfigService->get('ByjunoPayments.config.accesstokentest') ?? "";
         } else {
             $accessData->mode = 'live';
             $accessData->username = $this->systemConfigService->get("ByjunoPayments.config.cembrapayloginlive", $salesChannelId);
             $accessData->password = $this->systemConfigService->get("ByjunoPayments.config.cembrapaypasswordlive", $salesChannelId);
             $accessData->audience = "80d0ac9d-9d5c-499c-876e-71dd57e436f2/.default";
-            $accessToken = "";//$this->_scopeConfig->getValue('cembrapaycheckoutsettings/cembrapaycheckout_setup/access_token_live') ?? "";
+            $accessToken = $this->systemConfigService->get('ByjunoPayments.config.accesstokenlive') ?? "";
         }
         $tkn = explode(CembraPayConstants::$tokenSeparator, $accessToken);
         $hash = $accessData->username.$accessData->password.$accessData->audience;
@@ -158,11 +158,10 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         /* @var $accessData CembraPayLoginDto */
         $hash = $accessData->username.$accessData->password.$accessData->audience.CembraPayConstants::$tokenSeparator;
         if ($accessData->mode == 'test') {
-           // $this->_writerInterface->save('cembrapaycheckoutsettings/cembrapaycheckout_setup/access_token_test', $hash.$token);
+            $this->systemConfigService->set('ByjunoPayments.config.accesstokentest', $hash.$token);
         } else {
-          //  $this->_writerInterface->save('cembrapaycheckoutsettings/cembrapaycheckout_setup/access_token_live', $hash.$token);
+            $this->systemConfigService->set('ByjunoPayments.config.accesstokenlive', $hash.$token);
         }
-       // $this->_reinitableConfig->reinit();
     }
 
     public static function getSubscribedEvents(): array
