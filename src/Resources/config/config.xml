@@ -291,13 +291,13 @@
             <name>byjunoprodemail</name>
             <label>Production email of CembraPay</label>
             <label lang="de-DE">Production email of CembraPay</label>
-            <defaultValue>invoices@byjuno.ch</defaultValue>
+            <defaultValue>invoices@cembrapay.ch</defaultValue>
         </input-field>
         <input-field>
             <name>byjunotestemail</name>
             <label>Test email of CembraPay</label>
             <label lang="de-DE">Test email of CembraPay</label>
-            <defaultValue>invoices-test@byjuno.ch</defaultValue>
+            <defaultValue>invoices-test@cembrapay.ch</defaultValue>
         </input-field>
         <input-field type="single-select">
             <name>byjunoS3ActionEnable</name>

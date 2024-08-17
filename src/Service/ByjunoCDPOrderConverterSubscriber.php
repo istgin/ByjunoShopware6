@@ -317,7 +317,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
                         $order->getOrderNumber(), $txId);
 
 
-                    $CembraPayRequestName = "S5 Cancel request";
+                    $CembraPayRequestName = "Order Cancel request";
                     $json = $request->createRequest();
                     $cembrapayCommunicator = new CembraPayCommunicator($this->cembraPayAzure);
                     if (isset($mode) && strtolower($mode) == 'live') {
@@ -484,7 +484,10 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->amount = round(number_format($convertedCart["price"]->getTotalPrice(), 2, '.', '') * 100);
         $request->currency = $currency->getIsoCode();
 
-        $reference = $convertedCart["orderCustomer"]["customerId"];
+        $reference = "";
+        if (!empty($convertedCart["orderCustomer"]["customer"]["id"])) {
+            $reference = $convertedCart["orderCustomer"]["customer"]["id"];
+        }
         if (empty($reference)) {
             $request->custDetails->merchantCustRef = uniqid("guest_");
             $request->custDetails->loggedIn = false;
@@ -502,8 +505,15 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->custDetails->firstName = (string)$billingAddress["firstName"];
         $request->custDetails->lastName = (string)$billingAddress["lastName"];
         $request->custDetails->language = (string)$this->getCustomerLanguage($context->getContext(), $convertedCart["languageId"]);
-        $customer = $this->getCustomer($convertedCart["orderCustomer"]["customerId"], $context->getContext());
-        $dob = $customer->getBirthday();
+        $customerId = "";
+        if (!empty($convertedCart["orderCustomer"]["customer"]["id"])) {
+            $customerId = $convertedCart["orderCustomer"]["customer"]["id"];
+        }
+        $customer = $this->getCustomer($customerId, $context->getContext());
+        $dob = null;
+        if (!empty($customer)) {
+            $dob = $customer->getBirthday();
+        }
         $dob_year = null;
         $dob_month = null;
         $dob_day = null;
@@ -909,7 +919,12 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->custDetails->language = (string)$this->getCustomerLanguage($context, $order->getLanguageId());
 
         $customer = $this->getCustomer($order->getOrderCustomer()->getCustomerId(), $context);
-        $dob = $customer->getBirthday();
+        $dob = null;
+        $additionalInfo = null;
+        if (!empty($customer)) {
+            $dob = $customer->getBirthday();
+            $additionalInfo = $customer->getSalutation();
+        }
         $dob_year = null;
         $dob_month = null;
         $dob_day = null;
@@ -924,7 +939,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
 
         $request->custDetails->salutation = CembraPayConstants::$GENTER_UNKNOWN;
-        $additionalInfo =  $customer->getSalutation();
         $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale", $salesChannelId);
         $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale", $salesChannelId);
         $genderMale = explode(",", $genderMaleStr);
