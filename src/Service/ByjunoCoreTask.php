@@ -325,7 +325,7 @@ class ByjunoCoreTask
                         /* @var $responseRes CembraPayCheckoutCreditResponse */
                         $responseRes = CembraPayConstants::creditResponse($response);
                         $status = $responseRes->processingStatus;
-                        if (!empty($status) && $status != CembraPayConstants::$CREDIT_OK) {
+                        if (!empty($status) && $status == CembraPayConstants::$CREDIT_OK) {
                             $ok = true;
                         }
                     }
