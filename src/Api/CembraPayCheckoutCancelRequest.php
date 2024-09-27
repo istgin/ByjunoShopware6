@@ -23,6 +23,7 @@ class CembraPayCheckoutCancelRequest extends CembraPayCheckoutAutRequest
     public $merchantOrderRef; //String
     public $amount; //int
     public $currency; //String
+    public $isFullCancelation; //String
 
     public function createRequest() {
         return json_encode($this);

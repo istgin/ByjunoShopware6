@@ -742,6 +742,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->merchantOrderRef = $orderId;
         $request->amount = number_format($amount, 2, '.', '') * 100;
         $request->currency = $orderCurrency;
+        $request->isFullCancelation = true;
         return $request;
     }
 
