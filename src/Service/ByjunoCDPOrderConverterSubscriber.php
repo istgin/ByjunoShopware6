@@ -1202,7 +1202,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->customerConsents = array($customerConsents);
 
         $request->merchantDetails->transactionChannel = "WEB";
-        $request->merchantDetails->integrationModule = "CembraPay Magento 2 module 3.0.0";
+        $request->merchantDetails->integrationModule = "CembraPay Shopware 6 module 4.0.0";
 
         return $request;
     }
