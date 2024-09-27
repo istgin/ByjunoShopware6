@@ -81,7 +81,7 @@ class Order
 
 class SessionInfo
 {
-    public $fingerPrint; //String
+    public $tmxSessionId; //String
     public $sessionIp;
 
 }

@@ -506,8 +506,8 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->custDetails->lastName = (string)$billingAddress["lastName"];
         $request->custDetails->language = (string)$this->getCustomerLanguage($context->getContext(), $convertedCart["languageId"]);
         $customerId = "";
-        if (!empty($convertedCart["orderCustomer"]["customer"]["id"])) {
-            $customerId = $convertedCart["orderCustomer"]["customer"]["id"];
+        if (!empty($convertedCart["orderCustomer"]["customerId"])) {
+            $customerId = $convertedCart["orderCustomer"]["customerId"];
         }
         $customer = $this->getCustomer($customerId, $context->getContext());
         $dob = null;
@@ -583,7 +583,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $tmx_enable = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable", $context->getSalesChannelId());
         $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix", $context->getSalesChannelId());
         if (isset($tmx_enable) && $tmx_enable == 'enabled' && isset($tmxorgid) && $tmxorgid != '' && !empty($_SESSION["byjuno_tmx"])) {
-            $request->sessionInfo->fingerPrint = $_SESSION["byjuno_tmx"];
+            $request->sessionInfo->tmxSessionId = $_SESSION["byjuno_tmx"];
         }
 
         $request->sessionInfo->sessionIp = $this->Byjuno_getClientIp();
@@ -1004,7 +1004,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $tmx_enable = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable", $salesChannelId);
         $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix", $salesChannelId);
         if (isset($tmx_enable) && $tmx_enable == 'enabled' && isset($tmxorgid) && $tmxorgid != '' && !empty($_SESSION["byjuno_tmx"])) {
-            $request->sessionInfo->fingerPrint = $_SESSION["byjuno_tmx"];
+            $request->sessionInfo->tmxSessionId = $_SESSION["byjuno_tmx"];
         }
         $request->sessionInfo->sessionIp = $this->Byjuno_getClientIp();
 
@@ -1176,7 +1176,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $tmx_enable = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrixenable", $salesChannelId);
         $tmxorgid = $this->systemConfigService->get("ByjunoPayments.config.byjunothreatmetrix", $salesChannelId);
         if (isset($tmx_enable) && $tmx_enable == 'enabled' && isset($tmxorgid) && $tmxorgid != '' && !empty($_SESSION["byjuno_tmx"])) {
-            $request->sessionInfo->fingerPrint = $_SESSION["byjuno_tmx"];
+            $request->sessionInfo->tmxSessionId = $_SESSION["byjuno_tmx"];
         }
         $request->sessionInfo->sessionIp = $this->Byjuno_getClientIp();
 
