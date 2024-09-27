@@ -786,6 +786,12 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         } else {
             $json_string22 = json_encode($json_string2, JSON_PRETTY_PRINT);
         }
+        if (empty($json_string11)) {
+            $json_string11 = "no request";
+        }
+        if (empty($json_string22)) {
+            $json_string22 = "no response";
+        }
         $entry = [
             'id' => Uuid::randomHex(),
             'request_id' => (string)$requestId,
