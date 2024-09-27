@@ -138,10 +138,22 @@
                                             {% endfor %}
                                         </div>
                                     </div>
+                                    <div class="row g-1">
+                                        <div class="form-group col-md-6 col-6" id="confirm_tc_border" >
+                                            <input type="checkbox" name="confirm_tc" id="confirm_tc" value="" />
+                                                <a href=" {{ "ByjunoPayment.t_c_url" | trans }}" target="_blank"> {{ "ByjunoPayment.t_c" | trans }}</a>
+                                        </div>
+                                    </div>
                                 </div>
                                 <script>
                                     var byjuno_submit = false;
                                     function byjuno_submit_fn() {
+                                        if (!document.getElementById('confirm_tc').checked) {
+                                            document.getElementById('confirm_tc').style.outline = "2px solid red";
+                                            return false;
+                                        } else {
+                                            document.getElementById('confirm_tc').style.outline = "none";
+                                        }
                                         {% if page["custom_gender_enable"] %}
                                         document.getElementById('customPersonalSalutation').style.borderColor = null;
                                         if (document.getElementById('customPersonalSalutation').value === "") {

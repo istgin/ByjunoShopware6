@@ -31,6 +31,8 @@
     "back_to_shop" : "Retour à la page d'accueil",
     "t_and_c": "(CGV)",
     "byjunoauthflow": "CembraPayAuth",
-    "checkoutadditional": "Les informations suivantes sont nécessaires pour compléter le paiement avec CembraPay:"
+    "checkoutadditional": "Les informations suivantes sont nécessaires pour compléter le paiement avec CembraPay:",
+    "t_c": "L'option de paiement par facture (paiement échelonné inclus) est gérée par CembraPay SA. Les conditions générales et la politique de confidentialité de CembraPay SA s'appliquent.",
+    "t_c_url": "https://cembrapay.ch/fr/privacy"
   }
 }
