@@ -377,6 +377,11 @@
                     <name lang="de-DE">3 Installments</name>
                 </option>
                 <option>
+                    <id>installment_6</id>
+                    <name>6 Installments</name>
+                    <name lang="de-DE">6 Installments</name>
+                </option>
+                <option>
                     <id>installment_12</id>
                     <name>12 Installments</name>
                     <name lang="de-DE">12 Installments</name>

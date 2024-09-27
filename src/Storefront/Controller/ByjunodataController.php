@@ -279,10 +279,10 @@ class ByjunodataController extends StorefrontController
                     $selected = "installment_4";
                 }
             }
-            if ($this->systemConfigService->get("ByjunoPayments.config.installment10" . $prefix_b2b, $context->getSalesChannelId()) == 'enabled') {
-                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_10'), "id" => "installment_10", "toc" => $this->translator->trans('ByjunoPayment.installment_10_toc_url'));
+            if ($this->systemConfigService->get("ByjunoPayments.config.installment6" . $prefix_b2b, $context->getSalesChannelId()) == 'enabled') {
+                $paymentplans[] = Array("name" => $this->translator->trans('ByjunoPayment.installment_6'), "id" => "installment_6", "toc" => $this->translator->trans('ByjunoPayment.installment_6_toc_url'));
                 if ($selected == "") {
-                    $selected = "installment_10";
+                    $selected = "installment_6";
                 }
             }
             if ($this->systemConfigService->get("ByjunoPayments.config.installment12" . $prefix_b2b, $context->getSalesChannelId()) == 'enabled') {
