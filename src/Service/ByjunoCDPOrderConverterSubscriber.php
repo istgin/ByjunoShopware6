@@ -511,8 +511,10 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
         $customer = $this->getCustomer($customerId, $context->getContext());
         $dob = null;
+        $sal = null;
         if (!empty($customer)) {
             $dob = $customer->getBirthday();
+            $sal = $customer->getSalutation();
         }
         $dob_year = null;
         $dob_month = null;
@@ -527,19 +529,34 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             $request->custDetails->dateOfBirth = $dob_year . "-" . $dob_month . "-" . $dob_day;
         }
         $request->custDetails->salutation = CembraPayConstants::$GENTER_UNKNOWN;
-        $additionalInfo = $billingAddressSalutation->getDisplayName();
+        $additionalInfoSalutation = $billingAddressSalutation->getDisplayName();
         $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale", $context->getSalesChannelId());
         $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale", $context->getSalesChannelId());
         $genderMale = explode(",", $genderMaleStr);
         $genderFemale = explode(",", $genderFemaleStr);
-        if (!empty($additionalInfo)) {
+        if ($sal != null) {
+            $salName = $sal->getDisplayName();
+            if (!empty($salName)) {
+                foreach ($genderMale as $ml) {
+                    if (strtolower($salName) == strtolower(trim($ml))) {
+                        $request->custDetails->salutation = CembraPayConstants::$GENTER_MALE;
+                    }
+                }
+                foreach ($genderFemale as $feml) {
+                    if (strtolower($salName) == strtolower(trim($feml))) {
+                        $request->custDetails->salutation = CembraPayConstants::$GENTER_FEMALE;
+                    }
+                }
+            }
+        }
+        if (!empty($additionalInfoSalutation)) {
             foreach ($genderMale as $ml) {
-                if (strtolower($additionalInfo) == strtolower(trim($ml))) {
+                if (strtolower($additionalInfoSalutation) == strtolower(trim($ml))) {
                     $request->custDetails->salutation = CembraPayConstants::$GENTER_MALE;
                 }
             }
             foreach ($genderFemale as $feml) {
-                if (strtolower($additionalInfo) == strtolower(trim($feml))) {
+                if (strtolower($additionalInfoSalutation) == strtolower(trim($feml))) {
                     $request->custDetails->salutation = CembraPayConstants::$GENTER_FEMALE;
                 }
             }
@@ -926,10 +943,10 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
 
         $customer = $this->getCustomer($order->getOrderCustomer()->getCustomerId(), $context);
         $dob = null;
-        $additionalInfo = null;
+        $sal = null;
         if (!empty($customer)) {
             $dob = $customer->getBirthday();
-            $additionalInfo = $customer->getSalutation();
+            $sal = $customer->getSalutation();
         }
         $dob_year = null;
         $dob_month = null;
@@ -945,19 +962,41 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         }
 
         $request->custDetails->salutation = CembraPayConstants::$GENTER_UNKNOWN;
+
+        /* @var $additionalInfoSalutation \Shopware\Core\System\Salutation\SalutationEntity */
+        $additionalInfoSalutation = $billingAddress->getSalutation();
+
         $genderMaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogendermale", $salesChannelId);
         $genderFemaleStr = $this->systemConfigService->get("ByjunoPayments.config.byjunogenderfemale", $salesChannelId);
         $genderMale = explode(",", $genderMaleStr);
         $genderFemale = explode(",", $genderFemaleStr);
-        if (!empty($additionalInfo)) {
-            foreach ($genderMale as $ml) {
-                if (strtolower($additionalInfo) == strtolower(trim($ml))) {
-                    $request->custDetails->salutation = CembraPayConstants::$GENTER_MALE;
+        if ($sal != null) {
+            $salName = $sal->getDisplayName();
+            if (!empty($salName)) {
+                foreach ($genderMale as $ml) {
+                    if (strtolower($salName) == strtolower(trim($ml))) {
+                        $request->custDetails->salutation = CembraPayConstants::$GENTER_MALE;
+                    }
+                }
+                foreach ($genderFemale as $feml) {
+                    if (strtolower($salName) == strtolower(trim($feml))) {
+                        $request->custDetails->salutation = CembraPayConstants::$GENTER_FEMALE;
+                    }
                 }
             }
-            foreach ($genderFemale as $feml) {
-                if (strtolower($additionalInfo) == strtolower(trim($feml))) {
-                    $request->custDetails->salutation = CembraPayConstants::$GENTER_FEMALE;
+        }
+        if (!empty($additionalInfoSalutation)) {
+            $salutationKey = $additionalInfoSalutation->getSalutationKey();
+            if (!empty($salutationKey)) {
+                foreach ($genderMale as $ml) {
+                    if (strtolower($salutationKey) == strtolower(trim($ml))) {
+                        $request->custDetails->salutation = CembraPayConstants::$GENTER_MALE;
+                    }
+                }
+                foreach ($genderFemale as $feml) {
+                    if (strtolower($salutationKey) == strtolower(trim($feml))) {
+                        $request->custDetails->salutation = CembraPayConstants::$GENTER_FEMALE;
+                    }
                 }
             }
         }
@@ -1076,6 +1115,9 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $genderFemale = explode(",", $genderFemaleStr);
         $customer = $this->getCustomer($order->getOrderCustomer()->getCustomerId(), $context);
 
+        /* @var $additionalInfoSalutation \Shopware\Core\System\Salutation\SalutationEntity */
+        $additionalInfoSalutation = $billingAddress->getSalutation();
+
         $dob = $customer->getBirthday();
         $dob_year = null;
         $dob_month = null;
@@ -1110,15 +1152,15 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
             }
         }
         if (!empty($additionalInfoSalutation)) {
-            $name = $additionalInfoSalutation->getSalutationKey();
-            if (!empty($name)) {
+            $salutationKey = $additionalInfoSalutation->getSalutationKey();
+            if (!empty($salutationKey)) {
                 foreach ($genderMale as $ml) {
-                    if (strtolower($name) == strtolower(trim($ml))) {
+                    if (strtolower($salutationKey) == strtolower(trim($ml))) {
                         $request->custDetails->salutation = CembraPayConstants::$GENTER_MALE;
                     }
                 }
                 foreach ($genderFemale as $feml) {
-                    if (strtolower($name) == strtolower(trim($feml))) {
+                    if (strtolower($salutationKey) == strtolower(trim($feml))) {
                         $request->custDetails->salutation = CembraPayConstants::$GENTER_FEMALE;
                     }
                 }
