@@ -559,7 +559,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->custContacts->email = (string)$convertedCart["orderCustomer"]["email"];
 
         $request->deliveryDetails->deliveryDetailsDifferent = true;
-        $request->deliveryDetails->deliveryMethod = CembraPayConstants::$DELIVERY_POST;
         $request->deliveryDetails->deliveryFirstName = $shippingAddress["firstName"];
         $request->deliveryDetails->deliverySecondName =  $shippingAddress["lastName"];
         if (!empty($shippingAddress["company"]) && $b2b == 'enabled') {
@@ -982,7 +981,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->custContacts->email = (string)$order->getOrderCustomer()->getEmail();
 
         $request->deliveryDetails->deliveryDetailsDifferent = true;
-        $request->deliveryDetails->deliveryMethod = CembraPayConstants::$DELIVERY_POST;
 
         $request->deliveryDetails->deliveryFirstName = (String)($shippingAddress->getFirstname() ?? "");
         $request->deliveryDetails->deliverySecondName = (String)($shippingAddress->getLastname() ?? "");
