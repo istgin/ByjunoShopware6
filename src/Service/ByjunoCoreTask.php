@@ -205,7 +205,7 @@ class ByjunoCoreTask
                     $this->byjuno->saveCembraLog($context, $json, $response, $responseRes->processingStatus, $CembraPayRequestName,
                         "-","-", $request->requestMsgId,
                         "-", "-", "-","-", $responseRes->transactionId, $order->getOrderNumber());
-                    if (!empty($status) && in_array($status, CembraPayConstants::$SETTLE_STATUSES)) {
+                    if (!empty($status)) {
                         $customFields = array_merge($customFields, ['byjuno_s4_retry' => 0, 'byjuno_s4_sent' => 1, 'byjuno_time' => time()]);
                     } else {
                         if ($fields["byjuno_s4_retry"] < self::$MAX_RETRY_COUNT) {
@@ -318,14 +318,14 @@ class ByjunoCoreTask
                         /* @var $responseRes CembraPayCheckoutSettleResponse */
                         $responseRes = CembraPayConstants::settleResponse($response);
                         $status = $responseRes->processingStatus;
-                        if (!empty($status) && in_array($status, CembraPayConstants::$SETTLE_STATUSES)) {
+                        if (!empty($status)) {
                             $ok = true;
                         }
                     } else if ($CembraPayRequestName == "Refund request") {
                         /* @var $responseRes CembraPayCheckoutCreditResponse */
                         $responseRes = CembraPayConstants::creditResponse($response);
                         $status = $responseRes->processingStatus;
-                        if (!empty($status) && $status == CembraPayConstants::$CREDIT_OK) {
+                        if (!empty($status)) {
                             $ok = true;
                         }
                     }
