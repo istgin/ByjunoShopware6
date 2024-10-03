@@ -1348,7 +1348,6 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
     {
         /** @var OrderDeliveryEntity[] $deliveries */
         $deliveries = $orderEntity->getDeliveries();
-        // TODO: Only one shipping address is supported currently, this could change in the future
         foreach ($deliveries as $delivery) {
             if ($delivery->getShippingOrderAddress() === null) {
                 continue;

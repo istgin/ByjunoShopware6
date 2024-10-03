@@ -137,7 +137,6 @@ class CembraPayConstants
             $result->processingStatus = self::$REQUEST_ERROR;
         } else {
             if ($responseObject->processingStatus == self::$CANCEL_OK) {
-                // TODO if need
                 $result->processingStatus = $responseObject->processingStatus;
                 $result->transactionId = !empty($responseObject->transactionId) ? $responseObject->transactionId : "";
             } else {
@@ -174,7 +173,6 @@ class CembraPayConstants
             $result->processingStatus = self::$REQUEST_ERROR;
         } else {
             if ($responseObject->processingStatus == self::$CREDIT_OK) {
-                // TODO if need
                 $result->processingStatus = $responseObject->processingStatus;
                 $result->transactionId = !empty($responseObject->transactionId) ? $responseObject->transactionId : "";
             } else {
