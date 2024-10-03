@@ -403,6 +403,7 @@ class ByjunoCoreTask
         $request->amount = number_format($amount, 2, '.', '') * 100;
         $request->currency = $orderCurrency;
         $request->settlementDetails->merchantInvoiceRef = $doucmentId;
+        $request->settlementDetails->isFinal = true;
         return $request;
 
     }
