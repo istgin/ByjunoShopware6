@@ -32,7 +32,7 @@
         "send_postal": "Rechnungsversand in Papierform via Post (gegen Gebühr von CHF 4.25)",
         "submit_payment": "Zahlung abschliessen",
         "t_and_c": "(AGB)",
-        "t_c": " Ich <a href='%s1' target=_blank>akzeptiere die AGB</a> und die <a href='%s2' target=_blank>Datenschutzerklärung</a> von CembraPay.",
+        "t_c": "Ich akzeptiere die <a href='%s1' target=_blank>AGB</a> und die <a href='%s2' target=_blank>Datenschutzerklärung</a> von CembraPay.",
         "t_c_terms_url": "https://cembrapay.ch/de/terms",
         "t_c_privacy_url": "https://cembrapay.ch/de/privacy"
     }
