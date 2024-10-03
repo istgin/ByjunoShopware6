@@ -32,7 +32,8 @@
     "t_and_c": "(T&C)",
     "byjunoauthflow": "CembraPayAuth",
     "checkoutadditional": "For purchase completion with CembraPay the following information is required:",
-    "t_c": "I have read and accept the Terms and Conditions and the Data Privacy Policy of CembraPay.",
-    "t_c_url": "https://cembrapay.ch/en/privacy"
+    "t_c": "I have read and accept the <a href='%s1' target=_blank>Terms and Conditions</a> and the <a href='%s2' target=_blank>Data Privacy Policy</a> of CembraPay.",
+    "t_c_terms_url": "https://cembrapay.ch/en/terms",
+    "t_c_privacy_url": "https://cembrapay.ch/en/privacy"
   }
 }

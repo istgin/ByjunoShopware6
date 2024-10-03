@@ -126,6 +126,7 @@
                                             </div>
                                         </div>
                                     {% endif %}
+                                    {% if page["paymentplans"]|length > 1 %}
                                     <label class="form-label"
                                            for="paymentplan">
                                         {{ "ByjunoPayment.payment_plan" | trans }}
@@ -138,10 +139,15 @@
                                             {% endfor %}
                                         </div>
                                     </div>
+                                    {% else %}
+                                        {% for paymentoption in page["paymentplans"] %}
+                                            <input type="hidden" name="paymentplan" id="payment_{{ paymentoption['id'] }}" value="{{ paymentoption['id'] }}" />
+                                        {% endfor %}
+                                    {% endif %}
                                     <div class="row g-1">
                                         <div class="form-group col-md-6 col-6" id="confirm_tc_border" >
                                             <input type="checkbox" name="confirm_tc" id="confirm_tc" value="" />
-                                                <a href=" {{ "ByjunoPayment.t_c_url" | trans }}" target="_blank"> {{ "ByjunoPayment.t_c" | trans }}</a>
+                                                {{ "ByjunoPayment.t_c" | trans({'%s1': "ByjunoPayment.t_c_terms_url" | trans, '%s2': "ByjunoPayment.t_c_privacy_url" | trans }) | raw }}
                                         </div>
                                     </div>
                                 </div>
@@ -193,7 +199,7 @@
                                 </script>
                                 <div class="register-submit" style="text-align: left">
                                     <button onclick="byjuno_submit_fn()" type="button" class="btn btn-primary btn-lg" form="proceed_byjuno_invoice" id="proceed_byjuno_invoice_button">
-                                        {{ "ByjunoPayment.submit_payment" | trans }}
+                                        {{ "ByjunoPayment.submit_payment" | trans}}
                                     </button>
                                 </div>
                             </form>

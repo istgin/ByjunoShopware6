@@ -365,14 +365,14 @@ class ByjunodataController extends StorefrontController
             "current_month" => $dob_month,
             "current_day" => $dob_day
         );
-        if (!$invoiceDeliveryEnabled && !$custom_gender_enable && !$custom_bd_enable && count($paymentplans) == 1) {
+        if (!$invoiceDeliveryEnabled && !$custom_gender_enable && !$custom_bd_enable && count($paymentplans) == 0) {
             $_SESSION["_byjuno_single_payment"] = $selected;
             $url = $this->container->get('router')->generate("frontend.checkout.byjunosubmit", [], UrlGeneratorInterface::ABSOLUTE_PATH);
             $singleReturnUrl = $url . '?returnurl=' . urlencode($request->query->get("returnurl")) . '&orderid=' . $request->query->get("orderid");
             return new RedirectResponse($singleReturnUrl);
         }
         if (!$invoiceDeliveryEnabled
-            && count($paymentplans) == 1
+            && count($paymentplans) == 0
             && ($customer_dob_provided || !$custom_bd_enable)
             && ($customerSalutationSpecified || !$custom_gender_enable)) {
             $_SESSION["_byjuno_single_payment"] = $selected;

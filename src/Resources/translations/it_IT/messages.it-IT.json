@@ -32,7 +32,8 @@
     "t_and_c": "(CGC)",
     "byjunoauthflow": "CembraPayAuth",
     "checkoutadditional": "Le seguenti informazioni sono necessarie per completare il pagamento con CembraPay:",
-    "t_c": "Confermo di aver letto e di accettare accettato le CG e l’Informativa sulla privacy di CembraPay.",
-    "t_c_url": "https://cembrapay.ch/it/privacy"
+    "t_c": "Confermo di aver letto e di accettare <a href='%s1' target=_blank>accettato le CG</a> e l’Informativa <a href='%s2' target=_blank>sulla privacy</a> di CembraPay.",
+    "t_c_terms_url": "https://cembrapay.ch/it/terms",
+    "t_c_privacy_url": "https://cembrapay.ch/it/privacy"
   }
 }
