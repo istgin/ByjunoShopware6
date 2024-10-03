@@ -32,7 +32,7 @@
     "t_and_c": "(CGC)",
     "byjunoauthflow": "CembraPayAuth",
     "checkoutadditional": "Le seguenti informazioni sono necessarie per completare il pagamento con CembraPay:",
-    "t_c": "L'opzione di pagamento tramite fattura (pagamento rateale incluso) è gestita dalla CembraPay SA. Si applicano le CGC e l’Informativa sulla privacy di CembraPay SA.",
+    "t_c": "Confermo di aver letto e di accettare accettato le CG e l’Informativa sulla privacy di CembraPay.",
     "t_c_url": "https://cembrapay.ch/it/privacy"
   }
 }

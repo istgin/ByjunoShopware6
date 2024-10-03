@@ -32,7 +32,7 @@
     "t_and_c": "(T&C)",
     "byjunoauthflow": "CembraPayAuth",
     "checkoutadditional": "For purchase completion with CembraPay the following information is required:",
-    "t_c": "The payment option Invoice (including payment in installments) is operated by CembraPay AG. The T&C and the Data Privacy Policy of CembraPay AG  apply.",
+    "t_c": "I have read and accept the Terms and Conditions and the Data Privacy Policy of CembraPay.",
     "t_c_url": "https://cembrapay.ch/en/privacy"
   }
 }

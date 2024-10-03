@@ -506,8 +506,11 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->custDetails->lastName = (string)$billingAddress["lastName"];
         $request->custDetails->language = (string)$this->getCustomerLanguage($context->getContext(), $convertedCart["languageId"]);
         $customerId = "";
-        if (!empty($convertedCart["orderCustomer"]["customerId"])) {
+        if (!empty($convertedCart["orderCustomer"]["customerId"]) && empty($customerId)) {
             $customerId = $convertedCart["orderCustomer"]["customerId"];
+        }
+        if (!empty($convertedCart["orderCustomer"]["customer"]["id"]) && empty($customerId)) {
+            $customerId = $convertedCart["orderCustomer"]["customer"]["id"];
         }
         $customer = $this->getCustomer($customerId, $context->getContext());
         $dob = null;

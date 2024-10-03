@@ -134,7 +134,7 @@
                                         <div class="form-group col-md-6 col-6">
                                             {% for paymentoption in page["paymentplans"] %}
                                                 <input type="radio" name="paymentplan" id="payment_{{ paymentoption['id'] }}" value="{{ paymentoption['id'] }}" {% if page['selected'] == paymentoption['id']  %} checked="checked" {% endif %} />
-                                                <label for="payment_{{ paymentoption['id'] }}">{{ paymentoption['name'] }} <a href="{{ paymentoption['toc'] }}" target="_blank">{{ "ByjunoPayment.t_and_c" | trans }}</a></label><br />
+                                                <label for="payment_{{ paymentoption['id'] }}">{{ paymentoption['name'] }}</label><br />
                                             {% endfor %}
                                         </div>
                                     </div>

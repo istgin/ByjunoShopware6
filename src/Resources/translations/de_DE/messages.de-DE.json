@@ -32,7 +32,7 @@
     "t_and_c": "(AGB)",
     "byjunoauthflow": "CembraPayAuth",
     "checkoutadditional": "Für den Abschluss der Zahlung mit CembraPay werden folgende Informationen benötigt:",
-    "t_c": "Kauf auf Rechnung (inklusive Ratenzahlung) wird durch CembraPay AG abgewickelt. Es gelten die AGB und die Datenschutzerklärung der CembraPay AG.",
+    "t_c": " Ich akzeptiere die AGB und die Datenschutzerklärung von CembraPay.",
     "t_c_url": "https://cembrapay.ch/de/privacy"
   }
 }
