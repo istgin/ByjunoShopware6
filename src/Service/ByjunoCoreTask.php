@@ -117,7 +117,6 @@ class ByjunoCoreTask
                 }
                 $json = $requestAUT->createRequest();
                 $cembrapayCommunicator = new CembraPayCommunicator($this->byjuno->cembraPayAzure);
-                $mode = $this->systemConfigService->get("ByjunoPayments.config.mode", $fullOrder->getSalesChannelId());
                 if (isset($mode) && strtolower($mode) == 'live') {
                     $cembrapayCommunicator->setServer('live');
                 } else {
@@ -141,22 +140,24 @@ class ByjunoCoreTask
                     $this->byjuno->saveCembraLog($context, $json, $response, "Query error", $CembraPayRequestName,
                         $requestAUT->custDetails->firstName, $requestAUT->custDetails->lastName, $requestAUT->requestMsgId,
                         $requestAUT->billingAddr->postalCode, $requestAUT->billingAddr->town, $requestAUT->billingAddr->country, $requestAUT->billingAddr->addrFirstLine, "-", "-");
-                    continue;
                 }
                 if ($status == CembraPayConstants::$AUTH_OK) {
                     $cembrapayTrx = $responseRes->transactionId;
                     $fields = $fullOrder->getCustomFields();
                     $customFields = $fields ?? [];
                     $customFields = array_merge($customFields, ['chk_transaction_id' => $cembrapayTrx, 'byjuno_s3_sent' => 1]);
-                    $update = [
-                        'id' => $fullOrder->getId(),
-                        'customFields' => $customFields,
-                    ];
-                    $this->orderRepository->update([$update], $context);
+
                     $this->byjuno->transactionStateHandler->paid($lastTransaction->getId(), $context);
                 } else {
+                    $customFields = $fields ?? [];
+                    $customFields = array_merge($customFields, ['byjuno_s3_sent' => 1]);
                     $this->byjuno->transactionStateHandler->cancel($lastTransaction->getId(), $context);
                 }
+                $update = [
+                    'id' => $fullOrder->getId(),
+                    'customFields' => $customFields,
+                ];
+                $this->orderRepository->update([$update], $context);
             }
         }
 
