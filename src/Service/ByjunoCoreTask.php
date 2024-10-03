@@ -153,9 +153,9 @@ class ByjunoCoreTask
                         'customFields' => $customFields,
                     ];
                     $this->orderRepository->update([$update], $context);
-
+                    $this->byjuno->transactionStateHandler->paid($lastTransaction->getId(), $context);
                 } else {
-                    continue;
+                    $this->byjuno->transactionStateHandler->cancel($lastTransaction->getId(), $context);
                 }
             }
         }
