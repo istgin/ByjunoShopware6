@@ -379,6 +379,9 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         if ($convertedCart["price"] == null) {
             return;
         }
+        if (empty($convertedCart["billingAddressId"])) {
+            return;
+        }
         $totalPrice = $convertedCart["price"]->getTotalPrice();
         if ($totalPrice < $this->systemConfigService->get("ByjunoPayments.config.byjunominimum", $event->getSalesChannelContext()->getSalesChannelId())
             || $totalPrice > $this->systemConfigService->get("ByjunoPayments.config.byjunomaximum", $event->getSalesChannelContext()->getSalesChannelId())
