@@ -246,7 +246,7 @@ class ByjunoCoreTask
             $shopwareDocName = $getDoc->getConfig()["name"];
             $date = $getDoc->getCreatedAt()->format("Y-m-d");
             $order = $getDoc->getOrder();
-
+            $totalAmount = $order->getAmountTotal();
             $docName = $this->byjuno->Byjuno_MapDocument($shopwareDocName, $order->getSalesChannelId());
             if ($docName == "storno") {
                 if ($this->systemConfigService->get("ByjunoPayments.config.byjunoS5", $order->getSalesChannelId()) != 'enabled') {
@@ -258,11 +258,17 @@ class ByjunoCoreTask
                     $customFieldsR = $getDocInvoice->getCustomFields();
                     $customFieldsRef = $customFieldsR ?? [];
                 }
+                $amountCredit = $order->getAmountTotal();
+                if (!empty($customFieldsRef["inv_transaction_id"])
+                    && !empty($customFieldsRef["inv_transaction_amount"])
+                    && floatval($customFieldsRef["inv_transaction_amount"]) > $amountCredit) {
+                    $amountCredit = floatval($customFieldsRef["inv_transaction_amount"]) - $amountCredit;
+                }
                 $customFieldsO = $order->getCustomFields();
                 $customFieldsOrder = $customFieldsO ?? [];
                 $request = $this->CreateShopRequestCreditRefund(
                     $getDoc->getConfig()["documentNumber"],
-                    $order->getAmountTotal(),
+                    $amountCredit,
                     $order->getCurrency()->getIsoCode(),
                     $order->getOrderNumber(),
                     (!empty($customFieldsOrder["chk_transaction_id"])) ? $customFieldsOrder["chk_transaction_id"] : "",
@@ -341,7 +347,8 @@ class ByjunoCoreTask
                                 ['byjuno_doc_retry' => 0,
                                     'byjuno_doc_sent' => 1,
                                     'byjuno_time' => time(),
-                                    'inv_transaction_id' => $responseRes->settlementId]);
+                                    'inv_transaction_id' => $responseRes->settlementId,
+                                    'inv_transaction_amount' => $totalAmount]);
                         } else {
                             $customFields = array_merge($customFields,
                                 ['byjuno_doc_retry' => 0,
