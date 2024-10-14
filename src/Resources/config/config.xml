@@ -83,13 +83,13 @@
             <name>byjunominimum</name>
             <label>Mininmal amount for checkout (empty, default 10)</label>
             <label lang="de-DE">Mininmal amount for checkout (empty, default 10)</label>
-            <defaultValue>10</defaultValue>
+            <defaultValue>1</defaultValue>
         </input-field>
         <input-field>
             <name>byjunomaximum</name>
             <label>Maximal amount for checkout  (empty, default 1000)</label>
             <label lang="de-DE">Maximal amount for checkout  (empty, default 1000)</label>
-            <defaultValue>1000</defaultValue>
+            <defaultValue>10000</defaultValue>
         </input-field>
         <input-field>
             <name>byjunotimeout</name>
@@ -315,7 +315,7 @@
             <name>byjunotestemail</name>
             <label>Test email of CembraPay</label>
             <label lang="de-DE">Test email of CembraPay</label>
-            <defaultValue>invoices-test@cembrapay.ch</defaultValue>
+            <defaultValue>uat-invoices@cembrapay.ch</defaultValue>
         </input-field>
         <input-field type="single-select">
             <name>byjunoS3ActionEnable</name>

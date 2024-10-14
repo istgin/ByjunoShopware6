@@ -266,8 +266,12 @@ class ByjunoCoreTask
                 }
                 $customFieldsO = $order->getCustomFields();
                 $customFieldsOrder = $customFieldsO ?? [];
+                $noteId = $getDoc->getConfig()["documentNumber"];
+                if (!empty($getDoc->getConfig()["custom"]["invoiceNumber"])) {
+                    $noteId = $getDoc->getConfig()["custom"]["invoiceNumber"];
+                }
                 $request = $this->CreateShopRequestCreditRefund(
-                    $getDoc->getConfig()["documentNumber"],
+                    $noteId,
                     $amountCredit,
                     $order->getCurrency()->getIsoCode(),
                     $order->getOrderNumber(),
