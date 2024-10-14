@@ -384,7 +384,7 @@ class ByjunodataController extends StorefrontController
             $returnUrlFail = $request->query->get("returnurl") . "&status=fail";
             return new RedirectResponse($returnUrlFail);
         }
-        return $this->renderStorefront('@Storefront/storefront/page/checkout/cart/byjunodata.html.twig', ["page" => $params]);
+        return $this->renderStorefront('@Storefront/storefront/page/checkout/cart/byjunodata.html.twig', ["cembrapage" => $params]);
     }
 
     #[Route(path: '/byjunocheckoutok', name: 'frontend.checkout.byjunocheckoutok', methods: ['POST', 'GET'])]
