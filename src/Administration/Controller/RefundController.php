@@ -37,6 +37,9 @@ class RefundController extends AbstractController
         $amount  = $request->request->get('refundableAmount');
 
         $criteria = (new Criteria())
+            ->addAssociation('currency')
+            ->addAssociation('orderCustomer')
+            ->addAssociation('transactions')
             ->addFilter(new EqualsFilter('id', $orderId));
 
         /** @var $order OrderEntity */
