@@ -81,14 +81,14 @@
         </input-field>
         <input-field>
             <name>byjunominimum</name>
-            <label>Mininmal amount for checkout (empty, default 10)</label>
-            <label lang="de-DE">Mininmal amount for checkout (empty, default 10)</label>
+            <label>Mininmal amount for checkout (empty, default 1)</label>
+            <label lang="de-DE">Mininmal amount for checkout (empty, default 1)</label>
             <defaultValue>1</defaultValue>
         </input-field>
         <input-field>
             <name>byjunomaximum</name>
-            <label>Maximal amount for checkout  (empty, default 1000)</label>
-            <label lang="de-DE">Maximal amount for checkout  (empty, default 1000)</label>
+            <label>Maximal amount for checkout  (empty, default 10000)</label>
+            <label lang="de-DE">Maximal amount for checkout  (empty, default 10000)</label>
             <defaultValue>10000</defaultValue>
         </input-field>
         <input-field>
