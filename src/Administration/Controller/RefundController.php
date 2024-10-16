@@ -47,7 +47,7 @@ class RefundController extends AbstractController
             return new Response(null, Response::HTTP_BAD_REQUEST);
         }
 
-        $s5Request = $this->createS5CancelRequest($amount, $order->getCurrency()->getIsoCode(), $orderId, $order->getOrderCustomer()?->getCustomerNumber(), $order->getSalesChannelId());
+        $s5Request = $this->createS5CancelRequest($amount, $order->getCurrency()->getIsoCode(), $order->getOrderNumber(), $order->getOrderCustomer()?->getCustomerNumber(), $order->getSalesChannelId());
         $this->sendS5Request($order, $s5Request, $context);
 
         return new Response(null, Response::HTTP_NO_CONTENT);
