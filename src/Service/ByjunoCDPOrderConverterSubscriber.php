@@ -1020,9 +1020,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->billingAddr->town = (string)$billingAddress->getCity();
         $request->billingAddr->country = strtoupper($billingAddress->getCountry()->getIso() ?? "");
 
-        $request->custContacts->phoneMobile = (string)$billingAddress->getPhoneNumber();
         $request->custContacts->phonePrivate = (string)$billingAddress->getPhoneNumber();
-        $request->custContacts->phoneBusiness = (string)$billingAddress->getPhoneNumber();
         $request->custContacts->email = (string)$order->getOrderCustomer()->getEmail();
 
         $request->deliveryDetails->deliveryDetailsDifferent = true;
@@ -1197,9 +1195,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->billingAddr->postalCode = $billingAddress->getZipcode();
         $request->billingAddr->town = $billingAddress->getCity();
 
-        $request->custContacts->phoneMobile = (string)$billingAddress->getPhoneNumber();
         $request->custContacts->phonePrivate = (string)$billingAddress->getPhoneNumber();
-        $request->custContacts->phoneBusiness = (string)$billingAddress->getPhoneNumber();
         $request->custContacts->email = (string)$order->getOrderCustomer()->getEmail();
 
 
