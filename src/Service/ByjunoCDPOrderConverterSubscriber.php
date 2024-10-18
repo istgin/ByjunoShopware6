@@ -762,7 +762,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->requestMsgDateTime = CembraPayCheckoutAutRequest::Date();
         $request->transactionId = $tx;
         $request->merchantOrderRef = $orderId;
-        $request->amount = number_format($amount, 2, '.', '') * 100;
+        $request->amount = round(number_format($amount, 2, '.', '') * 100);
         $request->currency = $orderCurrency;
         $request->isFullCancelation = true;
         return $request;
@@ -924,7 +924,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->requestMsgId = CembraPayCheckoutChkRequest::GUID();
         $request->requestMsgDateTime = CembraPayCheckoutChkRequest::Date();
         $request->merchantOrderRef = $order->getOrderNumber();
-        $request->amount = number_format($order->getAmountTotal(), 2, '.', '') * 100;
+        $request->amount = round(number_format($order->getAmountTotal(), 2, '.', '') * 100);
         $request->currency = $order->getCurrency()->getIsoCode();
         $reference = $order->getOrderCustomer()->getCustomerId();
         if (empty($reference)) {
@@ -1086,7 +1086,7 @@ class ByjunoCDPOrderConverterSubscriber implements EventSubscriberInterface
         $request->requestMsgId = CembraPayCheckoutAutRequest::GUID();
         $request->requestMsgDateTime = CembraPayCheckoutAutRequest::Date();
         $request->merchantOrderRef = $orderId;
-        $request->amount = number_format($order->getAmountTotal(), 2, '.', '') * 100;
+        $request->amount = round(number_format($order->getAmountTotal(), 2, '.', '') * 100);
         $request->currency = $order->getCurrency()->getIsoCode();
 
 

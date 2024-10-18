@@ -412,7 +412,7 @@ class ByjunoCoreTask
         $request->requestMsgDateTime = CembraPayCheckoutSettleRequest::Date();
         $request->transactionId = $tx;
         $request->merchantOrderRef = $orderId;
-        $request->amount = number_format($amount, 2, '.', '') * 100;
+        $request->amount = round(number_format($amount, 2, '.', '') * 100);
         $request->currency = $orderCurrency;
         $request->settlementDetails->merchantInvoiceRef = $doucmentId;
         $request->settlementDetails->isFinal = true;
@@ -429,7 +429,7 @@ class ByjunoCoreTask
         $request->requestMsgDateTime = CembraPayCheckoutCreditRequest::Date();
         $request->transactionId = $tx;
         $request->merchantOrderRef = $orderId;
-        $request->amount = number_format($amount, 2, '.', '') * 100;
+        $request->amount = round(number_format($amount, 2, '.', '') * 100);
         $request->currency = $orderCurrency;
         $request->settlementDetails->merchantInvoiceRef = $doucmentId;
         $request->settlementDetails->settlementId = $settlementId;

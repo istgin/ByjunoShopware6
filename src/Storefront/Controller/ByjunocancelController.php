@@ -127,8 +127,8 @@ class ByjunocancelController extends StorefrontController
                 ], $salesChannelContext);
 
                 $cart = $this->cartService->add($cart, $lineItem, $salesChannelContext);
-                $this->cancelOrder($orderEntity, $salesChannelContext);
             }
+            $this->cancelOrder($orderEntity, $salesChannelContext);
         } catch (\Exception $exception) {
             $this->addFlash('danger', $this->trans('error.addToCartError'));
             return $this->redirectToRoute('frontend.home.page');
