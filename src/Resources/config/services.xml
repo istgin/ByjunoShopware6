@@ -111,7 +111,7 @@
         <service id="Byjuno\ByjunoPayments\ScheduledTask\ByjunoTaskHandler">
             <argument type="service" id="scheduled_task.repository" />
             <argument type="service" id="Byjuno\ByjunoPayments\Service\ByjunoCoreTask"/>
-            <tag name="messenger.message_handler" />
+            <tag name="messenger.message_handler" handles="Byjuno\ByjunoPayments\ScheduledTask\ByjunoTask"/>
         </service>
 
         <service id="Byjuno\ByjunoPayments\Core\Content\Flow\Subscriber\ByjunoAuthEventCollectorSubscriber">
