@@ -121,5 +121,15 @@
             <tag name="console.command"/>
         </service>
 
+        <service id="Byjuno\ByjunoPayments\Administration\Controller\RefundController" public="true">
+            <argument type="service" id="byjuno_log_entity.repository"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="Shopware\Core\Checkout\Cart\Order\OrderConverter"/>
+
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
     </services>
 </container>
