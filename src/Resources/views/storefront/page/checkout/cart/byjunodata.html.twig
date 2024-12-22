@@ -8,16 +8,16 @@
                     <div class="card register-card">
                         <div class="card-body">
                             <div class="card-title">
-                                {{ page["payment_method"] }}
+                                {{ cembrapage["payment_method"] }}
                             </div>
                             <p>
                                 {{ "ByjunoPayment.checkoutadditional" | trans }}
                             </p>
-                            <form action="{{ path('frontend.checkout.byjunosubmit') }}?returnurl={{ page["returnurl"] }}&orderid={{ page["orderid"] }}"
+                            <form action="{{ path('frontend.checkout.byjunosubmit') }}?returnurl={{ cembrapage["returnurl"] }}&orderid={{ cembrapage["orderid"] }}"
                                   class="register-form" method="post" id="proceed_byjuno_invoice"
                                   name="proceed_byjuno_invoice" data-form-csrf-handler="true">
                                 <div class="register-personal">
-                                    {% if page["custom_gender_enable"] %}
+                                    {% if cembrapage["custom_gender_enable"] %}
                                         <label class="form-label"
                                                for="customPersonalSalutation">
                                             {{ "account.personalSalutationLabel"|trans|sw_sanitize }}{{ "general.required"|trans|sw_sanitize }}
@@ -28,15 +28,15 @@
                                                         class="form-select"
                                                         name="customSalutationId"
                                                         required="required">
-                                                    {% if not page['current_salutation'] %}
+                                                    {% if not cembrapage['current_salutation'] %}
                                                         <option disabled="disabled"
                                                                 selected="selected"
                                                                 value="">
                                                             {{ "account.personalSalutationPlaceholder"|trans|sw_sanitize }}{{ "general.required"|trans|sw_sanitize }}
                                                         </option>
                                                     {% endif %}
-                                                    {% for salutation in page["salutations"] %}
-                                                        <option {% if salutation.id == page['current_salutation'] %}
+                                                    {% for salutation in cembrapage["salutations"] %}
+                                                        <option {% if salutation.id == cembrapage['current_salutation'] %}
                                                             selected="selected"
                                                         {% endif %}
                                                                 value="{{ salutation.id }}">
@@ -47,7 +47,7 @@
                                             </div>
                                         </div>
                                     {% endif %}
-                                    {% if page["custom_bd_enable"] %}
+                                    {% if cembrapage["custom_bd_enable"] %}
                                         <label for="personalBirthday">
                                             {{ "account.personalBirthdayLabel"|trans|sw_sanitize }}{{ shopware.config.core.loginRegistration.birthdayFieldRequired ? "general.required"|trans|sw_sanitize }}*
                                         </label>
@@ -57,7 +57,7 @@
                                                         name="customBirthdayDay"
                                                         class="form-select"
                                                         required="required">
-                                                    {% if not page['current_year'] %}
+                                                    {% if not cembrapage['current_year'] %}
                                                         <option selected="selected"
                                                                 value="">
                                                             {{ "account.personalBirthdaySelectDay"|trans|sw_sanitize }}
@@ -65,7 +65,7 @@
                                                     {% endif %}
                                                     {% for day in range(1, 31) %}
                                                         <option value="{{ day }}"
-                                                                {% if day == page['current_day']  %} selected="selected"{% endif %}>
+                                                                {% if day == cembrapage['current_day']  %} selected="selected"{% endif %}>
                                                             {{ day }}
                                                         </option>
                                                     {% endfor %}
@@ -75,7 +75,7 @@
                                                 <select id="customBirthdayMonth" name="customBirthdayMonth"
                                                         class="form-select"
                                                         required="required">
-                                                    {% if not page['current_month']  %}
+                                                    {% if not cembrapage['current_month']  %}
                                                         <option selected="selected"
                                                                 value="">
                                                             {{ "account.personalBirthdaySelectMonth"|trans|sw_sanitize }}
@@ -83,7 +83,7 @@
                                                     {% endif %}
                                                     {% for month in range(1, 12) %}
                                                         <option value="{{ month }}"
-                                                                {% if month == page['current_month']  %} selected="selected"{% endif %}>
+                                                                {% if month == cembrapage['current_month']  %} selected="selected"{% endif %}>
                                                             {{ month }}
                                                         </option>
                                                     {% endfor %}
@@ -96,7 +96,7 @@
                                                 <select id="customBirthdayYear" name="customBirthdayYear"
                                                         class="form-select"
                                                         required="required">
-                                                    {% if not page['current_day']  %}
+                                                    {% if not cembrapage['current_day']  %}
                                                         <option selected="selected"
                                                                 value="">
                                                             {{ "account.personalBirthdaySelectYear"|trans|sw_sanitize }}
@@ -104,7 +104,7 @@
                                                     {% endif %}
                                                     {% for year in range(currentYear, startYear) %}
                                                         <option value="{{ year }}"
-                                                                {% if year == page['current_year']  %} selected="selected"{% endif %}>
+                                                                {% if year == cembrapage['current_year']  %} selected="selected"{% endif %}>
                                                             {{ year }}
                                                         </option>
                                                     {% endfor %}
@@ -112,10 +112,10 @@
                                             </div>
                                         </div>
                                     {% endif %}
-                                    {% if page["invoiceDeliveryEnabled"] %}
+                                    {% if cembrapage["invoiceDeliveryEnabled"] %}
                                         <label class="form-label"
                                                for="invoicedelivery">
-                                            {{ page["send_invoice"] }}
+                                            {{ cembrapage["send_invoice"] }}
                                         </label>
                                         <div class="row g-1">
                                             <div class="form-group col-md-6 col-6">
@@ -132,8 +132,8 @@
                                     </label>
                                     <div class="row g-1">
                                         <div class="form-group col-md-6 col-6">
-                                            {% for paymentoption in page["paymentplans"] %}
-                                                <input type="radio" name="paymentplan" id="payment_{{ paymentoption['id'] }}" value="{{ paymentoption['id'] }}" {% if page['selected'] == paymentoption['id']  %} checked="checked" {% endif %} />
+                                            {% for paymentoption in cembrapage["paymentplans"] %}
+                                                <input type="radio" name="paymentplan" id="payment_{{ paymentoption['id'] }}" value="{{ paymentoption['id'] }}" {% if cembrapage['selected'] == paymentoption['id']  %} checked="checked" {% endif %} />
                                                 <label for="payment_{{ paymentoption['id'] }}">{{ paymentoption['name'] }} <a href="{{ paymentoption['toc'] }}" target="_blank">{{ "ByjunoPayment.t_and_c" | trans }}</a></label><br />
                                             {% endfor %}
                                         </div>
@@ -142,7 +142,7 @@
                                 <script>
                                     var byjuno_submit = false;
                                     function byjuno_submit_fn() {
-                                        {% if page["custom_gender_enable"] %}
+                                        {% if cembrapage["custom_gender_enable"] %}
                                         document.getElementById('customPersonalSalutation').style.borderColor = null;
                                         if (document.getElementById('customPersonalSalutation').value === "") {
                                             document.getElementById('customPersonalSalutation').style.borderColor = "#FF0000";
@@ -150,7 +150,7 @@
                                             return false;
                                         }
                                         {% endif %}
-                                        {% if page["custom_bd_enable"] %}
+                                        {% if cembrapage["custom_bd_enable"] %}
                                             document.getElementById('customPersonalBirthdayDay').style.borderColor = null;
                                             document.getElementById('customBirthdayMonth').style.borderColor = null;
                                             document.getElementById('customBirthdayYear').style.borderColor = null;
